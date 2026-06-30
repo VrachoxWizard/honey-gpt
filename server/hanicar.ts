@@ -35,7 +35,7 @@ type GoogleAiClient = {
 };
 
 export async function createHanicarReply(messages: ChatMessage[]): Promise<HanicarReply> {
-  if (process.env.USE_LOCAL_LLM === 'true') {
+  if (shouldUseLocalLlm()) {
     return createLocalLlmReply(messages);
   }
 
@@ -43,6 +43,13 @@ export async function createHanicarReply(messages: ChatMessage[]): Promise<Hanic
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
 
   if (!apiKey) {
+    if (isLocalLlmBlockedOnHostedRuntime()) {
+      throw httpError(
+        500,
+        'Lokalni LLM ne može raditi kroz Vercel/Netlify serverless jer njihov 127.0.0.1 nije tvoj laptop. Za deployed app postavi USE_LOCAL_LLM=false i GEMINI_API_KEY u Vercel Environment Variables, ili koristi lokalno http://127.0.0.1:5173/.',
+      );
+    }
+
     throw httpError(
       500,
       'Nedostaje GEMINI_API_KEY. Dodaj ga u .env lokalno ili u Environment Variables na Vercelu/Netlifyju.',
@@ -161,6 +168,26 @@ function readNumberEnv(name: string, fallback: number) {
 
 function isSearchEnabled() {
   return process.env.GEMINI_ENABLE_SEARCH !== 'false';
+}
+
+function shouldUseLocalLlm() {
+  if (process.env.USE_LOCAL_LLM !== 'true') {
+    return false;
+  }
+
+  if (!isHostedServerlessRuntime()) {
+    return true;
+  }
+
+  return process.env.LOCAL_LLM_ALLOW_HOSTED === 'true';
+}
+
+function isLocalLlmBlockedOnHostedRuntime() {
+  return process.env.USE_LOCAL_LLM === 'true' && isHostedServerlessRuntime() && process.env.LOCAL_LLM_ALLOW_HOSTED !== 'true';
+}
+
+function isHostedServerlessRuntime() {
+  return Boolean(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
 }
 
 function extractText(value: unknown): string {
