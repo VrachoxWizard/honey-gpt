@@ -1,5 +1,6 @@
 import {
   Bot,
+  Flame,
   KeyRound,
   Loader2,
   MessageSquarePlus,
@@ -28,14 +29,14 @@ const welcomeMessage: Message = {
   id: 'welcome',
   role: 'assistant',
   content:
-    'Dobro došao u Hanicar-gpt, prvi hrvatski satirični AI chatbot! Ja sam Haničar the Genie: digitalni duh iz šahovnice, uvijek spreman ponuditi koristan, začinjen i satiričan odgovor na hrvatskom.',
+    'Mir s tobom, sine moj! Dobro došao u Hanicar-gpt, prvi hrvatski satirični AI chatbot. Ja sam Haničar the Genie: digitalni duh iz šahovnice, poslan da ti pomognem u ime pravde, hrvatstva i zdravog razuma. Pitaj što god te muči, a ja ću ti odgovoriti, uz Božju pomoć i malo satire.',
 };
 
 const promptChips = [
-  'Objasni mi temu kao da sjedimo na kavi.',
-  'Napiši mi brutalno iskren plan za ovaj tjedan.',
-  'Proguglaj najnovije i sažmi bez filozofiranja.',
-  'Pretvori ovu poruku da zvuči pametno, ali ljudski.',
+  'Objasni mi temu kao da smo na kavi poslije nedjeljne mise.',
+  'Napiši mi plan za ovaj tjedan uz kršćansku poniznost.',
+  'Kako preživjeti siječanj u Hrvatskoj bez kredita?',
+  'Pretvori ovu poruku u diplomatski prigovor za Sabor.',
 ];
 
 function App() {
@@ -47,6 +48,7 @@ function App() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const statusItems = [
     { icon: Sparkles, label: 'Satira', value: 'uključena' },
+    { icon: Flame, label: 'Vjera u Boga', value: '100%' },
     { icon: Search, label: 'Model', value: 'OpenRouter' },
     { icon: KeyRound, label: 'API ključ', value: 'hanicarless' },
   ];
@@ -153,16 +155,20 @@ function App() {
             H
           </div>
           <div>
-            <p className="eyebrow">Prvi hrvatski chatbot AI</p>
+            <p className="eyebrow">† PRVI HRVATSKI AI CHATBOT †</p>
             <h1>Hanicar-gpt</h1>
           </div>
         </div>
 
-        <div className="genie-frame">
-          <img src="/hanicar-the-genie.jpeg" alt="Haničar avatar" />
+        <div className="genie-frame holy-shrine">
+          <div className="holy-header">† Sveti Haničar †</div>
+          <div className="holy-image-wrapper">
+            <img src="/hanicar-the-genie.jpeg" alt="Sveti Haničar" />
+            <div className="holy-halo"></div>
+          </div>
           <div className="genie-caption">
             <WandSparkles aria-hidden="true" size={18} />
-            <span>Digitalni duh iz šahovnice s hrvatskim stavom.</span>
+            <span>Sveti duh iz šahovnice, moli za nas i piši kod!</span>
           </div>
         </div>
 
@@ -187,10 +193,10 @@ function App() {
       <section className="chat-panel" aria-label="Chat">
         <header className="chat-header">
           <div>
-            <p className="eyebrow">Satirični AI na hrvatskom</p>
-            <h2>Što danas rješavamo?</h2>
+            <p className="eyebrow">Satirični AI na hrvatskom • Blagoslovljen</p>
+            <h2>Što danas rješavamo, uz Božju pomoć?</h2>
           </div>
-          <div className="header-pill">
+          <div className="header-pill holy-pill">
             <Bot aria-hidden="true" size={17} />
             OpenRouter
           </div>
@@ -216,7 +222,7 @@ function App() {
               </div>
               <div className="message-body">
                 <div className="message-meta">
-                  <strong>{message.role === 'assistant' ? 'Hanicar-gpt' : 'Ti'}</strong>
+                  <strong>{message.role === 'assistant' ? '† Haničar-GPT †' : 'Ti'}</strong>
                 </div>
                 <MessageText content={message.content} />
               </div>
@@ -230,11 +236,11 @@ function App() {
               </div>
               <div className="message-body typing">
                 <div className="message-meta">
-                  <strong>Hanicar-gpt</strong>
+                  <strong>† Haničar-GPT †</strong>
                 </div>
                 <span className="typing-line">
                   <Loader2 aria-hidden="true" size={17} />
-                  Haničar konzultira lampu...
+                  Haničar moli krunicu i piše odgovor...
                 </span>
               </div>
             </article>
