@@ -164,7 +164,6 @@ function App() {
           <div className="holy-header">† Sveti Haničar †</div>
           <div className="holy-image-wrapper">
             <img src="/hanicar-the-genie.jpeg" alt="Sveti Haničar" />
-            <div className="holy-halo"></div>
           </div>
           <div className="genie-caption">
             <WandSparkles aria-hidden="true" size={18} />
