@@ -1,0 +1,75 @@
+import react from '@vitejs/plugin-react';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
+import { handleChatPayload, toClientError } from './server/api';
+
+function readRequestBody(request: import('node:http').IncomingMessage) {
+  return new Promise<unknown>((resolve, reject) => {
+    let rawBody = '';
+
+    request.on('data', (chunk: Buffer) => {
+      rawBody += chunk.toString('utf8');
+
+      if (rawBody.length > 1_000_000) {
+        reject(new Error('Zahtjev je prevelik za lokalni razvoj.'));
+        request.destroy();
+      }
+    });
+
+    request.on('end', () => {
+      try {
+        resolve(rawBody ? JSON.parse(rawBody) : {});
+      } catch {
+        reject(new Error('Neispravan JSON u zahtjevu.'));
+      }
+    });
+
+    request.on('error', reject);
+  });
+}
+
+function localApiPlugin(): Plugin {
+  return {
+    name: 'hanicar-local-api',
+    configureServer(server) {
+      server.middlewares.use('/api/chat', async (request, response) => {
+        response.setHeader('Content-Type', 'application/json; charset=utf-8');
+
+        if (request.method === 'OPTIONS') {
+          response.statusCode = 204;
+          response.end();
+          return;
+        }
+
+        if (request.method !== 'POST') {
+          response.statusCode = 405;
+          response.end(JSON.stringify({ error: 'Haničar-GPT prima samo POST zahtjeve.' }));
+          return;
+        }
+
+        try {
+          const payload = await readRequestBody(request);
+          const result = await handleChatPayload(payload);
+          response.statusCode = 200;
+          response.end(JSON.stringify(result));
+        } catch (error) {
+          const clientError = toClientError(error);
+          response.statusCode = clientError.statusCode;
+          response.end(JSON.stringify({ error: clientError.message }));
+        }
+      });
+    },
+  };
+}
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  Object.assign(process.env, env);
+
+  return {
+    plugins: [react(), localApiPlugin()],
+    server: {
+      host: '127.0.0.1',
+      port: 5173,
+    },
+  };
+});
