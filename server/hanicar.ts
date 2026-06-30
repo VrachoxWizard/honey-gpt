@@ -12,7 +12,7 @@ export type HanicarReply = {
   model: string;
 };
 
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+const DEFAULT_MODEL = 'gemini-1.5-flash';
 const MAX_MESSAGES = 18;
 const MAX_MESSAGE_CHARS = 8_000;
 const MAX_PROMPT_CHARS = 30_000;
