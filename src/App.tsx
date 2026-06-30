@@ -3,12 +3,14 @@ import {
   Flame,
   KeyRound,
   Loader2,
+  Menu,
   MessageSquarePlus,
   RefreshCcw,
   Search,
   Send,
   Sparkles,
   WandSparkles,
+  X,
 } from 'lucide-react';
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -44,6 +46,7 @@ function App() {
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const statusItems = [
@@ -139,144 +142,181 @@ function App() {
     setMessages([welcomeMessage]);
     setDraft('');
     setError('');
+    setSidebarOpen(false);
     textareaRef.current?.focus();
   }
 
   function usePromptChip(prompt: string) {
     setDraft(prompt);
+    setSidebarOpen(false);
     textareaRef.current?.focus();
   }
 
   return (
-    <main className="app-shell">
-      <aside className="sidebar" aria-label="Hanicar-gpt profil">
-        <div className="brand-block">
-          <div className="brand-mark brand-mark-sahovnica" aria-hidden="true">
-            H
-          </div>
-          <div>
-            <p className="eyebrow">† PRVI HRVATSKI AI CHATBOT †</p>
-            <h1>Hanicar-gpt</h1>
-          </div>
-        </div>
-
-        <div className="genie-frame holy-shrine">
-          <div className="holy-header">† Sveti Haničar †</div>
-          <div className="holy-image-wrapper">
-            <img src="/hanicar-the-genie.jpeg" alt="Sveti Haničar" />
-          </div>
-          <div className="genie-caption">
-            <WandSparkles aria-hidden="true" size={18} />
-            <span>Sveti duh iz šahovnice, moli za nas i piši kod!</span>
-          </div>
-        </div>
-
-        <button className="new-chat-button" type="button" onClick={startFreshChat}>
-          <MessageSquarePlus aria-hidden="true" size={19} />
-          Novi razgovor
+    <>
+      {/* Mobile top bar — always shows Haničar avatar on small screens */}
+      <header className="mobile-bar">
+        <button
+          className="mobile-menu-btn"
+          type="button"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Otvori izbornik"
+        >
+          <Menu size={22} />
         </button>
+        <div className="mobile-brand">
+          <img src="/hanicar-the-genie.jpeg" alt="" className="mobile-avatar" />
+          <span className="mobile-title">Haničar-GPT</span>
+        </div>
+        <span className="mobile-cross" aria-hidden="true">†</span>
+      </header>
 
-        <div className="status-list" aria-label="Status aplikacije">
-          {statusItems.map((item) => (
-            <div className="status-row" key={item.label}>
-              <span className="status-icon">
-                <item.icon aria-hidden="true" size={17} />
-              </span>
-              <span>{item.label}</span>
-              <strong>{item.value}</strong>
+      {/* Sidebar overlay backdrop for mobile drawer */}
+      <div
+        className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden={!sidebarOpen}
+      />
+
+      <main className="app-shell">
+        <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`} aria-label="Haničar-GPT profil">
+          <button
+            className="sidebar-close"
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Zatvori izbornik"
+          >
+            <X size={20} />
+          </button>
+
+          <div className="brand-block">
+            <div className="brand-mark brand-mark-sahovnica" aria-hidden="true">
+              H
             </div>
-          ))}
-        </div>
-      </aside>
-
-      <section className="chat-panel" aria-label="Chat">
-        <header className="chat-header">
-          <div>
-            <p className="eyebrow">Satirični AI na hrvatskom • Blagoslovljen</p>
-            <h2>Što danas rješavamo, uz Božju pomoć?</h2>
+            <div>
+              <p className="eyebrow">† Prvi Hrvatski AI †</p>
+              <h1>Haničar-GPT</h1>
+            </div>
           </div>
-          <div className="header-pill holy-pill">
-            <Bot aria-hidden="true" size={17} />
-            OpenRouter
+
+          <div className="genie-frame holy-shrine">
+            <div className="holy-header">† Sveti Haničar †</div>
+            <div className="holy-image-wrapper">
+              <img src="/hanicar-the-genie.jpeg" alt="Sveti Haničar" />
+            </div>
+            <div className="genie-caption">
+              <WandSparkles aria-hidden="true" size={18} />
+              <span>Sveti duh iz šahovnice, moli za nas i piši kod!</span>
+            </div>
           </div>
-        </header>
 
-        <div className="suggestion-strip" aria-label="Brzi prijedlozi">
-          {promptChips.map((prompt) => (
-            <button type="button" key={prompt} onClick={() => usePromptChip(prompt)}>
-              {prompt}
-            </button>
-          ))}
-        </div>
+          <button className="new-chat-button" type="button" onClick={startFreshChat}>
+            <MessageSquarePlus aria-hidden="true" size={19} />
+            Novi razgovor
+          </button>
 
-        <div className="messages" aria-live="polite">
-          {messages.map((message) => (
-            <article className={`message ${message.role}`} key={message.id}>
-              <div className="message-avatar" aria-hidden="true">
-                {message.role === 'assistant' ? (
-                  <img src="/hanicar-the-genie.jpeg" alt="" />
-                ) : (
-                  <span>Ti</span>
-                )}
-              </div>
-              <div className="message-body">
-                <div className="message-meta">
-                  <strong>{message.role === 'assistant' ? '† Haničar-GPT †' : 'Ti'}</strong>
-                </div>
-                <MessageText content={message.content} />
-              </div>
-            </article>
-          ))}
-
-          {isSending ? (
-            <article className="message assistant">
-              <div className="message-avatar" aria-hidden="true">
-                <img src="/hanicar-the-genie.jpeg" alt="" />
-              </div>
-              <div className="message-body typing">
-                <div className="message-meta">
-                  <strong>† Haničar-GPT †</strong>
-                </div>
-                <span className="typing-line">
-                  <Loader2 aria-hidden="true" size={17} />
-                  Haničar moli krunicu i piše odgovor...
+          <div className="status-list" aria-label="Status aplikacije">
+            {statusItems.map((item) => (
+              <div className="status-row" key={item.label}>
+                <span className="status-icon">
+                  <item.icon aria-hidden="true" size={17} />
                 </span>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
               </div>
-            </article>
-          ) : null}
-
-          <div ref={scrollRef} />
-        </div>
-
-        <form className="composer" onSubmit={handleSubmit}>
-          {error ? (
-            <div className="error-banner" role="alert">
-              <RefreshCcw aria-hidden="true" size={17} />
-              {error}
-            </div>
-          ) : null}
-
-          <div className="composer-row">
-            <textarea
-              ref={textareaRef}
-              value={draft}
-              rows={1}
-              placeholder="Pitaj Haničara nešto pametno, glupo ili opasno blizu filozofije..."
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isSending}
-            />
-            <button type="submit" disabled={!draft.trim() || isSending} aria-busy={isSending} aria-label="Pošalji poruku">
-              {isSending ? (
-                <Loader2 className="spin-icon" aria-hidden="true" size={20} />
-              ) : (
-                <Send aria-hidden="true" size={20} />
-              )}
-            </button>
+            ))}
           </div>
-        </form>
-      </section>
-    </main>
+        </aside>
+
+        <section className="chat-panel" aria-label="Chat">
+          <header className="chat-header">
+            <div>
+              <p className="eyebrow">Satirični AI na hrvatskom</p>
+              <h2>Što danas rješavamo, uz Božju pomoć?</h2>
+            </div>
+            <div className="header-pill">
+              <Bot aria-hidden="true" size={16} />
+              OpenRouter
+            </div>
+          </header>
+
+          <div className="suggestion-strip" aria-label="Brzi prijedlozi">
+            {promptChips.map((prompt) => (
+              <button type="button" key={prompt} onClick={() => usePromptChip(prompt)}>
+                {prompt}
+              </button>
+            ))}
+          </div>
+
+          <div className="messages" aria-live="polite">
+            {messages.map((message) => (
+              <article className={`message ${message.role}`} key={message.id}>
+                <div className="message-avatar" aria-hidden="true">
+                  {message.role === 'assistant' ? (
+                    <img src="/hanicar-the-genie.jpeg" alt="" />
+                  ) : (
+                    <span>Ti</span>
+                  )}
+                </div>
+                <div className="message-body">
+                  <div className="message-meta">
+                    <strong>{message.role === 'assistant' ? '† Haničar-GPT †' : 'Ti'}</strong>
+                  </div>
+                  <MessageText content={message.content} />
+                </div>
+              </article>
+            ))}
+
+            {isSending ? (
+              <article className="message assistant">
+                <div className="message-avatar" aria-hidden="true">
+                  <img src="/hanicar-the-genie.jpeg" alt="" />
+                </div>
+                <div className="message-body typing">
+                  <div className="message-meta">
+                    <strong>† Haničar-GPT †</strong>
+                  </div>
+                  <span className="typing-line">
+                    <Loader2 aria-hidden="true" size={17} />
+                    Haničar moli krunicu i piše odgovor...
+                  </span>
+                </div>
+              </article>
+            ) : null}
+
+            <div ref={scrollRef} />
+          </div>
+
+          <form className="composer" onSubmit={handleSubmit}>
+            {error ? (
+              <div className="error-banner" role="alert">
+                <RefreshCcw aria-hidden="true" size={17} />
+                {error}
+              </div>
+            ) : null}
+
+            <div className="composer-row">
+              <textarea
+                ref={textareaRef}
+                value={draft}
+                rows={1}
+                placeholder="Pitaj Haničara nešto pametno, glupo ili opasno blizu filozofije..."
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isSending}
+              />
+              <button type="submit" disabled={!draft.trim() || isSending} aria-busy={isSending} aria-label="Pošalji poruku">
+                {isSending ? (
+                  <Loader2 className="spin-icon" aria-hidden="true" size={20} />
+                ) : (
+                  <Send aria-hidden="true" size={20} />
+                )}
+              </button>
+            </div>
+          </form>
+        </section>
+      </main>
+    </>
   );
 }
 
