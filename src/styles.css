@@ -49,6 +49,20 @@
   --shadow-deep: 0 16px 48px rgba(0, 0, 0, 0.3);
 }
 
+/* ---------- 1.1 Dark Theme Overrides ---------- */
+html[data-theme="dark"] {
+  --parchment: #0d100c;
+  --parchment-mid: #131711;
+  --parchment-dark: #191e16;
+  --parchment-line: rgba(212, 175, 55, 0.24);
+
+  --ink: #f8f4ea;
+  --ink-mid: #d2cbb8;
+
+  --white: #141913;
+  --shadow-soft: 0 8px 28px rgba(0, 0, 0, 0.4);
+}
+
 /* ---------- 2. Reset ---------- */
 *,
 *::before,
@@ -485,6 +499,41 @@ textarea:disabled {
   box-shadow: 0 2px 10px rgba(122, 0, 16, 0.2);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-toggle-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  color: var(--crimson);
+  border: 1px solid var(--parchment-line);
+  border-radius: var(--radius-sm);
+  transition: all 0.25s var(--ease);
+}
+
+html[data-theme="dark"] .theme-toggle-btn {
+  color: var(--gold);
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(122, 0, 16, 0.08);
+  transform: translateY(-1px);
+}
+
+html[data-theme="dark"] .theme-toggle-btn:hover {
+  background: rgba(212, 175, 55, 0.12);
+}
+
+.theme-toggle-btn:active {
+  transform: translateY(1px) scale(0.96);
+}
+
 /* ---------- 13. Suggestion Strip ---------- */
 .suggestion-strip {
   display: grid;
@@ -614,8 +663,15 @@ textarea:disabled {
   border: 1.5px solid rgba(212, 175, 55, 0.2);
 }
 
-.message-meta {
+.message-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 6px;
+}
+
+.message-meta {
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -630,16 +686,113 @@ textarea:disabled {
   color: var(--gold);
 }
 
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  opacity: 0;
+  transition: all 0.2s var(--ease);
+  padding: 0;
+}
+
+.message-body:hover .copy-btn {
+  opacity: 0.7;
+}
+
+.copy-btn:hover {
+  opacity: 1 !important;
+  background: rgba(122, 0, 16, 0.08);
+  color: var(--crimson);
+}
+
+.message.user .copy-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gold);
+}
+
+.copy-btn.copied {
+  color: #16a34a !important;
+  opacity: 1 !important;
+}
+
 .message-text {
-  display: grid;
-  gap: 6px;
+  display: block;
   line-height: 1.6;
   overflow-wrap: anywhere;
   font-size: 0.95rem;
 }
 
 .message-text p {
-  margin: 0;
+  margin: 0 0 10px 0;
+}
+
+.message-text p:last-child {
+  margin-bottom: 0;
+}
+
+.message-text ul,
+.message-text ol {
+  margin: 0 0 10px 20px;
+  padding: 0;
+}
+
+.message-text li {
+  margin-bottom: 4px;
+}
+
+.message-text li:last-child {
+  margin-bottom: 0;
+}
+
+.message-text blockquote {
+  margin: 10px 0;
+  padding: 8px 14px;
+  border-left: 3px solid var(--gold);
+  background: rgba(212, 175, 55, 0.05);
+  font-style: italic;
+}
+
+.message.assistant blockquote {
+  border-left-color: var(--crimson);
+  background: rgba(122, 0, 16, 0.03);
+}
+
+.message-text code {
+  font-family: monospace;
+  font-size: 0.85em;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.message.user code {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.message-text pre {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: #10120d;
+  color: #f8f4ea;
+  overflow-x: auto;
+  border: 1px solid var(--parchment-line);
+}
+
+.message.user pre {
+  background: #0d110e;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.message-text pre code {
+  padding: 0;
+  background: transparent;
+  font-size: 0.9em;
 }
 
 .typing {

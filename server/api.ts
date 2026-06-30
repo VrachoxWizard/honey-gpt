@@ -1,4 +1,4 @@
-import { createHanicarReply, httpError, type ChatMessage } from './hanicar.js';
+import { createHanicarReply, streamHanicarReply, httpError, type ChatMessage } from './hanicar.js';
 
 export type ClientError = {
   statusCode: number;
@@ -8,6 +8,14 @@ export type ClientError = {
 export async function handleChatPayload(payload: unknown) {
   const messages = parseMessages(payload);
   return createHanicarReply(messages);
+}
+
+export async function handleChatPayloadStream(
+  payload: unknown,
+  onChunk: (chunk: { token?: string; model?: string }) => void
+) {
+  const messages = parseMessages(payload);
+  return streamHanicarReply(messages, onChunk);
 }
 
 export function parseMessages(payload: unknown): ChatMessage[] {

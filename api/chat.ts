@@ -1,4 +1,4 @@
-import { handleChatPayload, toClientError } from '../server/api.js';
+import { handleChatPayloadStream, toClientError } from '../server/api.js';
 
 type VercelRequest = {
   method?: string;
@@ -9,6 +9,9 @@ type VercelResponse = {
   status(statusCode: number): VercelResponse;
   json(payload: unknown): void;
   end(): void;
+  setHeader(name: string, value: string): void;
+  write(chunk: string): void;
+  writeHead(statusCode: number, headers: Record<string, string>): void;
 };
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
@@ -23,10 +26,25 @@ export default async function handler(request: VercelRequest, response: VercelRe
   }
 
   try {
-    const result = await handleChatPayload(request.body);
-    response.status(200).json(result);
+    response.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
+
+    await handleChatPayloadStream(request.body, (chunk) => {
+      response.write(`data: ${JSON.stringify(chunk)}\n\n`);
+    });
+
+    response.write('data: [DONE]\n\n');
+    response.end();
   } catch (error) {
     const clientError = toClientError(error);
-    response.status(clientError.statusCode).json({ error: clientError.message });
+    try {
+      response.write(`data: ${JSON.stringify({ error: clientError.message })}\n\n`);
+      response.end();
+    } catch {
+      response.status(clientError.statusCode).json({ error: clientError.message });
+    }
   }
 }

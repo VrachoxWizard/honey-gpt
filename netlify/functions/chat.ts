@@ -1,4 +1,4 @@
-import { handleChatPayload, toClientError } from '../../server/api.js';
+import { handleChatPayloadStream, toClientError } from '../../server/api.js';
 
 const headers = {
   'Content-Type': 'application/json; charset=utf-8',
@@ -34,12 +34,22 @@ export async function handler(event: NetlifyEvent): Promise<NetlifyResponse> {
 
   try {
     const payload = event.body ? JSON.parse(event.body) : {};
-    const result = await handleChatPayload(payload);
+    let fullText = '';
+    let responseModel = 'OpenRouter';
+
+    await handleChatPayloadStream(payload, (chunk) => {
+      if (chunk.token) {
+        fullText += chunk.token;
+      }
+      if (chunk.model) {
+        responseModel = chunk.model;
+      }
+    });
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(result),
+      body: JSON.stringify({ text: fullText, model: responseModel }),
     };
   } catch (error) {
     const clientError = toClientError(error);

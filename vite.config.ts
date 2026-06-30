@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
-import { handleChatPayload, toClientError } from './server/api.js';
+import { handleChatPayload, handleChatPayloadStream, toClientError } from './server/api.js';
 
 function readRequestBody(request: import('node:http').IncomingMessage) {
   return new Promise<unknown>((resolve, reject) => {
@@ -32,8 +32,6 @@ function localApiPlugin(): Plugin {
     name: 'hanicar-local-api',
     configureServer(server) {
       server.middlewares.use('/api/chat', async (request, response) => {
-        response.setHeader('Content-Type', 'application/json; charset=utf-8');
-
         if (request.method === 'OPTIONS') {
           response.statusCode = 204;
           response.end();
@@ -42,19 +40,35 @@ function localApiPlugin(): Plugin {
 
         if (request.method !== 'POST') {
           response.statusCode = 405;
+          response.setHeader('Content-Type', 'application/json; charset=utf-8');
           response.end(JSON.stringify({ error: 'Haničar-GPT prima samo POST zahtjeve.' }));
           return;
         }
 
         try {
           const payload = await readRequestBody(request);
-          const result = await handleChatPayload(payload);
+          
           response.statusCode = 200;
-          response.end(JSON.stringify(result));
+          response.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+          response.setHeader('Cache-Control', 'no-cache');
+          response.setHeader('Connection', 'keep-alive');
+          
+          await handleChatPayloadStream(payload, (chunk) => {
+            response.write(`data: ${JSON.stringify(chunk)}\n\n`);
+          });
+          
+          response.write('data: [DONE]\n\n');
+          response.end();
         } catch (error) {
           const clientError = toClientError(error);
-          response.statusCode = clientError.statusCode;
-          response.end(JSON.stringify({ error: clientError.message }));
+          if (response.headersSent) {
+            response.write(`data: ${JSON.stringify({ error: clientError.message })}\n\n`);
+            response.end();
+          } else {
+            response.statusCode = clientError.statusCode;
+            response.setHeader('Content-Type', 'application/json; charset=utf-8');
+            response.end(JSON.stringify({ error: clientError.message }));
+          }
         }
       });
     },

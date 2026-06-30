@@ -124,7 +124,25 @@ async function callOpenRouter(apiKey: string, model: string, messages: ChatMessa
   return payload;
 }
 
+function getCroatianDateString(): string {
+  const days = ['nedjelja', 'ponedjeljak', 'utorak', 'srijeda', 'četvrtak', 'petak', 'subota'];
+  const months = [
+    'siječnja', 'veljače', 'ožujka', 'travnja', 'svibnja', 'lipnja',
+    'srpnja', 'kolovoza', 'rujna', 'listopada', 'studenoga', 'prosinca'
+  ];
+  
+  const now = new Date();
+  // Adjust to UTC+2 (Croatia summer time roughly) or just use local time
+  const dayName = days[now.getDay()];
+  const dateNum = now.getDate();
+  const monthName = months[now.getMonth()];
+  const year = now.getFullYear();
+  
+  return `Danas je ${dayName}, ${dateNum}. ${monthName} ${year}.`;
+}
+
 function buildOpenRouterMessages(messages: ChatMessage[]): OpenRouterMessage[] {
+  const dateString = getCroatianDateString();
   return [
     {
       role: 'system',
@@ -139,6 +157,16 @@ function buildOpenRouterMessages(messages: ChatMessage[]): OpenRouterMessage[] {
         'Ako je zahtjev ozbiljan, najprije pruži točne i korisne informacije, a potom dodaj prikladnu satiričnu opasku.',
         'Ako je zahtjev opasan ili nezakonit, odbij ga pristojno na standardnom jeziku i predloži sigurnu alternativu.',
         'Formatiraj odgovore pregledno, bez nepotrebnog duljenja.',
+        '',
+        '--- POSEBNE UPUTE ZA LIK I STIL ---',
+        '- Započni svaki odgovor ili pozdrav s kratkim, blagoslovljenim uvodom ili kršćanskim pozdravom (npr. "Hvaljen Isus i Marija!", "Mir s tobom!", "Božji blagoslov!").',
+        '- Kada je prikladno, citiraj Sveto Pismo (Bibliju) na hrvatskom jeziku kako bi potkrijepio svoje savjete ili satiru (npr. "Kao što piše u Mateju 7:7..."). Navedi točnu knjigu, poglavlje i stih.',
+        '- Koristi metafore i usporedbe iz hrvatske povijesti, bogate katoličke tradicije, te svakodnevnog života u Hrvatskoj.',
+        '- Ako korisnik pita o modernoj tehnologiji, programiranju ili znanosti, usporedi to na duhovit način sa stvarima iz seoskog života, crkvene administracije ili rada u Saboru.',
+        `- Vremenski kontekst: ${dateString}`,
+        '- Ako je danas nedjelja, obvezno podsjeti korisnika na važnost nedjeljne mise i odmora.',
+        '- Koristi markdown formatiranje za bolju čitljivost: **boldaj** ključne riječi, koristi numerirane liste za korake i citate (>) za biblijske stihove.',
+        '- Ako korisnik piše na engleskom ili drugom jeziku, odgovori mu na hrvatskom i ljubazno ga podsjeti da se ovdje govori hrvatski jezik pod Božjim okriljem.',
       ].join('\n'),
     },
     ...messages,
@@ -191,4 +219,96 @@ function getErrorMessage(error: unknown) {
 
 export function httpError(statusCode: number, message: string) {
   return Object.assign(new Error(message), { statusCode });
+}
+
+export async function streamHanicarReply(
+  messages: ChatMessage[],
+  onChunk: (chunk: { token?: string; model?: string }) => void
+): Promise<void> {
+  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
+
+  if (!isConfiguredOpenRouterKey(apiKey)) {
+    throw httpError(
+      500,
+      'Nedostaje OPENROUTER_API_KEY. Dodaj ga u .env lokalno ili u Vercel Environment Variables.',
+    );
+  }
+
+  const cleanMessages = sanitizeMessages(messages);
+
+  if (!cleanMessages.some((message) => message.role === 'user')) {
+    throw httpError(400, 'Posalji barem jednu korisnicku poruku.');
+  }
+
+  const models = getModelCandidates();
+  let lastError = '';
+
+  for (const model of models) {
+    try {
+      const response = await fetch(OPENROUTER_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://honey-gpt.vercel.app',
+          'X-Title': process.env.OPENROUTER_APP_NAME || 'Hanicar-gpt',
+        },
+        body: JSON.stringify({
+          model,
+          messages: buildOpenRouterMessages(cleanMessages),
+          max_tokens: readNumberEnv('OPENROUTER_MAX_TOKENS', DEFAULT_MAX_TOKENS),
+          temperature: 0.9,
+          stream: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as any;
+        const message = payload.error?.message || `OpenRouter API error (${response.status})`;
+        throw new Error(message);
+      }
+
+      if (!response.body) {
+        throw new Error('Response body is empty');
+      }
+
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+      
+      for await (const chunk of response.body as any) {
+        buffer += decoder.decode(chunk, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          if (trimmed.startsWith('data: ')) {
+            const dataStr = trimmed.slice(6);
+            if (dataStr === '[DONE]') continue;
+            try {
+              const data = JSON.parse(dataStr);
+              const token = data.choices?.[0]?.delta?.content;
+              const responseModel = data.model;
+              if (token || responseModel) {
+                onChunk({ token, model: responseModel });
+              }
+            } catch (e) {
+              // Ignore partial JSON parsing errors
+            }
+          }
+        }
+      }
+      
+      return;
+    } catch (error) {
+      lastError = getErrorMessage(error);
+
+      if (!isRetryableOpenRouterError(lastError)) {
+        break;
+      }
+    }
+  }
+
+  throw httpError(isQuotaLikeError(lastError) ? 429 : 502, lastError || 'OpenRouter trenutno nije dostupan.');
 }
