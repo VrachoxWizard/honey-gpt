@@ -1,6 +1,6 @@
 # Hanicar-gpt
 
-Satirični AI chatbot na hrvatskom jeziku. Frontend je Vite + React, a odgovor generira Google Gemini preko serverless funkcije, tako da se `GEMINI_API_KEY` ne izlaže u browseru.
+Satiricni AI chatbot na hrvatskom jeziku. Frontend je Vite + React, a odgovor generira OpenRouter preko serverless API rute, tako da se `OPENROUTER_API_KEY` ne izlaze u browseru.
 
 ## Lokalno pokretanje
 
@@ -10,10 +10,10 @@ Satirični AI chatbot na hrvatskom jeziku. Frontend je Vite + React, a odgovor g
 npm install
 ```
 
-2. Kopiraj `.env.example` u `.env` i upiši Google Gemini ključ:
+2. Kopiraj `.env.example` u `.env` i upisi OpenRouter kljuc:
 
 ```bash
-GEMINI_API_KEY=tvoj_kljuc
+OPENROUTER_API_KEY=tvoj_openrouter_kljuc
 ```
 
 3. Pokreni aplikaciju:
@@ -28,7 +28,7 @@ Otvori `http://127.0.0.1:5173`.
 
 - Build command: `npm run build`
 - Output directory: `dist`
-- Environment variable: `GEMINI_API_KEY`
+- Environment variable: `OPENROUTER_API_KEY`
 
 Vercel automatski koristi `api/chat.ts` kao serverless rutu na `/api/chat`.
 
@@ -37,44 +37,28 @@ Vercel automatski koristi `api/chat.ts` kao serverless rutu na `/api/chat`.
 - Build command: `npm run build`
 - Publish directory: `dist`
 - Functions directory: `netlify/functions`
-- Environment variable: `GEMINI_API_KEY`
+- Environment variable: `OPENROUTER_API_KEY`
 
-Netlify koristi `netlify/functions/chat.ts`, a frontend se automatski prebacuje na `/.netlify/functions/chat` ako `/api/chat` nije dostupan.
+Netlify koristi `netlify/functions/chat.ts`.
 
 ## Model
 
-Zadani model je `models/gemini-3-flash-preview`. Možeš ga promijeniti kroz environment varijablu `GEMINI_MODEL`.
-
-Za free tier su zadane štedljivije postavke:
+Zadani jeftini model je:
 
 ```bash
-GEMINI_MAX_OUTPUT_TOKENS=2048
-GEMINI_THINKING_LEVEL=low
-GEMINI_ENABLE_SEARCH=false
+OPENROUTER_MODEL=qwen/qwen3.5-flash-02-23
+OPENROUTER_MAX_TOKENS=2048
 ```
 
-Ako želiš odgovore s web pretragom, postavi `GEMINI_ENABLE_SEARCH=true`, ali to može lakše pogoditi free-tier limite.
-
-Ako dobiješ `429 You do not have enough quota`, free tier kvota za taj Google projekt je potrošena ili privremeno ograničena. Pričekaj reset kvote, smanji `GEMINI_MAX_OUTPUT_TOKENS`, ostavi `GEMINI_ENABLE_SEARCH=false`, ili koristi drugi Google AI Studio projekt s dostupnom kvotom.
-
-## Lokalni LLM
-
-Za potpuno lokalno korištenje s Ollamom:
+Mozes ga promijeniti kroz `OPENROUTER_MODEL`. Opcionalno mozes dodati fallback modele odvojene zarezom:
 
 ```bash
-USE_LOCAL_LLM=true
-LOCAL_LLM_API_URL=http://127.0.0.1:11434/api/generate
-LOCAL_LLM_MODEL=llama3
+OPENROUTER_FALLBACK_MODELS=deepseek/deepseek-v4-flash,mistralai/mistral-small-2603
 ```
 
-Ovo radi kad aplikaciju pokrećeš lokalno s `npm run dev`. Na Vercelu/Netlifyju `127.0.0.1` označava serverless okruženje, ne tvoje računalo, pa deployed app treba koristiti Gemini env varijable.
-
-Ako želiš da hosted UI na Vercelu koristi Ollamu s tvog računala, frontend može zvati Ollamu direktno iz browsera:
+Za OpenRouter attribution mozes postaviti:
 
 ```bash
-VITE_USE_BROWSER_LOCAL_LLM=true
-VITE_LOCAL_LLM_API_URL=http://127.0.0.1:11434/api/generate
-VITE_LOCAL_LLM_MODEL=llama3
+OPENROUTER_SITE_URL=https://honey-gpt.vercel.app
+OPENROUTER_APP_NAME=Hanicar-gpt
 ```
-
-Ollama mora dozvoliti browser origin. Na Windowsu postavi `OLLAMA_ORIGINS=*`, restartaj Ollamu, pa otvori Vercel stranicu dok Ollama radi lokalno.

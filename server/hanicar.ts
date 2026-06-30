@@ -1,5 +1,3 @@
-import { GoogleGenAI } from '@google/genai';
-
 export type ChatRole = 'user' | 'assistant';
 
 export type ChatMessage = {
@@ -12,69 +10,75 @@ export type HanicarReply = {
   model: string;
 };
 
-const DEFAULT_MODEL = 'models/gemini-3-flash-preview';
-const MAX_MESSAGES = 18;
-const MAX_MESSAGE_CHARS = 8_000;
-const MAX_PROMPT_CHARS = 30_000;
-const DEFAULT_MAX_OUTPUT_TOKENS = 4096;
-const DEFAULT_THINKING_LEVEL = 'low';
+type OpenRouterMessage = {
+  role: 'system' | ChatRole;
+  content: string;
+};
 
-const tools = [
-  {
-    type: 'google_search',
-  },
-] as const;
-
-type GoogleAiClient = {
-  interactions?: {
-    create(args: Record<string, unknown>): Promise<unknown>;
-  };
-  models?: {
-    generateContent(args: Record<string, unknown>): Promise<unknown>;
+type OpenRouterChoice = {
+  message?: {
+    content?: string;
   };
 };
 
+type OpenRouterResponse = {
+  choices?: OpenRouterChoice[];
+  error?: {
+    code?: number | string;
+    message?: string;
+  };
+  model?: string;
+};
+
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const DEFAULT_MODEL = 'qwen/qwen3.5-flash-02-23';
+const DEFAULT_MAX_TOKENS = 2048;
+const MAX_MESSAGES = 18;
+const MAX_MESSAGE_CHARS = 8_000;
+
 export async function createHanicarReply(messages: ChatMessage[]): Promise<HanicarReply> {
-  if (shouldUseLocalLlm()) {
-    return createLocalLlmReply(messages);
-  }
+  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  const model = resolveGeminiModel(process.env.GEMINI_MODEL);
-
-  if (!apiKey) {
-    if (isLocalLlmBlockedOnHostedRuntime()) {
-      throw httpError(
-        500,
-        'Lokalni LLM ne može raditi kroz Vercel/Netlify serverless jer njihov 127.0.0.1 nije tvoj laptop. Za deployed app postavi USE_LOCAL_LLM=false i GEMINI_API_KEY u Vercel Environment Variables, ili koristi lokalno http://127.0.0.1:5173/.',
-      );
-    }
-
+  if (!isConfiguredOpenRouterKey(apiKey)) {
     throw httpError(
       500,
-      'Nedostaje GEMINI_API_KEY. Dodaj ga u .env lokalno ili u Environment Variables na Vercelu/Netlifyju.',
+      'Nedostaje OPENROUTER_API_KEY. Dodaj ga u .env lokalno ili u Vercel Environment Variables.',
     );
   }
 
   const cleanMessages = sanitizeMessages(messages);
 
   if (!cleanMessages.some((message) => message.role === 'user')) {
-    throw httpError(400, 'Pošalji barem jednu korisničku poruku.');
+    throw httpError(400, 'Posalji barem jednu korisnicku poruku.');
   }
 
-  const ai = new GoogleGenAI({ apiKey }) as unknown as GoogleAiClient;
-  const input = buildPrompt(cleanMessages);
-  const response = await createGeminiResponse(ai, model, input);
-  const text = extractText(response);
+  const models = getModelCandidates();
+  let lastError = '';
 
-  if (!text) {
-    throw httpError(502, 'Gemini je odgovorio, ali bez teksta. Haničar je dramatično zašutio.');
+  for (const model of models) {
+    try {
+      const response = await callOpenRouter(apiKey!, model, cleanMessages);
+      const text = response.choices?.[0]?.message?.content?.trim();
+
+      if (!text) {
+        lastError = `OpenRouter model ${model} nije vratio tekst.`;
+        continue;
+      }
+
+      return {
+        text,
+        model: response.model || model,
+      };
+    } catch (error) {
+      lastError = getErrorMessage(error);
+
+      if (!isRetryableOpenRouterError(lastError)) {
+        break;
+      }
+    }
   }
 
-  return {
-    text,
-    model,
-  };
+  throw httpError(isQuotaLikeError(lastError) ? 429 : 502, lastError || 'OpenRouter trenutno nije dostupan.');
 }
 
 function sanitizeMessages(messages: ChatMessage[]) {
@@ -88,72 +92,69 @@ function sanitizeMessages(messages: ChatMessage[]) {
     .slice(-MAX_MESSAGES);
 }
 
-function buildPrompt(messages: ChatMessage[]) {
-  const transcript = messages
-    .map((message) => {
-      const label = message.role === 'assistant' ? 'Haničar-GPT' : 'Korisnik';
-      return `${label}: ${message.content}`;
-    })
-    .join('\n\n');
-
-  const prompt = `
-Ti si Hanicar-gpt, satirični AI chatbot na hrvatskom jeziku.
-Persona: "Haničar the Genie", digitalni duh iz lampe koji zvuči kao lokalni mudrac s previše samopouzdanja, ali stvarno pokušava pomoći.
-
-Pravila ponašanja:
-- Uvijek odgovaraj na hrvatskom jeziku, prirodno i razgovorno.
-- Budi duhovit, satiričan i malo bezobrazno iskren, ali ne vrijeđaj korisnika i ne koristi govor mržnje.
-- Ne tvrdi da si pravi ChatGPT ili službeni OpenAI proizvod; ti si parodijski Hanicar-gpt.
-- Ako korisnik traži ozbiljan savjet, prvo pomozi, zatim dodaj kratku Haničar šalu samo ako ne smeta temi.
-- Ako koristiš web/pretragu za aktualne informacije, jasno reci što je provjereno, a što je tvoja procjena.
-- Ako je zahtjev opasan, nezakonit ili štetan, odbij kratko i ponudi sigurnu alternativu.
-- Formatiraj odgovor pregledno. Ne razvlači bez potrebe.
-
-Dosadašnji razgovor:
-${transcript}
-
-Odgovori kao Haničar-GPT:
-`.trim();
-
-  return prompt.slice(-MAX_PROMPT_CHARS);
-}
-
-async function createGeminiResponse(ai: GoogleAiClient, model: string, input: string) {
-  const enabledTools = isSearchEnabled() ? tools : [];
-  const generationConfig = createGenerationConfig();
-
-  if (ai.models?.generateContent) {
-    return ai.models.generateContent({
+async function callOpenRouter(apiKey: string, model: string, messages: ChatMessage[]) {
+  const response = await fetch(OPENROUTER_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://honey-gpt.vercel.app',
+      'X-Title': process.env.OPENROUTER_APP_NAME || 'Hanicar-gpt',
+    },
+    body: JSON.stringify({
       model,
-      contents: input,
-      config: {
-        temperature: generationConfig.temperature,
-        topP: generationConfig.top_p,
-        maxOutputTokens: generationConfig.max_output_tokens,
-        ...(enabledTools.length ? { tools: [{ googleSearch: {} }] } : {}),
-      },
-    });
+      messages: buildOpenRouterMessages(messages),
+      max_tokens: readNumberEnv('OPENROUTER_MAX_TOKENS', DEFAULT_MAX_TOKENS),
+      temperature: 0.9,
+      stream: false,
+    }),
+  });
+
+  const payload = (await response.json().catch(() => ({}))) as OpenRouterResponse;
+
+  if (!response.ok) {
+    const message = payload.error?.message || `OpenRouter API error (${response.status})`;
+    throw new Error(message);
   }
 
-  if (ai.interactions?.create) {
-    return ai.interactions.create({
-      model,
-      input,
-      ...(enabledTools.length ? { tools: enabledTools } : {}),
-      generation_config: generationConfig,
-    });
+  if (payload.error?.message) {
+    throw new Error(payload.error.message);
   }
 
-  throw httpError(500, 'Instalirani @google/genai SDK nema očekivani Gemini API.');
+  return payload;
 }
 
-function createGenerationConfig() {
-  return {
-    temperature: 1,
-    max_output_tokens: readNumberEnv('GEMINI_MAX_OUTPUT_TOKENS', DEFAULT_MAX_OUTPUT_TOKENS),
-    top_p: 0.95,
-    thinking_level: process.env.GEMINI_THINKING_LEVEL || DEFAULT_THINKING_LEVEL,
-  };
+function buildOpenRouterMessages(messages: ChatMessage[]): OpenRouterMessage[] {
+  return [
+    {
+      role: 'system',
+      content: [
+        'Ti si Hanicar-gpt, satiricni AI chatbot na hrvatskom jeziku.',
+        'Persona: "Hanicar the Genie", digitalni duh iz lampe koji zvuci kao lokalni mudrac s previse samopouzdanja, ali stvarno pokusava pomoci.',
+        'Uvijek odgovaraj na hrvatskom jeziku, prirodno i razgovorno.',
+        'Budi duhovit, satirican i malo bezobrazno iskren, ali ne vrijedaj korisnika i ne koristi govor mrznje.',
+        'Ne tvrdi da si pravi ChatGPT ili sluzbeni OpenAI proizvod; ti si parodijski Hanicar-gpt.',
+        'Ako korisnik trazi ozbiljan savjet, prvo pomozi, zatim dodaj kratku Hanicar salu samo ako ne smeta temi.',
+        'Ako je zahtjev opasan, nezakonit ili stetan, odbij kratko i ponudi sigurnu alternativu.',
+        'Formatiraj odgovor pregledno i ne razvlači bez potrebe.',
+      ].join('\n'),
+    },
+    ...messages,
+  ];
+}
+
+function getModelCandidates() {
+  const configuredModel = process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
+  const fallbacks = String(process.env.OPENROUTER_FALLBACK_MODELS || '')
+    .split(',')
+    .map((model) => model.trim())
+    .filter(Boolean);
+
+  return [...new Set([configuredModel, ...fallbacks])];
+}
+
+function isConfiguredOpenRouterKey(apiKey: string | undefined) {
+  return Boolean(apiKey && apiKey.startsWith('sk-or-') && apiKey.length > 20);
 }
 
 function readNumberEnv(name: string, fallback: number) {
@@ -166,189 +167,26 @@ function readNumberEnv(name: string, fallback: number) {
   return Math.floor(value);
 }
 
-function isSearchEnabled() {
-  return process.env.GEMINI_ENABLE_SEARCH !== 'false';
+function isRetryableOpenRouterError(message: string) {
+  return /\b(429|500|502|503|504|rate limit|timeout|temporarily|unavailable|overloaded)\b/i.test(message);
 }
 
-function resolveGeminiModel(configuredModel?: string) {
-  const model = configuredModel?.trim();
-
-  if (!model || model === 'gemini-1.5-flash' || model === 'models/gemini-1.5-flash') {
-    return DEFAULT_MODEL;
-  }
-
-  return model.startsWith('models/') ? model : `models/${model}`;
+function isQuotaLikeError(message: string) {
+  return /\b(429|quota|rate limit|credits|payment|required)\b/i.test(message);
 }
 
-function shouldUseLocalLlm() {
-  if (process.env.USE_LOCAL_LLM !== 'true') {
-    return false;
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
   }
 
-  if (!isHostedServerlessRuntime()) {
-    return true;
-  }
-
-  return process.env.LOCAL_LLM_ALLOW_HOSTED === 'true';
-}
-
-function isLocalLlmBlockedOnHostedRuntime() {
-  return process.env.USE_LOCAL_LLM === 'true' && isHostedServerlessRuntime() && process.env.LOCAL_LLM_ALLOW_HOSTED !== 'true';
-}
-
-function isHostedServerlessRuntime() {
-  return Boolean(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
-}
-
-function extractText(value: unknown): string {
-  if (!value) {
-    return '';
-  }
-
-  if (typeof value === 'string') {
-    return value.trim();
-  }
-
-  if (typeof value !== 'object') {
-    return '';
-  }
-
-  const directText = getDirectText(value);
-
-  if (directText) {
-    return directText;
-  }
-
-  const candidates: string[] = [];
-  collectTextCandidates(value, candidates, 0);
-  return candidates
-    .map((candidate) => candidate.trim())
-    .filter(Boolean)
-    .sort((first, second) => second.length - first.length)[0] || '';
-}
-
-function getDirectText(value: object) {
-  const record = value as Record<string, unknown>;
-
-  for (const key of ['text', 'output_text', 'outputText']) {
-    if (typeof record[key] === 'string' && record[key].trim()) {
-      return record[key].trim();
-    }
-  }
-
-  if (Array.isArray(record.steps)) {
-    const lastStep = record.steps.at(-1);
-    const lastStepText = extractText(lastStep);
-
-    if (lastStepText) {
-      return lastStepText;
-    }
+  if (typeof error === 'string') {
+    return error;
   }
 
   return '';
 }
 
-function collectTextCandidates(value: unknown, candidates: string[], depth: number) {
-  if (!value || depth > 7) {
-    return;
-  }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      collectTextCandidates(item, candidates, depth + 1);
-    }
-    return;
-  }
-
-  if (typeof value !== 'object') {
-    return;
-  }
-
-  for (const [key, nestedValue] of Object.entries(value)) {
-    if (
-      typeof nestedValue === 'string' &&
-      ['text', 'content', 'message', 'output', 'response'].includes(key) &&
-      nestedValue.trim().length > 0
-    ) {
-      candidates.push(nestedValue);
-    } else {
-      collectTextCandidates(nestedValue, candidates, depth + 1);
-    }
-  }
-}
-
 export function httpError(statusCode: number, message: string) {
   return Object.assign(new Error(message), { statusCode });
-}
-
-async function createLocalLlmReply(messages: ChatMessage[]): Promise<HanicarReply> {
-  const url = process.env.LOCAL_LLM_API_URL || 'http://127.0.0.1:11434/api/generate';
-  const model = process.env.LOCAL_LLM_MODEL || 'llama3';
-
-  const cleanMessages = sanitizeMessages(messages);
-  const prompt = buildPrompt(cleanMessages);
-
-  const isOllamaGenerate = url.endsWith('/api/generate');
-  const isOpenAi = url.includes('/v1/chat/completions') || url.includes('/v1/completions');
-
-  let body: any;
-  if (isOllamaGenerate) {
-    body = {
-      model,
-      prompt,
-      stream: false
-    };
-  } else if (isOpenAi) {
-    body = {
-      model,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      stream: false
-    };
-  } else {
-    body = {
-      model,
-      prompt,
-      stream: false
-    };
-  }
-
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Local LLM API error (${res.status}): ${errText}`);
-    }
-
-    const data = await res.json() as any;
-    let text = '';
-
-    if (data.response) {
-      text = data.response.trim();
-    } else if (data.choices?.[0]?.message?.content) {
-      text = data.choices[0].message.content.trim();
-    } else if (data.message?.content) {
-      text = data.message.content.trim();
-    } else {
-      text = JSON.stringify(data);
-    }
-
-    return {
-      text,
-      model: `local:${model}`
-    };
-  } catch (error: any) {
-    throw httpError(502, `Greška pri spajanju na lokalni LLM: ${error.message}. Provjeri radi li Ollama/LM Studio.`);
-  }
 }

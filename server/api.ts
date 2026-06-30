@@ -70,12 +70,12 @@ function getStatusCode(error: Error) {
 }
 
 function sanitizeServerMessage(message: string) {
-  if (/Nedostaje GEMINI_API_KEY/i.test(message)) {
+  if (/Nedostaje OPENROUTER_API_KEY/i.test(message)) {
     return message;
   }
 
-  if (/api[_ -]?key|GEMINI_API_KEY|token|secret/i.test(message)) {
-    return 'Problem s Gemini API ključem ili postavkama deploya.';
+  if (/api[_ -]?key|OPENROUTER_API_KEY|token|secret/i.test(message)) {
+    return 'Problem s API kljucem ili postavkama deploya.';
   }
 
   return message || 'Server nije uspio dobiti odgovor.';
