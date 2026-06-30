@@ -68,3 +68,13 @@ LOCAL_LLM_MODEL=llama3
 ```
 
 Ovo radi kad aplikaciju pokrećeš lokalno s `npm run dev`. Na Vercelu/Netlifyju `127.0.0.1` označava serverless okruženje, ne tvoje računalo, pa deployed app treba koristiti Gemini env varijable.
+
+Ako želiš da hosted UI na Vercelu koristi Ollamu s tvog računala, frontend može zvati Ollamu direktno iz browsera:
+
+```bash
+VITE_USE_BROWSER_LOCAL_LLM=true
+VITE_LOCAL_LLM_API_URL=http://127.0.0.1:11434/api/generate
+VITE_LOCAL_LLM_MODEL=llama3
+```
+
+Ollama mora dozvoliti browser origin. Na Windowsu postavi `OLLAMA_ORIGINS=*`, restartaj Ollamu, pa otvori Vercel stranicu dok Ollama radi lokalno.

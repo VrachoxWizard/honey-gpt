@@ -38,12 +38,6 @@ const promptChips = [
   'Pretvori ovu poruku da zvuči pametno, ali ljudski.',
 ];
 
-const statusItems = [
-  { icon: Sparkles, label: 'Satira', value: 'uključena' },
-  { icon: Search, label: 'Google search', value: 'spreman' },
-  { icon: KeyRound, label: 'API ključ', value: 'serverless' },
-];
-
 function App() {
   const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
   const [draft, setDraft] = useState('');
@@ -51,6 +45,12 @@ function App() {
   const [error, setError] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const runtimeMode = shouldUseBrowserLocalLlm() ? 'Local LLM' : 'Gemini';
+  const statusItems = [
+    { icon: Sparkles, label: 'Satira', value: 'uključena' },
+    { icon: Search, label: 'Model', value: runtimeMode },
+    { icon: KeyRound, label: 'API ključ', value: runtimeMode === 'Local LLM' ? 'ne treba' : 'serverless' },
+  ];
 
   const conversation = useMemo(
     () =>
@@ -193,7 +193,7 @@ function App() {
           </div>
           <div className="header-pill">
             <Bot aria-hidden="true" size={17} />
-            Gemini
+            {runtimeMode}
           </div>
         </header>
 
@@ -287,6 +287,10 @@ function MessageText({ content }: { content: string }) {
 }
 
 async function sendChat(messages: Array<{ role: Role; content: string }>): Promise<ChatResponse> {
+  if (shouldUseBrowserLocalLlm()) {
+    return sendBrowserLocalChat(messages);
+  }
+
   const endpoints = getChatEndpoints();
   let lastError: Error | null = null;
 
@@ -338,10 +342,103 @@ function getChatEndpoints() {
     return [configuredEndpoint];
   }
 
+  if (typeof window !== 'undefined' && window.location.hostname.endsWith('vercel.app')) {
+    return ['/api/chat'];
+  }
+
   return ['/api/chat', '/.netlify/functions/chat'];
 }
 
-async function readJson(response: Response): Promise<{ text?: string; model?: string; error?: string }> {
+function shouldUseBrowserLocalLlm() {
+  const configured = import.meta.env.VITE_USE_BROWSER_LOCAL_LLM;
+
+  if (configured === 'true') {
+    return true;
+  }
+
+  if (configured === 'false') {
+    return false;
+  }
+
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return !['127.0.0.1', 'localhost'].includes(window.location.hostname);
+}
+
+async function sendBrowserLocalChat(messages: Array<{ role: Role; content: string }>): Promise<ChatResponse> {
+  const endpoint = import.meta.env.VITE_LOCAL_LLM_API_URL || 'http://127.0.0.1:11434/api/generate';
+  const model = import.meta.env.VITE_LOCAL_LLM_MODEL || 'llama3';
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        prompt: buildBrowserLocalPrompt(messages),
+        stream: false,
+      }),
+    });
+
+    const payload = await readJson(response);
+
+    if (!response.ok) {
+      throw new Error(payload.error || `Lokalni LLM je vratio status ${response.status}.`);
+    }
+
+    const text = payload.response || payload.text || payload.message?.content || payload.choices?.[0]?.message?.content;
+
+    if (!text) {
+      throw new Error('Lokalni LLM nije vratio tekst.');
+    }
+
+    return {
+      text,
+      model: `local:${model}`,
+    };
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'fetch failed';
+    throw new Error(
+      `Ne mogu se spojiti na lokalnu Ollamu iz browsera. Provjeri da Ollama radi, da je model ${model} instaliran i da je OLLAMA_ORIGINS postavljen na *. Detalj: ${detail}`,
+    );
+  }
+}
+
+function buildBrowserLocalPrompt(messages: Array<{ role: Role; content: string }>) {
+  const transcript = messages
+    .map((message) => `${message.role === 'assistant' ? 'Hanicar-gpt' : 'Korisnik'}: ${message.content}`)
+    .join('\n\n');
+
+  return `
+Ti si Hanicar-gpt, satiricni AI chatbot na hrvatskom jeziku.
+Persona: "Hanicar the Genie", digitalni duh iz lampe koji stvarno pokusava pomoci, ali ima lokalni humor i malo previse samopouzdanja.
+
+Pravila:
+- Uvijek odgovaraj na hrvatskom jeziku.
+- Budi koristan prvo, satirican drugo.
+- Ne tvrdi da si sluzbeni OpenAI proizvod.
+- Ako je tema ozbiljna, budi miran i jasan.
+- Ako je zahtjev opasan ili stetan, odbij i ponudi sigurnu alternativu.
+
+Dosadasnji razgovor:
+${transcript}
+
+Odgovori kao Hanicar-gpt:
+`.trim();
+}
+
+async function readJson(response: Response): Promise<{
+  choices?: Array<{ message?: { content?: string } }>;
+  error?: string;
+  message?: { content?: string };
+  model?: string;
+  response?: string;
+  text?: string;
+}> {
   const text = await response.text();
 
   try {
