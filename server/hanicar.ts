@@ -35,6 +35,10 @@ type GoogleAiClient = {
 };
 
 export async function createHanicarReply(messages: ChatMessage[]): Promise<HanicarReply> {
+  if (process.env.USE_LOCAL_LLM === 'true') {
+    return createLocalLlmReply(messages);
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
 
@@ -238,4 +242,76 @@ function collectTextCandidates(value: unknown, candidates: string[], depth: numb
 
 export function httpError(statusCode: number, message: string) {
   return Object.assign(new Error(message), { statusCode });
+}
+
+async function createLocalLlmReply(messages: ChatMessage[]): Promise<HanicarReply> {
+  const url = process.env.LOCAL_LLM_API_URL || 'http://127.0.0.1:11434/api/generate';
+  const model = process.env.LOCAL_LLM_MODEL || 'llama3';
+
+  const cleanMessages = sanitizeMessages(messages);
+  const prompt = buildPrompt(cleanMessages);
+
+  const isOllamaGenerate = url.endsWith('/api/generate');
+  const isOpenAi = url.includes('/v1/chat/completions') || url.includes('/v1/completions');
+
+  let body: any;
+  if (isOllamaGenerate) {
+    body = {
+      model,
+      prompt,
+      stream: false
+    };
+  } else if (isOpenAi) {
+    body = {
+      model,
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      stream: false
+    };
+  } else {
+    body = {
+      model,
+      prompt,
+      stream: false
+    };
+  }
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Local LLM API error (${res.status}): ${errText}`);
+    }
+
+    const data = await res.json() as any;
+    let text = '';
+
+    if (data.response) {
+      text = data.response.trim();
+    } else if (data.choices?.[0]?.message?.content) {
+      text = data.choices[0].message.content.trim();
+    } else if (data.message?.content) {
+      text = data.message.content.trim();
+    } else {
+      text = JSON.stringify(data);
+    }
+
+    return {
+      text,
+      model: `local:${model}`
+    };
+  } catch (error: any) {
+    throw httpError(502, `Greška pri spajanju na lokalni LLM: ${error.message}. Provjeri radi li Ollama/LM Studio.`);
+  }
 }
