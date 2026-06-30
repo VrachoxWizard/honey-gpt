@@ -242,7 +242,11 @@ textarea:disabled {
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   min-width: 0;
   min-height: 100vh;
-  background: var(--paper);
+  background: 
+    radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.05), transparent 50%),
+    linear-gradient(rgba(212, 175, 55, 0.02) 1px, transparent 1px),
+    var(--paper);
+  background-size: 100% 100%, 100% 28px, 100% 100%;
   color: var(--ink);
 }
 
@@ -656,6 +660,19 @@ textarea:disabled {
   color: #1a150e !important;
   font-size: 0.98rem;
   line-height: 1.5;
+  position: relative;
+}
+
+.message.assistant .message-body::after {
+  content: "†";
+  position: absolute;
+  bottom: 2px;
+  right: 8px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  color: var(--jade);
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 /* User message body styling */
@@ -666,3 +683,42 @@ textarea:disabled {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   font-size: 0.98rem;
 }
+
+/* --- High-Agency Motion & Waterfall Staggered Entrance Reveal --- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message {
+  animation: fadeInUp 0.45s cubic-bezier(0.215, 0.61, 0.355, 1) both;
+}
+
+/* Staggered message mounting delays */
+.message:nth-child(1) { animation-delay: 80ms; }
+.message:nth-child(2) { animation-delay: 160ms; }
+.message:nth-child(3) { animation-delay: 240ms; }
+.message:nth-child(4) { animation-delay: 320ms; }
+.message:nth-child(5) { animation-delay: 400ms; }
+
+.status-row {
+  animation: fadeInUp 0.4s cubic-bezier(0.215, 0.61, 0.355, 1) both;
+}
+.status-row:nth-child(1) { animation-delay: 120ms; }
+.status-row:nth-child(2) { animation-delay: 220ms; }
+.status-row:nth-child(3) { animation-delay: 320ms; }
+.status-row:nth-child(4) { animation-delay: 420ms; }
+
+.suggestion-strip button {
+  animation: fadeInUp 0.4s cubic-bezier(0.215, 0.61, 0.355, 1) both;
+}
+.suggestion-strip button:nth-child(1) { animation-delay: 150ms; }
+.suggestion-strip button:nth-child(2) { animation-delay: 250ms; }
+.suggestion-strip button:nth-child(3) { animation-delay: 350ms; }
+.suggestion-strip button:nth-child(4) { animation-delay: 450ms; }
