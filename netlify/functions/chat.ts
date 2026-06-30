@@ -1,4 +1,4 @@
-import { handleChatPayload, toClientError } from '../../server/api';
+import { handleChatPayload, toClientError } from '../../server/api.js';
 
 const headers = {
   'Content-Type': 'application/json; charset=utf-8',

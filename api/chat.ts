@@ -1,4 +1,4 @@
-import { handleChatPayload, toClientError } from '../server/api';
+import { handleChatPayload, toClientError } from '../server/api.js';
 
 type VercelRequest = {
   method?: string;

@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
-import { handleChatPayload, toClientError } from './server/api';
+import { handleChatPayload, toClientError } from './server/api.js';
 
 function readRequestBody(request: import('node:http').IncomingMessage) {
   return new Promise<unknown>((resolve, reject) => {

@@ -1,4 +1,4 @@
-import { createHanicarReply, httpError, type ChatMessage } from './hanicar';
+import { createHanicarReply, httpError, type ChatMessage } from './hanicar.js';
 
 export type ClientError = {
   statusCode: number;
