@@ -12,7 +12,7 @@ export type HanicarReply = {
   model: string;
 };
 
-const DEFAULT_MODEL = 'gemini-1.5-flash';
+const DEFAULT_MODEL = 'models/gemini-3-flash-preview';
 const MAX_MESSAGES = 18;
 const MAX_MESSAGE_CHARS = 8_000;
 const MAX_PROMPT_CHARS = 30_000;
@@ -40,7 +40,7 @@ export async function createHanicarReply(messages: ChatMessage[]): Promise<Hanic
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
+  const model = resolveGeminiModel(process.env.GEMINI_MODEL);
 
   if (!apiKey) {
     if (isLocalLlmBlockedOnHostedRuntime()) {
@@ -168,6 +168,16 @@ function readNumberEnv(name: string, fallback: number) {
 
 function isSearchEnabled() {
   return process.env.GEMINI_ENABLE_SEARCH !== 'false';
+}
+
+function resolveGeminiModel(configuredModel?: string) {
+  const model = configuredModel?.trim();
+
+  if (!model || model === 'gemini-1.5-flash' || model === 'models/gemini-1.5-flash') {
+    return DEFAULT_MODEL;
+  }
+
+  return model.startsWith('models/') ? model : `models/${model}`;
 }
 
 function shouldUseLocalLlm() {
