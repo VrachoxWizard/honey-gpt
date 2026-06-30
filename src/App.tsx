@@ -26,7 +26,7 @@ const welcomeMessage: Message = {
   id: 'welcome',
   role: 'assistant',
   content:
-    'Mir s tobom, sine moj! Dobro došao u Haničar-GPT, prvi hrvatski satirični AI chatbot. Ja sam Haničar the Genie: digitalni duh iz šahovnice, poslan da ti pomognem u ime pravde, hrvatstva i zdravog razuma. Pitaj što god te muči, a ja ću ti odgovoriti, uz Božju pomoć i malo satire.',
+    'Mir s tobom, sine moj! Dobro došao u Haničar GPT, prvi hrvatski satirični AI chatbot. Ja sam Haničar the Genie: digitalni duh iz šahovnice, poslan da ti pomognem u ime pravde, hrvatstva i zdravog razuma. Pitaj što god te muči, a ja ću ti odgovoriti, uz Božju pomoć i malo satire.',
 };
 
 const promptChips = [
@@ -198,7 +198,7 @@ function App() {
           </button>
           <div className="flex items-center gap-2">
             <img src="/hanicar-the-genie.jpeg" alt="" className="w-8 h-8 rounded-full border border-crimson-700/50" />
-            <span className="font-bold text-sm tracking-wide text-zinc-100">HANIČAR-GPT</span>
+            <span className="font-bold text-sm tracking-wide text-zinc-100">HANIČAR GPT</span>
           </div>
         </div>
       </header>
@@ -233,8 +233,8 @@ function App() {
               H
             </div>
             <div>
-              <p className="text-[10px] font-bold tracking-widest text-crimson-500 uppercase mb-1">† Prvi Hrvatski AI †</p>
-              <h1 className="text-xl font-bold text-white tracking-tight leading-none">Haničar-GPT</h1>
+              <p className="text-[10px] font-bold tracking-widest text-crimson-500 uppercase mb-1">† Prvi moralni AI †</p>
+              <h1 className="text-xl font-bold text-white tracking-tight leading-none">Haničar GPT</h1>
             </div>
           </div>
 
@@ -339,7 +339,7 @@ function App() {
                       "text-xs font-bold uppercase tracking-wider",
                       message.role === 'user' ? "text-zinc-500" : "text-crimson-500"
                     )}>
-                      {message.role === 'assistant' ? '† Haničar-GPT †' : 'Ti'}
+                      {message.role === 'assistant' ? '† Haničar GPT †' : 'Ti'}
                     </span>
                     {message.id !== 'welcome' && <CopyButton text={message.content} />}
                   </div>
@@ -366,7 +366,7 @@ function App() {
                 <img src="/hanicar-the-genie.jpeg" alt="" className="w-full h-full object-cover opacity-50" />
               </div>
               <div className="flex flex-col">
-                <span className="text-xs font-bold uppercase tracking-wider text-crimson-500 mb-2">† Haničar-GPT †</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-crimson-500 mb-2">† Haničar GPT †</span>
                 <div className="flex items-center gap-3 text-zinc-500 text-sm font-medium">
                   <Loader2 size={16} className="animate-spin text-crimson-600" />
                   Haničar moli krunicu i piše odgovor...
@@ -407,7 +407,7 @@ function App() {
                 {isSending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ml-1" />}
               </motion.button>
             </form>
-            <p className="text-center text-[11px] text-zinc-600 mt-3 font-medium">Haničar-GPT može pogriješiti. Provjerite važne informacije kod župnika.</p>
+            <p className="text-center text-[11px] text-zinc-600 mt-3 font-medium">Haničar GPT može pogriješiti. Provjerite važne informacije kod župnika.</p>
           </div>
         </div>
       </main>

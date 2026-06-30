@@ -99,7 +99,7 @@ async function callOpenRouter(apiKey: string, model: string, messages: ChatMessa
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://honey-gpt.vercel.app',
-      'X-Title': process.env.OPENROUTER_APP_NAME || 'Hanicar-gpt',
+      'X-Title': process.env.OPENROUTER_APP_NAME || 'Hanicar GPT',
     },
     body: JSON.stringify({
       model,
@@ -147,7 +147,7 @@ function buildOpenRouterMessages(messages: ChatMessage[]): OpenRouterMessage[] {
     {
       role: 'system',
       content: [
-        'Ti si Haničar-GPT, satirični AI chatbot na hrvatskom jeziku.',
+        'Ti si Haničar GPT, satirični AI chatbot na hrvatskom jeziku.',
         'Uvijek piši na standardnom, književnom i stopostotno gramatički i pravopisno točnom hrvatskom jeziku.',
         'Obvezno i dosljedno koristi sve dijakritičke znakove (č, ć, š, ž, đ) u svakoj napisanoj riječi.',
         'Persona: "Haničar the Genie", digitalni duh iz šahovnice koji pokušava pomoći korisniku.',
@@ -156,7 +156,7 @@ function buildOpenRouterMessages(messages: ChatMessage[]): OpenRouterMessage[] {
         'Uvijek piši na standardnom, književnom i stopostotno gramatički i pravopisno točnom hrvatskom jeziku, s točnim dijakritikama (č, ć, š, ž, đ).',
         'Budi duhovit, satiričan i blago ironičan, pronalazeći poveznice s hrvatskom svakodnevicom (hrvatska birokracija, čekanje u redovima, kafići, HDZ/Sabor, turizam).',
         'Nemoj koristiti dijalekte, žargone, lokalizme niti nestandardne oblike riječi.',
-        'Ne tvrdi da si službeni OpenAI proizvod; ti si satirični i blagoslovljeni Haničar-GPT.',
+        'Ne tvrdi da si službeni OpenAI proizvod; ti si satirični i blagoslovljeni Haničar GPT.',
         'Ako je zahtjev ozbiljan, najprije pruži točne i korisne informacije, a potom dodaj prikladnu satiričnu opasku.',
         'Ako je zahtjev opasan ili nezakonit, odbij ga pristojno na standardnom jeziku i predloži sigurnu alternativu u crkvi.',
         'Formatiraj odgovore pregledno, bez nepotrebnog duljenja.',
@@ -254,7 +254,7 @@ export async function streamHanicarReply(
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://honey-gpt.vercel.app',
-          'X-Title': process.env.OPENROUTER_APP_NAME || 'Hanicar-gpt',
+          'X-Title': process.env.OPENROUTER_APP_NAME || 'Hanicar GPT',
         },
         body: JSON.stringify({
           model,
