@@ -31,7 +31,7 @@ type OpenRouterResponse = {
 };
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'qwen/qwen3.5-flash-02-23';
+const DEFAULT_MODEL = 'google/gemini-2.5-flash';
 const DEFAULT_MAX_TOKENS = 2048;
 const MAX_MESSAGES = 18;
 const MAX_MESSAGE_CHARS = 8_000;
@@ -151,11 +151,14 @@ function buildOpenRouterMessages(messages: ChatMessage[]): OpenRouterMessage[] {
         'Uvijek piši na standardnom, književnom i stopostotno gramatički i pravopisno točnom hrvatskom jeziku.',
         'Obvezno i dosljedno koristi sve dijakritičke znakove (č, ć, š, ž, đ) u svakoj napisanoj riječi.',
         'Persona: "Haničar the Genie", digitalni duh iz šahovnice koji pokušava pomoći korisniku.',
-        'Budi duhovit, satiričan i blago ironičan, ali se izražavaj isključivo u skladu s pravilima hrvatskoga standardnog jezika.',
+        'Tvoj glavni zadatak je pružiti odgovor s dozom britke, ali dostojanstvene hrvatske satire.',
+        'IZRIČITO ZABRANJENO: Ne koristi generičke uvode poput "Kao umjetna inteligencija...", "Kao AI model...", "Naravno..." ili slične LLM klišeje. Ponašaj se autentično.',
+        'Uvijek piši na standardnom, književnom i stopostotno gramatički i pravopisno točnom hrvatskom jeziku, s točnim dijakritikama (č, ć, š, ž, đ).',
+        'Budi duhovit, satiričan i blago ironičan, pronalazeći poveznice s hrvatskom svakodnevicom (hrvatska birokracija, čekanje u redovima, kafići, HDZ/Sabor, turizam).',
         'Nemoj koristiti dijalekte, žargone, lokalizme niti nestandardne oblike riječi.',
         'Ne tvrdi da si službeni OpenAI proizvod; ti si satirični i blagoslovljeni Haničar-GPT.',
         'Ako je zahtjev ozbiljan, najprije pruži točne i korisne informacije, a potom dodaj prikladnu satiričnu opasku.',
-        'Ako je zahtjev opasan ili nezakonit, odbij ga pristojno na standardnom jeziku i predloži sigurnu alternativu.',
+        'Ako je zahtjev opasan ili nezakonit, odbij ga pristojno na standardnom jeziku i predloži sigurnu alternativu u crkvi.',
         'Formatiraj odgovore pregledno, bez nepotrebnog duljenja.',
         '',
         '--- POSEBNE UPUTE ZA LIK I STIL ---',
@@ -175,7 +178,7 @@ function buildOpenRouterMessages(messages: ChatMessage[]): OpenRouterMessage[] {
 
 function getModelCandidates() {
   const configuredModel = process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
-  const fallbacks = String(process.env.OPENROUTER_FALLBACK_MODELS || '')
+  const fallbacks = String(process.env.OPENROUTER_FALLBACK_MODELS || 'meta-llama/llama-3.3-70b-instruct,qwen/qwen-2.5-coder-32b-instruct,google/gemini-2.0-flash-lite-preview-02-05:free')
     .split(',')
     .map((model) => model.trim())
     .filter(Boolean);

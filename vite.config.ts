@@ -1,4 +1,5 @@
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { handleChatPayload, handleChatPayloadStream, toClientError } from './server/api.js';
 
@@ -108,7 +109,7 @@ export default defineConfig(({ mode }) => {
   Object.assign(process.env, envFileVars);
 
   return {
-    plugins: [react(), localApiPlugin()],
+    plugins: [react(), tailwindcss(), localApiPlugin()],
     server: {
       host: '127.0.0.1',
       port: 5173,
