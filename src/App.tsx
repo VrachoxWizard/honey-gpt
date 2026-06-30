@@ -48,7 +48,7 @@ function App() {
   const statusItems = [
     { icon: Sparkles, label: 'Satira', value: 'uključena' },
     { icon: Search, label: 'Model', value: 'OpenRouter' },
-    { icon: KeyRound, label: 'API ključ', value: 'serverless' },
+    { icon: KeyRound, label: 'API ključ', value: 'hanicarless' },
   ];
 
   const conversation = useMemo(
