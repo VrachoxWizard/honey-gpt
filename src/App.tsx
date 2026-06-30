@@ -28,7 +28,7 @@ const welcomeMessage: Message = {
   id: 'welcome',
   role: 'assistant',
   content:
-    'Dobro došao u Hanicar-gpt. Ja sam Haničar the Genie: polu-lampa, polu-chatbot, potpuno uvjeren da imam odgovor. Pitaj me što trebaš i dobit ćeš korisno, začinjeno i na hrvatskom.',
+    'Dobro došao u Hanicar-gpt, prvi hrvatski satirični AI chatbot! Ja sam Haničar the Genie: digitalni duh iz šahovnice, uvijek spreman ponuditi koristan, začinjen i satiričan odgovor na hrvatskom.',
 };
 
 const promptChips = [
@@ -150,11 +150,11 @@ function App() {
     <main className="app-shell">
       <aside className="sidebar" aria-label="Hanicar-gpt profil">
         <div className="brand-block">
-          <div className="brand-mark">
-            <img src="/hanicar-the-genie.jpeg" alt="Haničar the Genie" />
+          <div className="brand-mark brand-mark-sahovnica" aria-hidden="true">
+            H
           </div>
           <div>
-            <p className="eyebrow">Haničar the Genie</p>
+            <p className="eyebrow">Prvi hrvatski chatbot AI</p>
             <h1>Hanicar-gpt</h1>
           </div>
         </div>
@@ -163,7 +163,7 @@ function App() {
           <img src="/hanicar-the-genie.jpeg" alt="Haničar avatar" />
           <div className="genie-caption">
             <WandSparkles aria-hidden="true" size={18} />
-            <span>Digitalni duh iz lampe s hrvatskim stavom.</span>
+            <span>Digitalni duh iz šahovnice s hrvatskim stavom.</span>
           </div>
         </div>
 
