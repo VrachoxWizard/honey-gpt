@@ -111,15 +111,6 @@ async function createGeminiResponse(ai: GoogleAiClient, model: string, input: st
   const enabledTools = isSearchEnabled() ? tools : [];
   const generationConfig = createGenerationConfig();
 
-  if (ai.interactions?.create) {
-    return ai.interactions.create({
-      model,
-      input,
-      ...(enabledTools.length ? { tools: enabledTools } : {}),
-      generation_config: generationConfig,
-    });
-  }
-
   if (ai.models?.generateContent) {
     return ai.models.generateContent({
       model,
@@ -130,6 +121,15 @@ async function createGeminiResponse(ai: GoogleAiClient, model: string, input: st
         maxOutputTokens: generationConfig.max_output_tokens,
         ...(enabledTools.length ? { tools: [{ googleSearch: {} }] } : {}),
       },
+    });
+  }
+
+  if (ai.interactions?.create) {
+    return ai.interactions.create({
+      model,
+      input,
+      ...(enabledTools.length ? { tools: enabledTools } : {}),
+      generation_config: generationConfig,
     });
   }
 
