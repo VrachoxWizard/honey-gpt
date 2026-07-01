@@ -99,7 +99,8 @@ export function buildSystemPrompt(
   toneMode?: 'humilis' | 'clericus' | 'sanctus',
   summarizedContext?: string,
   lorePhrases?: string[],
-  detectedSentiment?: 'angry' | 'sad' | 'normal'
+  detectedSentiment?: 'angry' | 'sad' | 'normal',
+  newsHeadlines?: string[]
 ): string {
   const dateString = getCroatianDateString();
 
@@ -147,6 +148,14 @@ export function buildSystemPrompt(
     );
   }
 
+  // Integracija aktualnih vijesti
+  if (newsHeadlines && newsHeadlines.length > 0) {
+    baseInstructions.push(
+      'AKTUALNE DNEVNE VIJESTI IZ HRVATSKE (iskoristi ih satirično ili komentiraj samo ako te korisnik pita za vijesti ili što ima novo):',
+      ...newsHeadlines.map(headline => `- ${headline}`)
+    );
+  }
+
   let toneInstructions: string[];
   if (toneMode === 'humilis') {
     toneInstructions = [
@@ -191,7 +200,8 @@ export type OpenRouterMessage = {
 export function buildOpenRouterMessages(
   messages: ChatMessage[],
   toneMode?: 'humilis' | 'clericus' | 'sanctus',
-  summarizedContext?: string
+  summarizedContext?: string,
+  newsHeadlines?: string[]
 ): OpenRouterMessage[] {
   // Pronađi zadnju poruku korisnika za analizu sentimenta i lore injekciju
   const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
@@ -211,7 +221,7 @@ export function buildOpenRouterMessages(
   const sentiment = userText ? detectSentiment(userText) : 'normal';
   const lorePhrases = userText ? getLorePhrases(userText) : [];
 
-  const systemContent = buildSystemPrompt(toneMode, summarizedContext, lorePhrases, sentiment);
+  const systemContent = buildSystemPrompt(toneMode, summarizedContext, lorePhrases, sentiment, newsHeadlines);
   return [
     {
       role: 'system',

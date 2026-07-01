@@ -1,6 +1,8 @@
 import type { ChatMessage, HanicarReply, HanicarOptions } from './shared-types.js';
 import { buildOpenRouterMessages, detectCodingOrLogic } from './prompts.js';
 import { parseSSEChunks } from './sse-parser.js';
+import { fetchCroatianNews } from './news.js';
+import ky from 'ky';
 
 type OpenRouterChoice = {
   message?: {
@@ -49,7 +51,11 @@ export async function createHanicarReply(
     throw httpError(400, 'Posalji barem jednu korisnicku poruku.');
   }
 
-  // 3. Dinamičko usmjeravanje modela
+  // 3. Dohvaćanje vijesti iz Hrvatske ako korisnik pita za aktualnosti
+  const wantsNews = ['vijest', 'novost', 'dogadaj', 'novog', 'sabor', 'izbor', 'desilo', 'dogodilo', 'novine'].some(w => userText.toLowerCase().includes(w));
+  const newsHeadlines = wantsNews ? await fetchCroatianNews() : [];
+
+  // 4. Dinamičko usmjeravanje modela
   const models = getModelCandidates(options?.model, userText);
   let lastError = '';
 
@@ -60,7 +66,8 @@ export async function createHanicarReply(
         model,
         cleanMessages,
         options?.toneMode,
-        summarizedContext
+        summarizedContext,
+        newsHeadlines
       );
       const text = response.choices?.[0]?.message?.content?.trim();
 
@@ -73,7 +80,7 @@ export async function createHanicarReply(
         text,
         model: response.model || model,
       };
-    } catch (error) {
+    } catch (error: any) {
       lastError = getErrorMessage(error);
 
       if (!isRetryableOpenRouterError(lastError)) {
@@ -119,31 +126,33 @@ async function callOpenRouter(
   model: string,
   messages: ChatMessage[],
   toneMode?: 'humilis' | 'clericus' | 'sanctus',
-  summarizedContext?: string
+  summarizedContext?: string,
+  newsHeadlines?: string[]
 ) {
-  const response = await fetch(OPENROUTER_URL, {
-    method: 'POST',
+  // Korištenje ky klijenta s automatskim retries i timeout-om
+  const payload = await ky.post(OPENROUTER_URL, {
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://honey-gpt.vercel.app',
       'X-Title': process.env.OPENROUTER_APP_NAME || 'Hanicar GPT',
     },
-    body: JSON.stringify({
+    json: {
       model,
-      messages: buildOpenRouterMessages(messages, toneMode, summarizedContext),
+      messages: buildOpenRouterMessages(messages, toneMode, summarizedContext, newsHeadlines),
       max_tokens: readNumberEnv('OPENROUTER_MAX_TOKENS', DEFAULT_MAX_TOKENS),
       temperature: 0.9,
       stream: false,
-    }),
+    },
+    retry: {
+      limit: 3,
+      methods: ['post'],
+      statusCodes: [408, 429, 500, 502, 503, 504],
+    },
+    timeout: 15000,
+  }).json<OpenRouterResponse>().catch((err) => {
+    throw new Error(err.message || 'Mrezna greska na OpenRouteru.');
   });
-
-  const payload = (await response.json().catch(() => ({}))) as OpenRouterResponse;
-
-  if (!response.ok) {
-    const message = payload.error?.message || `OpenRouter API error (${response.status})`;
-    throw new Error(message);
-  }
 
   if (payload.error?.message) {
     throw new Error(payload.error.message);
@@ -155,8 +164,6 @@ async function callOpenRouter(
 function getModelCandidates(userModel?: string, userText?: string) {
   let configuredModel = userModel || process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
 
-  // Dinamičko usmjeravanje: Ako je odabran zadani model, a upit se tiče kodiranja/tehnologije,
-  // prebaci na Qwen Coder model koji je bolji za te zadatke.
   if (userText && (!userModel || userModel === DEFAULT_MODEL)) {
     if (detectCodingOrLogic(userText)) {
       configuredModel = 'qwen/qwen-2.5-coder-32b-instruct';
@@ -215,26 +222,22 @@ export function httpError(statusCode: number, message: string) {
   return Object.assign(new Error(message), { statusCode });
 }
 
-// Pozadinska funkcija za brzo sažimanje ranog konteksta
 async function summarizeConversationIfNeeded(
   messages: ChatMessage[],
   apiKey: string
 ): Promise<string> {
-  // Radimo sažetak tek kada imamo 10 ili više poruka u povijesti
   if (messages.length < 10) return '';
 
-  // Uzimamo sve poruke osim zadnje 4 kako bismo sačuvali neposredni tijek razgovora
   const earlyMessages = messages.slice(0, -4).filter(m => m.role === 'user' || m.role === 'assistant');
   if (earlyMessages.length === 0) return '';
 
   try {
-    const response = await fetch(OPENROUTER_URL, {
-      method: 'POST',
+    const payload = await ky.post(OPENROUTER_URL, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
+      json: {
         model: 'google/gemini-2.5-flash',
         messages: [
           {
@@ -248,15 +251,14 @@ async function summarizeConversationIfNeeded(
         ],
         max_tokens: 150,
         temperature: 0.3,
-      }),
-    });
+      },
+      retry: 2,
+      timeout: 8000,
+    }).json<OpenRouterResponse>().catch(() => null);
 
-    if (response.ok) {
-      const payload = (await response.json().catch(() => ({}))) as OpenRouterResponse;
-      const text = payload.choices?.[0]?.message?.content?.trim();
-      if (text) {
-        return text;
-      }
+    const text = payload?.choices?.[0]?.message?.content?.trim();
+    if (text) {
+      return text;
     }
   } catch (e) {
     console.error('Neuspjelo sazimanja povijesti:', e);
@@ -292,34 +294,38 @@ export async function streamHanicarReply(
     throw httpError(400, 'Posalji barem jednu korisnicku poruku.');
   }
 
-  // 3. Dinamičko usmjeravanje modela
+  // 3. Dohvaćanje vijesti iz Hrvatske
+  const wantsNews = ['vijest', 'novost', 'dogadaj', 'novog', 'sabor', 'izbor', 'desilo', 'dogodilo', 'novine'].some(w => userText.toLowerCase().includes(w));
+  const newsHeadlines = wantsNews ? await fetchCroatianNews() : [];
+
+  // 4. Dinamičko usmjeravanje modela
   const models = getModelCandidates(options?.model, userText);
   let lastError = '';
 
   for (const model of models) {
     try {
-      const response = await fetch(OPENROUTER_URL, {
-        method: 'POST',
+      // Korištenje ky klijenta za streaming zahtjev
+      const response = await ky.post(OPENROUTER_URL, {
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://honey-gpt.vercel.app',
           'X-Title': process.env.OPENROUTER_APP_NAME || 'Hanicar GPT',
         },
-        body: JSON.stringify({
+        json: {
           model,
-          messages: buildOpenRouterMessages(cleanMessages, options?.toneMode, summarizedContext),
+          messages: buildOpenRouterMessages(cleanMessages, options?.toneMode, summarizedContext, newsHeadlines),
           max_tokens: readNumberEnv('OPENROUTER_MAX_TOKENS', DEFAULT_MAX_TOKENS),
           temperature: 0.9,
           stream: true,
-        }),
+        },
+        retry: {
+          limit: 3,
+          methods: ['post'],
+          statusCodes: [408, 429, 500, 502, 503, 504],
+        },
+        timeout: 20000,
       });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => ({}))) as any;
-        const message = payload.error?.message || `OpenRouter API error (${response.status})`;
-        throw new Error(message);
-      }
 
       if (!response.body) {
         throw new Error('Response body is empty');
@@ -340,7 +346,7 @@ export async function streamHanicarReply(
       }
 
       return;
-    } catch (error) {
+    } catch (error: any) {
       lastError = getErrorMessage(error);
 
       if (!isRetryableOpenRouterError(lastError)) {
