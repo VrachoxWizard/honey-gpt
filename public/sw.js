@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hanicar-v2';
+const CACHE_NAME = 'hanicar-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -34,18 +34,39 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  if (event.request.url.includes('/api/')) return;
+  
+  const url = new URL(event.request.url);
+  
+  // Ignoriraj API pozive u potpunosti
+  if (url.pathname.startsWith('/api/')) return;
 
+  // Za HTML/root stranicu koristi Network-First strategiju
+  // Ovo sprječava učitavanje starog index.html sa starim JS/CSS hashevima
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // Ako mreža nije dostupna, vrati iz cachea
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Za ostale statičke resurse i Vite assets (koji imaju jedinstvene hasheve u nazivu)
+  // koristi Cache-First strategiju (brzo učitavanje)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse);
-            });
-          }
-        }).catch(() => {});
         return cachedResponse;
       }
 
