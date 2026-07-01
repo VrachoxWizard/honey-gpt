@@ -95,37 +95,9 @@ function localApiPlugin(): Plugin {
   };
 }
 
-import fs from 'node:fs';
-import path from 'node:path';
-
-function parseEnvFile(filePath: string): Record<string, string> {
-  const result: Record<string, string> = {};
-  try {
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      for (const line of content.split('\n')) {
-        const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith('#')) {
-          const index = trimmed.indexOf('=');
-          if (index !== -1) {
-            const key = trimmed.slice(0, index).trim();
-            const value = trimmed.slice(index + 1).trim();
-            result[key] = value;
-          }
-        }
-      }
-    }
-  } catch {}
-  return result;
-}
-
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   Object.assign(process.env, env);
-  
-  // Explicitly overwrite process.env with local .env file variables to override system environment settings
-  const envFileVars = parseEnvFile(path.resolve(process.cwd(), '.env'));
-  Object.assign(process.env, envFileVars);
 
   return {
     plugins: [react(), tailwindcss(), localApiPlugin()],

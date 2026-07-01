@@ -2,9 +2,8 @@ import {
   createHanicarReply,
   streamHanicarReply,
   httpError,
-  type ChatMessage,
-  type HanicarOptions,
 } from './hanicar.js';
+import type { ChatMessage, HanicarOptions } from './shared-types.js';
 
 export type ClientError = {
   statusCode: number;

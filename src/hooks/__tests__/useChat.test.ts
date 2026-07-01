@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useChat, welcomeMessage } from '../useChat';
+import { useChatStore } from '../../store/chatStore';
 import type { ChatSession } from '../../types';
 
 describe('useChat', () => {
@@ -18,6 +19,7 @@ describe('useChat', () => {
       },
     });
     global.fetch = vi.fn();
+    useChatStore.getState().reloadFromLocalStorage();
   });
 
   afterEach(() => {
@@ -46,6 +48,10 @@ describe('useChat', () => {
     ];
     localStorage.setItem('hanicar_gpt_sessions_v2', JSON.stringify(mockSessions));
     localStorage.setItem('hanicar_gpt_active_session_id_v2', mockSessionId);
+
+    act(() => {
+      useChatStore.getState().reloadFromLocalStorage();
+    });
 
     const { result } = renderHook(() => useChat());
     expect(result.current.sessions).toHaveLength(1);

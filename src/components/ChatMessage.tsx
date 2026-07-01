@@ -1,31 +1,11 @@
 import { Check, Copy, Pencil, RefreshCcw } from 'lucide-react';
-import { useState, lazy, Suspense } from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { motion } from 'framer-motion';
 import { cn } from '../utils/cn';
 import { useToast } from '../hooks/useToast';
+import { ShikiHighlighter } from './ShikiHighlighter';
 import type { Message } from '../types';
-
-// Lazy loaded heavy syntax highlighter component
-const SyntaxHighlighter = lazy(() =>
-  Promise.all([
-    import('react-syntax-highlighter').then((m) => m.Prism),
-    import('react-syntax-highlighter/dist/esm/styles/prism').then((m) => m.vscDarkPlus),
-  ]).then(([Prism, vscDarkPlus]) => ({
-    default: ({ children, language, ...props }: any) => (
-      <Prism
-        language={language}
-        style={vscDarkPlus}
-        PreTag="div"
-        customStyle={{ margin: 0, background: '#09090b', padding: '1rem' }}
-        {...props}
-      >
-        {children}
-      </Prism>
-    ),
-  }))
-);
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -43,7 +23,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="p-1 text-zinc-600 hover:text-zinc-300 rounded-md hover:bg-white/5 transition-colors select-none"
+      className="p-1 text-zinc-600 hover:text-zinc-300 rounded-md hover:bg-white/5 transition-colors select-none cursor-pointer"
       title="Kopiraj"
     >
       {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
@@ -51,29 +31,48 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-export function ChatMessage({
-  message,
-  isWelcome,
-  isLastAssistant,
-  onRegenerate,
-  onEdit,
-}: {
+function CopyBlockButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1 cursor-pointer select-none font-sans"
+    >
+      {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+      <span>{copied ? 'Kopirano' : 'Kopiraj'}</span>
+    </button>
+  );
+}
+
+interface ChatMessageProps {
   message: Message;
   isWelcome?: boolean;
   isLastAssistant?: boolean;
   onRegenerate?: () => void;
   onEdit?: (messageId: string, newContent: string) => void;
-}) {
+}
+
+export const ChatMessage = React.memo(function ChatMessage({
+  message,
+  isWelcome,
+  isLastAssistant,
+  onRegenerate,
+  onEdit,
+}: ChatMessageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+    <div
       className={cn(
-        'flex gap-4 md:gap-6 w-full max-w-[900px] mx-auto',
+        'flex gap-4 md:gap-6 w-full max-w-[900px] mx-auto animate-message-enter',
         message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
       )}
     >
@@ -206,16 +205,9 @@ export function ChatMessage({
                     <div className="rounded-xl overflow-hidden my-4 border border-white/10">
                       <div className="bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-400 uppercase tracking-widest border-b border-white/5 flex justify-between items-center select-none">
                         <span>{match[1]}</span>
+                        <CopyBlockButton text={codeString} />
                       </div>
-                      <Suspense
-                        fallback={
-                          <pre className="p-4 bg-[#09090b] text-xs font-mono text-zinc-500 overflow-x-auto whitespace-pre-wrap">
-                            {codeString}
-                          </pre>
-                        }
-                      >
-                        <SyntaxHighlighter language={match[1]} children={codeString} {...props} />
-                      </Suspense>
+                      <ShikiHighlighter code={codeString} language={match[1]} />
                     </div>
                   ) : (
                     <code
@@ -236,6 +228,6 @@ export function ChatMessage({
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
-}
+});

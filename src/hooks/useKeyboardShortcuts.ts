@@ -5,11 +5,21 @@ interface ShortcutConfig {
   onNewChat: () => void;
   onExport: () => void;
   onClose: () => void;
+  onHelp?: () => void;
 }
 
-export function useKeyboardShortcuts({ onSearch, onNewChat, onExport, onClose }: ShortcutConfig) {
+export function useKeyboardShortcuts({
+  onSearch,
+  onNewChat,
+  onExport,
+  onClose,
+  onHelp,
+}: ShortcutConfig) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevencija okidanja prečaca dok korisnik piše u tekstualno polje
+      const isInput = e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement;
+
       // Provjera platforme (Mac koristi Cmd/Meta, ostali Ctrl)
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const modifier = isMac ? e.metaKey : e.ctrlKey;
@@ -36,9 +46,15 @@ export function useKeyboardShortcuts({ onSearch, onNewChat, onExport, onClose }:
       if (e.key === 'Escape') {
         onClose();
       }
+
+      // ? -> Otvori help modal (samo ako nismo fokusirani na input/textarea)
+      if (e.key === '?' && !modifier && !isInput) {
+        e.preventDefault();
+        onHelp?.();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onSearch, onNewChat, onExport, onClose]);
+  }, [onSearch, onNewChat, onExport, onClose, onHelp]);
 }

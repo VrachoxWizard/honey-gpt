@@ -240,11 +240,20 @@ export function ChatComposer({
               rows={1}
               placeholder="Pitaj Haničara nešto pametno, glupo ili opasno..."
               aria-label="Unesi poruku za Haničara"
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={(e) => setDraft(e.target.value.slice(0, 8000))}
               onKeyDown={handleKeyDown}
               disabled={isSending}
-              className="flex-1 max-h-[200px] bg-transparent resize-none py-3 px-4 text-zinc-100 placeholder:text-zinc-500 focus:outline-none text-[15px] leading-relaxed disabled:opacity-50"
+              className="flex-1 max-h-[200px] bg-transparent resize-none py-3 pl-4 pr-16 text-zinc-100 placeholder:text-zinc-500 focus:outline-none text-[15px] leading-relaxed disabled:opacity-50"
             />
+
+            {draft.length > 0 && (
+              <span className={cn(
+                "absolute right-16 bottom-3.5 text-[9px] font-bold font-mono select-none transition-colors pointer-events-none",
+                draft.length > 7000 ? "text-crimson-500" : "text-zinc-500"
+              )}>
+                {draft.length}/8000
+              </span>
+            )}
 
             <motion.button
               whileHover={!isSending ? { scale: 1.05 } : {}}
