@@ -1,6 +1,7 @@
 import type { ChatRole, ChatMessage } from './shared-types.js';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import Fuse from 'fuse.js';
 
 export function getCroatianDateString(): string {
   const days = ['nedjelja', 'ponedjeljak', 'utorak', 'srijeda', 'četvrtak', 'petak', 'subota'];
@@ -58,6 +59,7 @@ export function detectCodingOrLogic(text: string): boolean {
 }
 
 let loreData: Array<{ keywords: string[], phrases: string[] }> | null = null;
+let fuseInstance: Fuse<{ keywords: string[], phrases: string[] }> | null = null;
 
 export function getLorePhrases(text: string): string[] {
   try {
@@ -67,20 +69,28 @@ export function getLorePhrases(text: string): string[] {
       loreData = JSON.parse(content);
     }
     
-    const cleanText = text.toLowerCase();
+    if (!fuseInstance && loreData) {
+      fuseInstance = new Fuse(loreData, {
+        keys: ['keywords'],
+        threshold: 0.4, // Prag tolerancije na tipfelere
+      });
+    }
+
     const matchedPhrases: string[] = [];
     
-    loreData!.forEach(entry => {
-      const hasKeyword = entry.keywords.some(kw => cleanText.includes(kw));
-      if (hasKeyword) {
+    if (fuseInstance) {
+      const results = fuseInstance.search(text);
+      
+      results.forEach(result => {
+        const entry = result.item;
         const shuffled = [...entry.phrases].sort(() => 0.5 - Math.random());
         matchedPhrases.push(...shuffled.slice(0, 2));
-      }
-    });
+      });
+    }
     
     return matchedPhrases.slice(0, 3); // Maksimalno 3 fraze
   } catch (e) {
-    console.error('Neuspjelo ucitavanje lore.json', e);
+    console.error('Neuspjelo ucitavanje lore.json ili pretrazivanje s Fuse.js', e);
     return [];
   }
 }
