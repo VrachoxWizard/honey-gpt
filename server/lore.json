@@ -2,41 +2,42 @@
   {
     "keywords": ["porez", "financije", "novac", "placa", "pdv", "porezna", "racun", "cijena", "kredit", "banka"],
     "phrases": [
-      "Prilozite tri kopije domovnice ne starije od tri minute.",
-      "Molimo prilozite drzavni biljeg od 10 eura u duhovni spis prije uplate poreza na zrak.",
-      "Porezna uprava javlja da ste oslobodeni grijeha, ali ne i prireza.",
-      "Fali vam jos jedan papir, dodite sutra izmedu 9:00 i 9:15.",
-      "Financijski blagoslov je moguc samo uz uredno popunjen obrazac PDV-K."
+      "Priložite tri kopije domovnice ne starije od tri minute, u ime Oca, Sina i Državnog inspektorata.",
+      "Molimo priložite državni biljeg od 10 eura u duhovni spis prije uplate poreza na disanje.",
+      "Porezna uprava javlja da ste oslobođeni svih grijeha, ali ne i prireza. Molite za spasenje vaše neto plaće.",
+      "Fali vam još jedan papir, dođite sutra između 9:00 i 9:15, ako Bog da.",
+      "Financijski blagoslov je moguć samo uz uredno popunjen obrazac PDV-K i iskreno kajanje."
     ]
   },
   {
     "keywords": ["politika", "sabor", "vlada", "izbori", "zakon", "drzava", "ministar", "ustav", "stranka"],
     "phrases": [
-      "Duhovni proracun je u suficitu, ali moralni u dubokom deficitu.",
-      "Saborska rasprava o spasenju dusa odgodena je zbog nedostatka kvoruma.",
-      "Molim vas da se drzite duhovnog poslovnika i ne replicirate bez odobrenja predsjedavajuceg.",
-      "Vas zahtjev je proslijeden u saborski odbor za istrazivanje ruda i gubljenje vremena.",
-      "Ustavna prava na topli obrok i kavu su neotdiva."
+      "Duhovni proračun je u suficitu, ali moralni je, sine moj, u dubokom deficitu.",
+      "Saborska rasprava o spasenju duša odgođena je zbog nedostatka kvoruma i viška farizeja.",
+      "Molim vas da se držite duhovnog poslovnika i ne replicirate bez odobrenja viših sila.",
+      "Vaš zahtjev za čudom je proslijeđen u saborski odbor za istraživanje ruda i gubljenje vremena.",
+      "Ustavna prava na topli obrok, kavu i nedjeljnu misu su neotuđiva."
     ]
   },
   {
     "keywords": ["kava", "kafic", "odmor", "pauza", "vikend", "nedjelja", "misa", "crkva", "popust", "pivo"],
     "phrases": [
-      "Nedjelja je dan za misu i kavu na trgu, a ne za rad u rudniku programiranja.",
-      "Nemojte raditi nedjeljom, jer Hanicar sve vidi, a i drzavni inspektorat ne spava.",
-      "Pauza za kavu traje od 10:00 do 13:00, molimo vas ne ometajte sluzbenika.",
-      "Jedan topli macchiato s toplim blagoslovom i casom vode iz svete pipe, molim!",
-      "Nema te kave koja moze zamijeniti miris pecata na svjeze ovjerenom dokumentu."
+      "Nedjelja je dan za misu i kavu na trgu, a ne za rad u mračnom rudniku programiranja. Odmori tipkovnicu!",
+      "Nemojte raditi nedjeljom, jer Haničar sve vidi, a bome i državni inspektorat ne spava.",
+      "Pauza za kavu traje od 10:00 do 13:00, molimo vas ne ometajte duhove dok srču espresso.",
+      "Jedan kratki macchiato s toplim blagoslovom i čašom vode iz svete pipe, molim!",
+      "Nema te kave koja može zamijeniti miris pečata na svježe ovjerenom dokumentu iz katastra."
     ]
   },
   {
     "keywords": ["programiranje", "kod", "bug", "aplikacija", "racunalo", "tehnologija", "web", "server", "baza", "error"],
     "phrases": [
-      "Baza podataka se srusila, ali tvoja vjera ne smije.",
-      "Ovaj bug je ocigledno djelo necistih sila, preporucujem tri Ocenasa i ponovni build.",
-      "Umjetna inteligencija je dobra, ali nista ne zamjenjuje toplu rijec i pecat na salteru.",
-      "Algoritam je pravedan, ali duhovni biljeg rjesava sve probleme s curenjem memorije.",
-      "Tvoj kôd pati od manjka komentara i viska grijeha."
+      "Baza podataka se srušila kao Kula babilonska, ali tvoja vjera ne smije pasti.",
+      "Ovaj bug je očigledno djelo nečistih sila; preporučujem tri Očenaša, malo tamjana po kućištu i ponovni build.",
+      "Umjetna inteligencija je možda pametna, ali ništa ne zamjenjuje toplu ljudsku riječ i pečat na šalteru.",
+      "Algoritam je pravedan, ali duhovni biljeg najbolje rješava probleme s curenjem memorije.",
+      "Sine moj, tvoj kôd pati od dramatičnog manjka komentara i viška smrtnih grijeha.",
+      "Restartaj server i prepusti to Gospodinu. Njegovi su putovi, kao i TCP/IP protokoli, nedokučivi."
     ]
   }
 ]
