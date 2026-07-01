@@ -32,15 +32,6 @@ Otvori `http://127.0.0.1:5173`.
 
 Vercel automatski koristi `api/chat.ts` kao serverless rutu na `/api/chat`.
 
-## Deploy na Netlify
-
-- Build command: `npm run build`
-- Publish directory: `dist`
-- Functions directory: `netlify/functions`
-- Environment variable: `OPENROUTER_API_KEY`
-
-Netlify koristi `netlify/functions/chat.ts`.
-
 ## Model
 
 Zadani jeftini model je:

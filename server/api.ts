@@ -41,8 +41,33 @@ export function parseMessages(payload: unknown): ChatMessage[] {
       throw httpError(400, 'Poruka ima neispravnu ulogu.');
     }
 
-    if (typeof content !== 'string') {
-      throw httpError(400, 'Poruka mora imati tekstualni content.');
+    if (typeof content !== 'string' && !Array.isArray(content)) {
+      throw httpError(400, 'Poruka mora imati tekstualni content ili polje content dijelova.');
+    }
+
+    if (Array.isArray(content)) {
+      content.forEach((part) => {
+        if (!part || typeof part !== 'object') {
+          throw httpError(400, 'Svaki dio contenta mora biti objekt.');
+        }
+        const type = (part as { type?: unknown }).type;
+        if (type !== 'text' && type !== 'image_url') {
+          throw httpError(400, 'Neispravan tip dijela contenta.');
+        }
+        if (type === 'text' && typeof (part as { text?: unknown }).text !== 'string') {
+          throw httpError(400, 'Tekstualni dio mora sadržavati string.');
+        }
+        if (type === 'image_url') {
+          const imageUrl = (part as { image_url?: unknown }).image_url;
+          if (
+            !imageUrl ||
+            typeof imageUrl !== 'object' ||
+            typeof (imageUrl as { url?: unknown }).url !== 'string'
+          ) {
+            throw httpError(400, 'Slika mora sadržavati ispravan url.');
+          }
+        }
+      });
     }
 
     return {

@@ -1,12 +1,49 @@
 @import "tailwindcss";
 
+:root {
+  --theme-bg-950: #09090b; /* zinc-950 */
+  --theme-bg-900: #18181b; /* zinc-900 */
+  --theme-bg-800: #27272a; /* zinc-800 */
+  --theme-text-300: #d4d4d8; /* zinc-300 */
+  --theme-text-200: #e4e4e7; /* zinc-200 */
+  --theme-text-100: #f4f4f5; /* zinc-100 */
+  --theme-text-500: #71717a; /* zinc-500 */
+  --theme-border: rgba(255, 255, 255, 0.05);
+  --theme-border-strong: rgba(255, 255, 255, 0.1);
+  --theme-glass-bg: rgba(24, 24, 27, 0.5);
+  --theme-scroll-thumb: #27272a;
+}
+
+html.light {
+  --theme-bg-950: #f4f4f5; /* zinc-100 */
+  --theme-bg-900: #e4e4e7; /* zinc-200 */
+  --theme-bg-800: #d4d4d8; /* zinc-300 */
+  --theme-text-300: #27272a; /* zinc-800 */
+  --theme-text-200: #18181b; /* zinc-900 */
+  --theme-text-100: #09090b; /* zinc-950 */
+  --theme-text-500: #52525b; /* zinc-600 */
+  --theme-border: rgba(9, 9, 11, 0.08);
+  --theme-border-strong: rgba(9, 9, 11, 0.15);
+  --theme-glass-bg: rgba(228, 228, 230, 0.6);
+  --theme-scroll-thumb: #d4d4d8;
+}
+
 @theme {
-  --color-zinc-950: #09090b;
-  --color-zinc-900: #18181b;
+  --color-zinc-950: var(--theme-bg-950);
+  --color-zinc-900: var(--theme-bg-900);
+  --color-zinc-800: var(--theme-bg-800);
+  --color-zinc-300: var(--theme-text-300);
+  --color-zinc-200: var(--theme-text-200);
+  --color-zinc-100: var(--theme-text-100);
+  --color-zinc-500: var(--theme-text-500);
+  
+  --color-crimson-400: #fb7185;
+  --color-crimson-500: #f43f5e;
   --color-crimson-600: #e11d48;
   --color-crimson-700: #be123c;
   --color-crimson-800: #9f1239;
   --color-crimson-900: #881337;
+  --color-crimson-950: #4c0519;
   
   --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
   --font-serif: "Outfit", system-ui, -apple-system, sans-serif; /* Anti-serif for dashboard ui rule */
@@ -14,7 +51,7 @@
 
 @layer base {
   html, body {
-    @apply h-full antialiased bg-zinc-950 text-zinc-300 font-sans;
+    @apply h-full antialiased bg-zinc-950 text-zinc-300 font-sans transition-colors duration-300;
     margin: 0;
   }
 }
@@ -30,9 +67,46 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-zinc-800 rounded-full;
+  background-color: var(--theme-scroll-thumb);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-zinc-700;
+  background-color: var(--color-zinc-500);
+}
+
+/* Helper overrides for light mode layout styling */
+html.light .border-white\/5 {
+  border-color: var(--theme-border) !important;
+}
+html.light .border-white\/10 {
+  border-color: var(--theme-border-strong) !important;
+}
+html.light .bg-zinc-900\/50 {
+  background-color: var(--theme-glass-bg) !important;
+}
+html.light .bg-zinc-950\/40 {
+  background-color: rgba(244, 244, 245, 0.4) !important;
+}
+html.light .bg-zinc-900\/30 {
+  background-color: rgba(228, 228, 230, 0.3) !important;
+}
+html.light .text-white {
+  color: var(--theme-text-100) !important;
+}
+html.light .text-zinc-400 {
+  color: var(--theme-text-500) !important;
+}
+html.light .bg-zinc-900\/40 {
+  background-color: rgba(228, 228, 230, 0.4) !important;
+}
+html.light .bg-zinc-900\/10 {
+  background-color: rgba(228, 228, 230, 0.15) !important;
+}
+html.light .prose-invert {
+  --tw-prose-body: var(--theme-text-300);
+  --tw-prose-headings: var(--theme-text-100);
+  --tw-prose-links: var(--color-crimson-600);
+  --tw-prose-bold: var(--theme-text-100);
+  --tw-prose-pre-bg: var(--theme-bg-950);
 }

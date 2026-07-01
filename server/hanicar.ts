@@ -2,7 +2,7 @@ export type ChatRole = 'user' | 'assistant';
 
 export type ChatMessage = {
   role: ChatRole;
-  content: string;
+  content: string | any[];
 };
 
 export type HanicarReply = {
@@ -12,7 +12,7 @@ export type HanicarReply = {
 
 type OpenRouterMessage = {
   role: 'system' | ChatRole;
-  content: string;
+  content: string | any[];
 };
 
 type OpenRouterChoice = {
@@ -84,11 +84,24 @@ export async function createHanicarReply(messages: ChatMessage[]): Promise<Hanic
 function sanitizeMessages(messages: ChatMessage[]) {
   return messages
     .filter((message) => message.role === 'user' || message.role === 'assistant')
-    .map((message) => ({
-      role: message.role,
-      content: String(message.content || '').trim().slice(0, MAX_MESSAGE_CHARS),
-    }))
-    .filter((message) => message.content.length > 0)
+    .map((message) => {
+      if (typeof message.content === 'string') {
+        return {
+          role: message.role,
+          content: String(message.content || '').trim().slice(0, MAX_MESSAGE_CHARS),
+        };
+      }
+      return {
+        role: message.role,
+        content: message.content,
+      };
+    })
+    .filter((message) => {
+      if (typeof message.content === 'string') {
+        return message.content.length > 0;
+      }
+      return Array.isArray(message.content) && message.content.length > 0;
+    })
     .slice(-MAX_MESSAGES);
 }
 

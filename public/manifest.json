@@ -4,8 +4,8 @@
   "description": "Prvi hrvatski satirični AI chatbot pod Božjim okriljem",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0d08",
-  "theme_color": "#0a0d08",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
   "orientation": "any",
   "icons": [
     {

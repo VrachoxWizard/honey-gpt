@@ -15,6 +15,10 @@ type VercelResponse = {
 };
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
+  response.setHeader('Access-Control-Allow-Origin', '*');
+  response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   if (request.method === 'OPTIONS') {
     response.status(204).end();
     return;

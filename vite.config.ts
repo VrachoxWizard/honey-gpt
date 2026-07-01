@@ -114,5 +114,10 @@ export default defineConfig(({ mode }) => {
       host: '127.0.0.1',
       port: 5173,
     },
-  };
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      setupFiles: './src/setupTests.ts'
+    }
+  } as import('vite').UserConfig & { test: any };
 });
