@@ -51,6 +51,7 @@ function AppContent() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
 
   // Toggle theme
   useEffect(() => {
@@ -61,6 +62,19 @@ function AppContent() {
     }
     localStorage.setItem('hanicar_gpt_theme', theme);
   }, [theme]);
+
+  const activeSessionTitle = useMemo(
+    () => sessions.find((s) => s.id === activeSessionId)?.title,
+    [sessions, activeSessionId]
+  );
+
+  const activeModelName = useMemo(
+    () =>
+      activeModel
+        .replace(/^(google\/|qwen\/|meta-llama\/|deepseek\/|mistralai\/)/, '')
+        .split(':')[0],
+    [activeModel]
+  );
 
   const lastAssistantMessageId = useMemo(() => {
     return [...messages].reverse().find((m) => m.role === 'assistant' && m.id !== 'welcome')?.id;
@@ -73,8 +87,11 @@ function AppContent() {
   }, [messages, isSending]);
 
   useEffect(() => {
-    // Auto-scroll to bottom on new messages
-    scrollRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    // Auto-scroll to bottom on new content only when the user is already near the
+    // bottom — never yank them down while they're reading earlier messages.
+    if (isNearBottomRef.current) {
+      scrollRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    }
   }, [messages, isSending, showTypingIndicator]);
 
   const handleSuggestionSelect = (prompt: string) => {
@@ -105,9 +122,10 @@ function AppContent() {
   const handleScroll = () => {
     const container = containerRef.current;
     if (!container) return;
-    const isScrolledUp =
-      container.scrollHeight - container.scrollTop - container.clientHeight > 300;
-    setShowScrollButton(isScrolledUp);
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    isNearBottomRef.current = distanceFromBottom < 120;
+    setShowScrollButton(distanceFromBottom > 300);
   };
 
   const scrollToBottom = () => {
@@ -121,7 +139,7 @@ function AppContent() {
   return (
     <div className="grid h-[100dvh] w-full grid-cols-1 md:grid-cols-[340px_1fr] lg:grid-cols-[380px_1fr] bg-zinc-950 overflow-hidden font-sans relative">
       {/* Background grain noise overlay for premium feel */}
-      <div className="fixed inset-0 pointer-events-none z-50 opacity-[0.012] bg-[url('data:image/svg+xml;utf8,<svg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22><filter id=%22noise%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/></filter><rect width=%22100%%22 height=%22100%%22 filter=%22url(%23noise)%22/></svg>')] bg-repeat" />
+      <div className="fixed inset-0 pointer-events-none z-40 opacity-[0.012] bg-[url('data:image/svg+xml;utf8,<svg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22><filter id=%22noise%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/></filter><rect width=%22100%%22 height=%22100%%22 filter=%22url(%23noise)%22/></svg>')] bg-repeat" />
 
       <Sidebar
         isOpen={sidebarOpen}
@@ -146,6 +164,8 @@ function AppContent() {
           onMenuClick={() => setSidebarOpen(true)}
           theme={theme}
           onToggleTheme={toggleTheme}
+          sessionTitle={messages.length > 1 ? activeSessionTitle : undefined}
+          modelName={activeModelName}
         />
 
         {/* Message List Area */}
@@ -181,7 +201,7 @@ function AppContent() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 10 }}
               onClick={scrollToBottom}
-              className="fixed bottom-24 right-6 md:right-8 z-30 p-3 rounded-full bg-crimson-600 hover:bg-crimson-500 text-white shadow-lg shadow-crimson-900/20 transition-colors focus:outline-none cursor-pointer"
+              className="absolute bottom-28 right-6 md:right-8 z-30 p-3 rounded-full bg-crimson-600 hover:bg-crimson-500 text-white shadow-lg shadow-crimson-900/20 transition-colors cursor-pointer"
               aria-label="Skok na dno"
             >
               <ArrowDown size={18} />

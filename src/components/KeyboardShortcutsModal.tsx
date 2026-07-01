@@ -1,5 +1,7 @@
+import { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Keyboard } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -7,6 +9,9 @@ interface KeyboardShortcutsModalProps {
 }
 
 export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(isOpen, dialogRef);
+
   const shortcuts = [
     { keys: ['Ctrl', 'K'], desc: 'Otvori pretragu razgovora' },
     { keys: ['Ctrl', 'N'], desc: 'Započni novi razgovor' },
@@ -28,6 +33,10 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
           />
 
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Kratice na tipkovnici"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}

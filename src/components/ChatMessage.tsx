@@ -72,7 +72,7 @@ export const ChatMessage = React.memo(function ChatMessage({
   return (
     <div
       className={cn(
-        'flex gap-4 md:gap-6 w-full max-w-[900px] mx-auto animate-message-enter',
+        'group flex gap-4 md:gap-6 w-full max-w-[900px] mx-auto animate-message-enter',
         message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
       )}
     >
@@ -110,7 +110,7 @@ export const ChatMessage = React.memo(function ChatMessage({
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-crimson-500"></span>
               </span>
             )}
-            {message.role === 'assistant' ? '† Haničar GPT †' : 'Ti'}
+            {message.role === 'assistant' ? 'Haničar GPT' : 'Ti'}
           </span>
           {message.timestamp && (
             <span className="text-[10px] text-zinc-500 select-none">
@@ -120,29 +120,42 @@ export const ChatMessage = React.memo(function ChatMessage({
               })}
             </span>
           )}
-          {!isWelcome && <CopyButton text={message.content} />}
 
-          {message.role === 'user' && !isEditing && (
-            <button
-              onClick={() => {
-                setIsEditing(true);
-                setEditContent(message.content);
-              }}
-              className="p-1 text-zinc-600 hover:text-zinc-300 rounded-md hover:bg-white/5 transition-colors select-none cursor-pointer"
-              title="Uredi poruku"
+          {/* Action bar — revealed on hover (always visible on touch) */}
+          {!isEditing && (
+            <div
+              className={cn(
+                'flex items-center gap-1 transition-opacity duration-150',
+                'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100'
+              )}
             >
-              <Pencil size={12} />
-            </button>
-          )}
+              {!isWelcome && <CopyButton text={message.content} />}
 
-          {message.role === 'assistant' && isLastAssistant && onRegenerate && (
-            <button
-              onClick={onRegenerate}
-              className="p-1 text-zinc-600 hover:text-zinc-300 rounded-md hover:bg-white/5 transition-colors select-none cursor-pointer"
-              title="Regeneriraj odgovor"
-            >
-              <RefreshCcw size={12} />
-            </button>
+              {message.role === 'user' && (
+                <button
+                  onClick={() => {
+                    setIsEditing(true);
+                    setEditContent(message.content);
+                  }}
+                  className="p-1 text-zinc-600 hover:text-zinc-300 rounded-md hover:bg-white/5 transition-colors select-none cursor-pointer"
+                  title="Uredi poruku"
+                  aria-label="Uredi poruku"
+                >
+                  <Pencil size={12} />
+                </button>
+              )}
+
+              {message.role === 'assistant' && isLastAssistant && onRegenerate && (
+                <button
+                  onClick={onRegenerate}
+                  className="p-1 text-zinc-600 hover:text-zinc-300 rounded-md hover:bg-white/5 transition-colors select-none cursor-pointer"
+                  title="Regeneriraj odgovor"
+                  aria-label="Regeneriraj odgovor"
+                >
+                  <RefreshCcw size={12} />
+                </button>
+              )}
+            </div>
           )}
         </div>
 

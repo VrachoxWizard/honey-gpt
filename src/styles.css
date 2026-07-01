@@ -50,11 +50,28 @@ html.light {
     'Outfit', system-ui, -apple-system, sans-serif; /* Anti-serif for dashboard ui rule */
 }
 
+/*
+  Radius scale (keep component usage on these tiers for visual consistency):
+    rounded-md   → tiny controls & inline code (icon buttons, <kbd>, `code`)
+    rounded-lg   → small controls (selects, filter inputs, chips)
+    rounded-xl   → cards, buttons, inputs, thumbnails
+    rounded-2xl  → large surfaces (composer, modals, message bubbles, shrine)
+    rounded-full → pills, avatars, status dots
+*/
+
 @layer base {
   html,
   body {
     @apply h-full antialiased bg-zinc-950 text-zinc-300 font-sans transition-colors duration-300;
     margin: 0;
+  }
+
+  /* Consistent focus ring for keyboard users across ALL interactive elements.
+     Uses !important so it wins over the many `focus:outline-none` utilities,
+     and :focus-visible so it never shows on mouse clicks. */
+  :where(button, a, input, textarea, select, summary, [role='button'], [tabindex]):focus-visible {
+    outline: 2px solid var(--color-crimson-500) !important;
+    outline-offset: 2px !important;
   }
 }
 
@@ -104,6 +121,35 @@ html.light .bg-zinc-900\/40 {
 }
 html.light .bg-zinc-900\/10 {
   background-color: rgba(228, 228, 230, 0.15) !important;
+}
+html.light .bg-zinc-900\/60 {
+  background-color: rgba(228, 228, 230, 0.6) !important;
+}
+html.light .bg-zinc-900\/80 {
+  background-color: rgba(242, 239, 233, 0.85) !important;
+}
+html.light .bg-zinc-900\/90 {
+  background-color: rgba(242, 239, 233, 0.92) !important;
+}
+html.light .bg-zinc-900 {
+  background-color: var(--theme-bg-900) !important;
+}
+html.light .bg-zinc-800,
+html.light .bg-zinc-800\/40 {
+  background-color: var(--theme-bg-800) !important;
+}
+html.light .bg-zinc-950,
+html.light .bg-zinc-950\/40,
+html.light .bg-zinc-950\/80 {
+  background-color: var(--theme-bg-950) !important;
+}
+html.light .bg-zinc-950\/20 {
+  background-color: rgba(250, 249, 246, 0.4) !important;
+}
+/* Keep primary crimson actions readable on the warm light canvas */
+html.light .text-zinc-300,
+html.light .text-zinc-200 {
+  color: var(--theme-text-300) !important;
 }
 html.light .prose-invert {
   --tw-prose-body: var(--theme-text-300);

@@ -33,7 +33,7 @@ describe('ChatMessage', () => {
     render(<ChatMessage message={message} isWelcome={true} />);
 
     expect(screen.getByText('Mir s tobom!')).toBeInTheDocument();
-    expect(screen.getByText('† Haničar GPT †')).toBeInTheDocument();
+    expect(screen.getByText('Haničar GPT')).toBeInTheDocument();
   });
 
   it('renders a user message with correct layout and label', () => {

@@ -57,7 +57,7 @@ export function SessionList({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto mb-6 pr-1 space-y-2 select-none min-h-[120px] scrollbar-thin flex flex-col">
+    <div className="flex-1 min-h-0 overflow-hidden mb-4 pr-1 space-y-2 select-none scrollbar-thin flex flex-col">
       {/* Real-time search filter input */}
       <div className="px-2 mb-3 shrink-0 relative">
         <input
@@ -84,7 +84,17 @@ export function SessionList({
           </button>
         )}
       </div>
-      <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+        {filteredSessions.length === 0 && (
+          <div className="flex flex-col items-center justify-center text-center py-8 px-4 gap-2">
+            <MessageSquare className="text-zinc-600" size={22} />
+            <p className="text-xs font-medium text-zinc-500">
+              {sessions.length === 0
+                ? 'Još nema razgovora. Zapali svijeću i pitaj Haničara nešto.'
+                : 'Nijedan razgovor ne odgovara filtru.'}
+            </p>
+          </div>
+        )}
         <AnimatePresence initial={false}>
           {filteredSessions.map((session) => {
             const isActive = session.id === activeSessionId;

@@ -2,6 +2,7 @@ import { ChangeEvent, DragEvent, FormEvent, KeyboardEvent, useEffect, useRef, us
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, RefreshCcw, Send, Square, Paperclip, X } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { useToast } from '../hooks/useToast';
 
 interface ChatComposerProps {
   draft: string;
@@ -74,6 +75,7 @@ export function ChatComposer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -94,7 +96,7 @@ export function ChatComposer({
       const compressedBase64 = await compressAndConvertImage(file);
       setAttachedImage(compressedBase64);
     } catch (err: any) {
-      alert(err.message || 'Greška prilikom obrade slike.');
+      showToast(err?.message || 'Greška prilikom obrade slike.', 'error');
     }
   };
 
@@ -156,20 +158,24 @@ export function ChatComposer({
     <div className="p-4 md:p-6 bg-zinc-950/40 border-t border-white/5 backdrop-blur-md">
       <div className="max-w-[900px] mx-auto relative">
         {/* Floating Stop Button when sending */}
-        {isSending && (
-          <div className="absolute -top-14 left-1/2 -translate-x-1/2 z-10">
-            <motion.button
+        <AnimatePresence>
+          {isSending && (
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              onClick={onAbort}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900 border border-white/10 shadow-lg text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-white transition-all cursor-pointer"
+              className="absolute -top-14 left-1/2 -translate-x-1/2 z-10"
             >
-              <Square fill="currentColor" size={10} className="text-crimson-500" />
-              Zaustavi
-            </motion.button>
-          </div>
-        )}
+              <button
+                onClick={onAbort}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900 border border-white/10 shadow-lg text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-white transition-all cursor-pointer"
+              >
+                <Square fill="currentColor" size={10} className="text-crimson-500" />
+                Zaustavi
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {error && (
           <div className="mb-4 p-3 bg-red-950/50 border border-red-900/50 rounded-xl text-red-200 text-sm flex items-start gap-3">
@@ -243,17 +249,8 @@ export function ChatComposer({
               onChange={(e) => setDraft(e.target.value.slice(0, 8000))}
               onKeyDown={handleKeyDown}
               disabled={isSending}
-              className="flex-1 max-h-[200px] bg-transparent resize-none py-3 pl-4 pr-16 text-zinc-100 placeholder:text-zinc-500 focus:outline-none text-[15px] leading-relaxed disabled:opacity-50"
+              className="flex-1 max-h-[200px] bg-transparent resize-none py-3 pl-4 pr-4 text-zinc-100 placeholder:text-zinc-500 focus:outline-none text-[15px] leading-relaxed disabled:opacity-50"
             />
-
-            {draft.length > 0 && (
-              <span className={cn(
-                "absolute right-16 bottom-3.5 text-[9px] font-bold font-mono select-none transition-colors pointer-events-none",
-                draft.length > 7000 ? "text-crimson-500" : "text-zinc-500"
-              )}>
-                {draft.length}/8000
-              </span>
-            )}
 
             <motion.button
               whileHover={!isSending ? { scale: 1.05 } : {}}
@@ -270,6 +267,19 @@ export function ChatComposer({
               )}
             </motion.button>
           </div>
+
+          {draft.length > 0 && (
+            <div className="flex justify-end px-3 pb-1 pt-0.5">
+              <span
+                className={cn(
+                  'text-[10px] font-bold font-mono select-none transition-colors',
+                  draft.length > 7000 ? 'text-crimson-500' : 'text-zinc-500'
+                )}
+              >
+                {draft.length}/8000
+              </span>
+            </div>
+          )}
         </form>
         <p className="text-center text-[10px] text-zinc-600 mt-3 font-medium select-none">
           Haničar GPT može pogriješiti. Provjerite važne informacije kod župnika.

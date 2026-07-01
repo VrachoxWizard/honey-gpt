@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
 
             <h1 className="text-xl font-black text-zinc-100 tracking-tight mb-2">
-              † Haničar se privremeno srušio †
+              Haničar se privremeno srušio
             </h1>
             <p className="text-xs font-bold uppercase tracking-widest text-crimson-500 mb-4">
               Greška u sustavu

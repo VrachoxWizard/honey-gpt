@@ -6,7 +6,7 @@ export function exportChatToMarkdown(messages: Message[]) {
 
   for (const message of messages) {
     if (message.role === 'assistant') {
-      content += `**† Haničar GPT †:**\n\n${message.content}\n\n---\n\n`;
+      content += `**Haničar GPT:**\n\n${message.content}\n\n---\n\n`;
     } else {
       content += `**Ti:**\n\n${message.content}\n\n---\n\n`;
     }

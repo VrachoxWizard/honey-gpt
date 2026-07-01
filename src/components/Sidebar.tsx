@@ -51,7 +51,7 @@ export function Sidebar({
       )}
       aria-label="Bočna traka s opcijama"
     >
-      <div className="flex flex-col h-full p-6 relative overflow-y-auto overflow-x-hidden">
+      <div className="flex flex-col h-full p-5 relative overflow-hidden">
         <button
           onClick={onClose}
           aria-label="Zatvori bočnu traku"
@@ -60,51 +60,33 @@ export function Sidebar({
           <X size={20} />
         </button>
 
-        {/* Brand Block */}
-        <div className="flex items-center gap-4 mb-8 mt-2 md:mt-0">
-          <div>
-            <p className="text-[10px] font-bold tracking-widest text-crimson-500 uppercase mb-1">
-              † Prvi moralni AI †
+        {/* Brand Block — compact identity strip with the shrine as an avatar */}
+        <div className="flex items-center gap-3 mb-5 mt-1 md:mt-0 shrink-0">
+          <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-crimson-800/40 shadow-md shrink-0">
+            <img
+              src="/hanicar-the-genie.jpeg"
+              alt="Haničar"
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold tracking-widest text-crimson-500 uppercase mb-0.5">
+              Prvi moralni AI
             </p>
-            <h1 className="text-xl font-bold text-white tracking-tight leading-none">
+            <h1 className="text-lg font-bold text-white tracking-tight leading-none truncate">
               Haničar GPT
             </h1>
           </div>
         </div>
 
-        {/* Holy Shrine (Haničar Icon Frame) */}
-        <div className="relative p-1 rounded-2xl bg-zinc-900/60 border border-crimson-900/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_12px_36px_rgba(0,0,0,0.4)] mb-6 group shrink-0">
-          <div className="rounded-xl overflow-hidden bg-zinc-950 border border-white/5 relative">
-            <div className="bg-crimson-950/40 px-3 py-2 text-center border-b border-white/5 flex items-center justify-center gap-1.5">
-              <span className="text-[9px] font-bold tracking-[0.2em] text-crimson-400 uppercase">
-                † SVETI HANIČAR †
-              </span>
-            </div>
-            <div className="relative aspect-[4/5] overflow-hidden">
-              <img
-                src="/hanicar-the-genie.jpeg"
-                alt="Haničar"
-                className="w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700 ease-out"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/10 to-transparent" />
-            </div>
-            <div className="absolute bottom-0 w-full p-4 flex items-center gap-2.5 bg-gradient-to-t from-zinc-950 to-transparent">
-              <WandSparkles className="text-crimson-500 shrink-0 animate-pulse" size={15} />
-              <p className="text-[11px] text-zinc-300 leading-normal font-medium">
-                Sveti duh iz šahovnice, moli za nas!
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex flex-col gap-3 mb-6 shrink-0">
+        {/* Primary actions — pinned near the top so starting/exporting is one click */}
+        <div className="flex flex-col gap-2.5 mb-4 shrink-0">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={onNewChat}
             aria-label="Započni novi razgovor"
-            className="w-full flex items-center justify-center gap-2 bg-zinc-100 hover:bg-white text-zinc-950 py-3 px-4 rounded-xl font-bold text-sm shadow-[0_4px_14px_rgba(255,255,255,0.06)] transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 bg-zinc-100 hover:bg-white text-zinc-950 py-2.5 px-4 rounded-xl font-bold text-sm shadow-[0_4px_14px_rgba(255,255,255,0.06)] transition-all cursor-pointer"
           >
             <MessageSquarePlus size={18} />
             Novi razgovor
@@ -115,14 +97,36 @@ export function Sidebar({
             whileTap={{ scale: 0.98 }}
             onClick={onExportChat}
             aria-label="Preuzmi trenutni razgovor"
-            className="w-full flex items-center justify-center gap-2 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 py-3 px-4 rounded-xl font-medium text-sm border border-white/5 transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 py-2 px-4 rounded-xl font-medium text-sm border border-white/5 transition-all cursor-pointer"
           >
             <Download size={16} className="text-zinc-400" />
             Preuzmi razgovor
           </motion.button>
         </div>
 
-        {/* Sessions List */}
+        {/* Compact shrine banner — keeps the satirical relic without eating the list.
+            Hidden on short viewports so the session list always wins the space. */}
+        <div className="relative mb-4 rounded-xl overflow-hidden border border-crimson-900/15 shrink-0 hidden min-[820px]:block group">
+          <div className="relative h-[92px] overflow-hidden">
+            <img
+              src="/hanicar-the-genie.jpeg"
+              alt="Sveti Haničar"
+              className="w-full h-full object-cover object-[center_28%] group-hover:scale-105 transition-transform duration-700 ease-out"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/95 via-zinc-950/60 to-transparent" />
+            <div className="absolute inset-0 p-3 flex flex-col justify-center">
+              <span className="text-[9px] font-bold tracking-[0.2em] text-crimson-400 uppercase mb-1">
+                † Sveti Haničar †
+              </span>
+              <p className="text-[11px] text-zinc-200 leading-snug font-medium flex items-center gap-1.5 max-w-[180px]">
+                <WandSparkles className="text-crimson-500 shrink-0 animate-pulse" size={13} />
+                Duh iz šahovnice, moli za nas!
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Sessions List — the primary surface, gets all remaining vertical space */}
         <SessionList
           sessions={sessions}
           activeSessionId={activeSessionId}
@@ -132,7 +136,7 @@ export function Sidebar({
           onClearAllSessions={onClearAllSessions}
         />
 
-        {/* Status List with Interactive Selects */}
+        {/* Compact settings footer */}
         <ModelSelector
           activeModel={activeModel}
           onChangeModel={onChangeModel}

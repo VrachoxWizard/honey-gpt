@@ -5,9 +5,17 @@ interface ChatHeaderProps {
   onMenuClick: () => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
+  sessionTitle?: string;
+  modelName?: string;
 }
 
-export function ChatHeader({ onMenuClick, theme, onToggleTheme }: ChatHeaderProps) {
+export function ChatHeader({
+  onMenuClick,
+  theme,
+  onToggleTheme,
+  sessionTitle,
+  modelName,
+}: ChatHeaderProps) {
   return (
     <>
       {/* Mobile Header */}
@@ -44,15 +52,18 @@ export function ChatHeader({ onMenuClick, theme, onToggleTheme }: ChatHeaderProp
 
       {/* Header Desktop */}
       <header className="hidden md:flex items-center justify-between p-6 md:p-8 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-20">
-        <div>
+        <div className="min-w-0">
           <p className="text-[11px] font-bold tracking-widest text-crimson-500 uppercase mb-1">
             Satirični AI na hrvatskom
           </p>
-          <h2 className="text-2xl font-bold tracking-tight text-zinc-100 animate-fade-in">
-            Što danas rješavamo, uz Božju pomoć?
+          <h2
+            key={sessionTitle}
+            className="text-2xl font-bold tracking-tight text-zinc-100 animate-fade-in truncate max-w-[52ch]"
+          >
+            {sessionTitle || 'Što danas rješavamo, uz Božju pomoć?'}
           </h2>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {/* Desktop Theme Toggle */}
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -64,9 +75,12 @@ export function ChatHeader({ onMenuClick, theme, onToggleTheme }: ChatHeaderProp
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </motion.button>
 
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-xs font-semibold text-zinc-300 shadow-sm">
-            <Bot size={14} className="text-crimson-500 animate-pulse" />
-            <span>OpenRouter</span>
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-xs font-semibold text-zinc-300 shadow-sm max-w-[200px]"
+            title={modelName ? `Aktivni model: ${modelName}` : 'OpenRouter'}
+          >
+            <Bot size={14} className="text-crimson-500 shrink-0" />
+            <span className="truncate">{modelName || 'OpenRouter'}</span>
           </div>
         </div>
       </header>

@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MessageSquare } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import type { ChatSession } from '../types';
 
 interface SearchOverlayProps {
@@ -13,6 +14,9 @@ interface SearchOverlayProps {
 export function SearchOverlay({ isOpen, onClose, sessions, onSwitchSession }: SearchOverlayProps) {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(isOpen, dialogRef);
 
   useEffect(() => {
     if (isOpen) {
@@ -69,6 +73,10 @@ export function SearchOverlay({ isOpen, onClose, sessions, onSwitchSession }: Se
 
           {/* Modal window */}
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Pretraži razgovore"
             initial={{ opacity: 0, scale: 0.97, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: -10 }}
