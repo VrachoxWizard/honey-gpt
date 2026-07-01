@@ -1,6 +1,6 @@
 import { ChangeEvent, DragEvent, FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, RefreshCcw, Send, Square, Paperclip, X } from 'lucide-react';
+import { Loader2, Feather, Square, Paperclip, X, AlertTriangle } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useToast } from '../hooks/useToast';
 
@@ -45,20 +45,15 @@ function compressAndConvertImage(file: File): Promise<string> {
           }
 
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          resolve(compressedDataUrl);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
         } catch {
-          resolve(event.target?.result as string); // Fallback to raw base64 if canvas drawing fails
+          resolve(event.target?.result as string);
         }
       };
-      img.onerror = () => {
-        reject(new Error('Učitavanje slike nije uspjelo.'));
-      };
+      img.onerror = () => reject(new Error('Učitavanje slike nije uspjelo.'));
       img.src = event.target?.result as string;
     };
-    reader.onerror = () => {
-      reject(new Error('Čitanje datoteke nije uspjelo.'));
-    };
+    reader.onerror = () => reject(new Error('Čitanje datoteke nije uspjelo.'));
     reader.readAsDataURL(file);
   });
 }
@@ -84,17 +79,14 @@ export function ChatComposer({
     textarea.style.height = `${Math.min(textarea.scrollHeight, 168)}px`;
   }, [draft]);
 
-  // Keep focus when sending completes
   useEffect(() => {
-    if (!isSending) {
-      textareaRef.current?.focus();
-    }
+    if (!isSending) textareaRef.current?.focus();
   }, [isSending]);
 
   const processImageFile = async (file: File) => {
     try {
-      const compressedBase64 = await compressAndConvertImage(file);
-      setAttachedImage(compressedBase64);
+      const compressed = await compressAndConvertImage(file);
+      setAttachedImage(compressed);
     } catch (err: any) {
       showToast(err?.message || 'Greška prilikom obrade slike.', 'error');
     }
@@ -104,18 +96,13 @@ export function ChatComposer({
     const file = e.target.files?.[0];
     if (!file) return;
     await processImageFile(file);
-    e.target.value = ''; // Reset input
-  };
-
-  const triggerFileSelect = () => {
-    fileInputRef.current?.click();
+    e.target.value = '';
   };
 
   const handleSubmit = (e?: FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
     if (isSending) return;
     if (!draft.trim() && !attachedImage) return;
-
     onSubmit(draft.trim(), attachedImage || undefined);
     setAttachedImage(null);
   };
@@ -130,56 +117,48 @@ export function ChatComposer({
   const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isSending) {
-      setIsDragging(true);
-    }
+    if (!isSending) setIsDragging(true);
   };
-
   const handleDragLeave = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   };
-
   const handleDrop = async (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-
     if (isSending) return;
-
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      await processImageFile(file);
-    }
+    if (file && file.type.startsWith('image/')) await processImageFile(file);
   };
 
   return (
-    <div className="p-4 md:p-6 bg-zinc-950/40 border-t border-white/5 backdrop-blur-md">
-      <div className="max-w-[900px] mx-auto relative">
-        {/* Floating Stop Button when sending */}
+    <div className="px-4 md:px-8 pb-4 md:pb-6 pt-2 bg-gradient-to-t from-parchment via-parchment to-transparent">
+      <div className="max-w-[720px] mx-auto relative">
+        {/* Stop pero */}
         <AnimatePresence>
           {isSending && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="absolute -top-14 left-1/2 -translate-x-1/2 z-10"
+              className="absolute -top-12 left-1/2 -translate-x-1/2 z-10"
             >
               <button
                 onClick={onAbort}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900 border border-white/10 shadow-lg text-xs font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-white transition-all cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-parchment-2 border border-line shadow-md font-ui text-xs font-semibold text-ink-soft hover:text-ink transition-all cursor-pointer"
               >
-                <Square fill="currentColor" size={10} className="text-crimson-500" />
-                Zaustavi
+                <Square fill="currentColor" size={9} className="text-oxblood" />
+                Spusti pero
               </button>
             </motion.div>
           )}
         </AnimatePresence>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-950/50 border border-red-900/50 rounded-xl text-red-200 text-sm flex items-start gap-3">
-            <RefreshCcw size={16} className="mt-0.5 shrink-0" />
+          <div className="mb-3 p-3 rounded-xl bg-oxblood/10 border border-oxblood/25 text-oxblood text-sm flex items-start gap-2.5 font-display">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
             <span className="leading-snug">{error}</span>
           </div>
         )}
@@ -190,28 +169,27 @@ export function ChatComposer({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            'relative flex flex-col bg-zinc-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_10px_30px_rgba(0,0,0,0.5)] p-2 focus-within:border-zinc-800 focus-within:bg-zinc-900/80 transition-all duration-200',
-            isDragging && 'border-crimson-600/50 bg-zinc-900/80 ring-1 ring-crimson-600/20'
+            'relative flex flex-col bg-vellum/70 backdrop-blur-sm rounded-2xl border border-line shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_8px_28px_rgba(60,30,10,0.14)] p-2 focus-within:border-gold/50 transition-all duration-200',
+            isDragging && 'border-gold/70 ring-2 ring-gold/25'
           )}
         >
-          {/* Image preview thumbnail inside bubble */}
           <AnimatePresence>
             {attachedImage && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 5 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 5 }}
-                className="relative inline-block w-20 h-20 mb-2 ml-2 select-none group shrink-0"
+                className="relative inline-block w-20 h-20 mb-2 ml-2 select-none shrink-0"
               >
                 <img
                   src={attachedImage}
                   alt="Pretpregled privitka"
-                  className="w-20 h-20 object-cover rounded-xl border border-white/10"
+                  className="w-20 h-20 object-cover rounded-xl border border-line"
                 />
                 <button
                   type="button"
                   onClick={() => setAttachedImage(null)}
-                  className="absolute -top-1.5 -right-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full p-1 border border-white/10 cursor-pointer shadow-md"
+                  className="absolute -top-1.5 -right-1.5 bg-parchment-2 hover:bg-parchment-3 text-ink rounded-full p-1 border border-line cursor-pointer shadow"
                   aria-label="Ukloni sliku"
                 >
                   <X size={10} />
@@ -221,7 +199,6 @@ export function ChatComposer({
           </AnimatePresence>
 
           <div className="flex items-end gap-2 w-full">
-            {/* Hidden File Input */}
             <input
               type="file"
               ref={fileInputRef}
@@ -229,13 +206,12 @@ export function ChatComposer({
               accept="image/*"
               className="hidden"
             />
-            {/* Image Attachment Button */}
             <button
               type="button"
-              onClick={triggerFileSelect}
+              onClick={() => fileInputRef.current?.click()}
               disabled={isSending}
-              aria-label="Učitaj sliku"
-              className="shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-zinc-800/40 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 ml-0.5 cursor-pointer border border-white/5"
+              aria-label="Priloži sliku"
+              className="shrink-0 w-11 h-11 flex items-center justify-center rounded-xl text-ink-soft hover:text-ink hover:bg-vellum disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 ml-0.5 cursor-pointer"
             >
               <Paperclip size={18} />
             </button>
@@ -244,26 +220,25 @@ export function ChatComposer({
               ref={textareaRef}
               value={draft}
               rows={1}
-              placeholder="Pitaj Haničara nešto pametno, glupo ili opasno..."
-              aria-label="Unesi poruku za Haničara"
+              placeholder="Upiši svoju molbu Haničaru…"
+              aria-label="Upiši molbu"
               onChange={(e) => setDraft(e.target.value.slice(0, 8000))}
               onKeyDown={handleKeyDown}
               disabled={isSending}
-              className="flex-1 max-h-[200px] bg-transparent resize-none py-3 pl-4 pr-4 text-zinc-100 placeholder:text-zinc-500 focus:outline-none text-[15px] leading-relaxed disabled:opacity-50"
+              className="flex-1 max-h-[168px] bg-transparent resize-none py-3 px-2 text-ink placeholder:text-ink-faint focus:outline-none text-[16px] leading-relaxed font-display disabled:opacity-50"
             />
 
             <motion.button
-              whileHover={!isSending ? { scale: 1.05 } : {}}
-              whileTap={!isSending ? { scale: 0.95 } : {}}
+              whileTap={!isSending ? { scale: 0.94 } : {}}
               type="submit"
               disabled={(!draft.trim() && !attachedImage) || isSending}
-              aria-label="Pošalji poruku"
-              className="shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-crimson-600 hover:bg-crimson-500 text-white disabled:opacity-50 disabled:bg-zinc-800 disabled:text-zinc-500 transition-colors mb-0.5 mr-0.5 shadow-md shadow-crimson-900/20 cursor-pointer"
+              aria-label="Zapečati i pošalji"
+              className="wax-seal shrink-0 w-12 h-12 flex items-center justify-center rounded-full mb-0.5 mr-0.5 cursor-pointer disabled:cursor-not-allowed"
             >
               {isSending ? (
                 <Loader2 size={20} className="animate-spin" />
               ) : (
-                <Send size={18} className="ml-0.5" />
+                <Feather size={18} />
               )}
             </motion.button>
           </div>
@@ -272,8 +247,8 @@ export function ChatComposer({
             <div className="flex justify-end px-3 pb-1 pt-0.5">
               <span
                 className={cn(
-                  'text-[10px] font-bold font-mono select-none transition-colors',
-                  draft.length > 7000 ? 'text-crimson-500' : 'text-zinc-500'
+                  'font-ui text-[10px] font-semibold select-none tabular-nums',
+                  draft.length > 7000 ? 'text-oxblood' : 'text-ink-faint'
                 )}
               >
                 {draft.length}/8000
@@ -281,8 +256,9 @@ export function ChatComposer({
             </div>
           )}
         </form>
-        <p className="text-center text-[10px] text-zinc-600 mt-3 font-medium select-none">
-          Haničar GPT može pogriješiti. Provjerite važne informacije kod župnika.
+
+        <p className="text-center font-display italic text-[12px] text-ink-faint mt-3 select-none">
+          Haničar može pogriješiti. Za teške grijehe provjeri kod župnika.
         </p>
       </div>
     </div>

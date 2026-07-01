@@ -33,7 +33,7 @@ describe('ChatMessage', () => {
     render(<ChatMessage message={message} isWelcome={true} />);
 
     expect(screen.getByText('Mir s tobom!')).toBeInTheDocument();
-    expect(screen.getByText('Haničar GPT')).toBeInTheDocument();
+    expect(screen.getByText('Haničar')).toBeInTheDocument();
   });
 
   it('renders a user message with correct layout and label', () => {
@@ -47,7 +47,7 @@ describe('ChatMessage', () => {
     render(<ChatMessage message={message} />);
 
     expect(screen.getByText('Pozdrav Haničaru')).toBeInTheDocument();
-    expect(screen.getAllByText('Ti').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Molba').length).toBeGreaterThan(0);
   });
 
   it('renders the timestamp if provided', () => {
@@ -75,7 +75,7 @@ describe('ChatMessage', () => {
 
     render(<ChatMessage message={message} />);
 
-    const copyButton = screen.getByTitle('Kopiraj');
+    const copyButton = screen.getByTitle('Prepiši');
     expect(copyButton).toBeInTheDocument();
 
     await act(async () => {

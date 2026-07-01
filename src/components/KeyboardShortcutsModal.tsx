@@ -45,8 +45,8 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
           >
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
               <div className="flex items-center gap-2.5">
-                <Keyboard className="text-crimson-500" size={20} />
-                <h3 className="font-bold text-lg text-zinc-100">Kratice na tipkovnici</h3>
+                <Keyboard className="text-oxblood" size={20} />
+                <h3 className="font-incipit text-xl tracking-wide text-ink-strong">Kratice na tipkovnici</h3>
               </div>
               <button
                 onClick={onClose}
@@ -60,7 +60,7 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
             <div className="space-y-4">
               {shortcuts.map((shortcut, idx) => (
                 <div key={idx} className="flex items-center justify-between text-sm">
-                  <span className="text-zinc-350 font-medium">{shortcut.desc}</span>
+                  <span className="text-ink font-display text-[15px]">{shortcut.desc}</span>
                   <div className="flex gap-1.5 select-none">
                     {shortcut.keys.map((key, keyIdx) => (
                       <kbd

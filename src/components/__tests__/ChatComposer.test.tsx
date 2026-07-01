@@ -15,7 +15,7 @@ describe('ChatComposer', () => {
       />
     );
 
-    const button = screen.getByRole('button', { name: 'Pošalji poruku' });
+    const button = screen.getByRole('button', { name: 'Zapečati i pošalji' });
     expect(button).toBeDisabled();
   });
 
@@ -31,7 +31,7 @@ describe('ChatComposer', () => {
       />
     );
 
-    const button = screen.getByRole('button', { name: 'Pošalji poruku' });
+    const button = screen.getByRole('button', { name: 'Zapečati i pošalji' });
     expect(button).not.toBeDisabled();
   });
 
@@ -48,7 +48,7 @@ describe('ChatComposer', () => {
       />
     );
 
-    const button = screen.getByRole('button', { name: 'Pošalji poruku' });
+    const button = screen.getByRole('button', { name: 'Zapečati i pošalji' });
     fireEvent.click(button);
     expect(onSubmit).toHaveBeenCalledWith('Dobar dan', undefined);
   });
@@ -67,11 +67,11 @@ describe('ChatComposer', () => {
     );
 
     // Original button should be disabled because isSending = true
-    const submitBtn = screen.getByRole('button', { name: 'Pošalji poruku' });
+    const submitBtn = screen.getByRole('button', { name: 'Zapečati i pošalji' });
     expect(submitBtn).toBeDisabled();
 
     // The new "Zaustavi" button should be in the document
-    const abortBtn = screen.getByText('Zaustavi');
+    const abortBtn = screen.getByText('Spusti pero');
     expect(abortBtn).toBeInTheDocument();
 
     fireEvent.click(abortBtn);
@@ -90,7 +90,7 @@ describe('ChatComposer', () => {
       />
     );
 
-    const paperclipBtn = screen.getByLabelText('Učitaj sliku');
+    const paperclipBtn = screen.getByLabelText('Priloži sliku');
     expect(paperclipBtn).toBeInTheDocument();
   });
 });

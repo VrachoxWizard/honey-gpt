@@ -1,185 +1,316 @@
 @import 'tailwindcss';
 
+/*
+  ────────────────────────────────────────────────────────────────────────
+  HANIČAR CODEX — an illuminated-manuscript design system.
+  Two rites of light:
+    • DAY   (default)  → parchment & ink, gold leaf, oxblood rubrics
+    • NIGHT (.night)   → candlelit leather codex, glowing gold
+  Legacy Tailwind `zinc-*` / `crimson-*` tokens are remapped onto these
+  variables so older components inherit the aesthetic for free.
+  ────────────────────────────────────────────────────────────────────────
+*/
+
 :root {
-  --theme-bg-950: #09090b; /* zinc-950 */
-  --theme-bg-900: #18181b; /* zinc-900 */
-  --theme-bg-800: #27272a; /* zinc-800 */
-  --theme-text-300: #d4d4d8; /* zinc-300 */
-  --theme-text-200: #e4e4e7; /* zinc-200 */
-  --theme-text-100: #f4f4f5; /* zinc-100 */
-  --theme-text-500: #71717a; /* zinc-500 */
-  --theme-border: rgba(255, 255, 255, 0.05);
-  --theme-border-strong: rgba(255, 255, 255, 0.1);
-  --theme-glass-bg: rgba(24, 24, 27, 0.5);
-  --theme-scroll-thumb: #27272a;
+  /* Surfaces (parchment) */
+  --parchment: #ece0c4;
+  --parchment-2: #e3d4b2;
+  --parchment-3: #d8c69f;
+  --vellum: #f5eed9;
+
+  /* Ink */
+  --ink: #362b1c;
+  --ink-strong: #211910;
+  --ink-soft: #6d5d45;
+  --ink-faint: #93816411;
+  --ink-faint-solid: #8a7860;
+
+  /* Gilt & blood */
+  --gold: #977c2f;
+  --gold-bright: #b58f30;
+  --oxblood: #7c1c14;
+  --oxblood-deep: #56110b;
+  --rubric: #9d2c1b;
+
+  /* Lines */
+  --line: rgba(54, 43, 28, 0.16);
+  --line-strong: rgba(54, 43, 28, 0.3);
+  --glass: rgba(245, 238, 217, 0.72);
+  --scroll-thumb: rgba(151, 124, 47, 0.45);
+
+  /* Type */
+  --font-body-stack: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --font-display-stack: 'Cormorant Garamond', Georgia, serif;
+  --font-incipit-stack: 'Cinzel', 'Cormorant Garamond', serif;
+  --font-ui-stack: 'Outfit', system-ui, -apple-system, sans-serif;
 }
 
-html.light {
-  --theme-bg-950: #faf9f6; /* topla boja pergamenta/kosti */
-  --theme-bg-900: #f2efe9; /* topli kamen/gips */
-  --theme-bg-800: #e6e0d3; /* tamniji pješčenjak za obrube */
-  --theme-text-300: #2c2a29; /* stone-800 primarni tekst */
-  --theme-text-200: #464240; /* stone-700 sekundarni tekst */
-  --theme-text-100: #171515; /* stone-950 naslovi */
-  --theme-text-500: #7a726e; /* stone-500 prigušeni tekst */
-  --theme-border: rgba(122, 114, 110, 0.12);
-  --theme-border-strong: rgba(122, 114, 110, 0.2);
-  --theme-glass-bg: rgba(242, 239, 233, 0.7);
-  --theme-scroll-thumb: #ded9cd;
+html.night {
+  --parchment: #171009;
+  --parchment-2: #201810;
+  --parchment-3: #2b2116;
+  --vellum: #241b11;
+
+  --ink: #e8d9b6;
+  --ink-strong: #f6ecd2;
+  --ink-soft: #ab9670;
+  --ink-faint: #ffffff10;
+  --ink-faint-solid: #7d6b4c;
+
+  --gold: #caa63f;
+  --gold-bright: #e6c65e;
+  --oxblood: #c0492f;
+  --oxblood-deep: #7c1c14;
+  --rubric: #de6c46;
+
+  --line: rgba(231, 216, 184, 0.12);
+  --line-strong: rgba(231, 216, 184, 0.24);
+  --glass: rgba(32, 24, 16, 0.72);
+  --scroll-thumb: rgba(202, 166, 63, 0.4);
 }
 
 @theme {
-  --color-zinc-950: var(--theme-bg-950);
-  --color-zinc-900: var(--theme-bg-900);
-  --color-zinc-800: var(--theme-bg-800);
-  --color-zinc-300: var(--theme-text-300);
-  --color-zinc-200: var(--theme-text-200);
-  --color-zinc-100: var(--theme-text-100);
-  --color-zinc-500: var(--theme-text-500);
+  /* New semantic aliases → use these in new components */
+  --color-parchment: var(--parchment);
+  --color-parchment-2: var(--parchment-2);
+  --color-parchment-3: var(--parchment-3);
+  --color-vellum: var(--vellum);
+  --color-ink: var(--ink);
+  --color-ink-strong: var(--ink-strong);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint-solid);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-oxblood: var(--oxblood);
+  --color-oxblood-deep: var(--oxblood-deep);
+  --color-rubric: var(--rubric);
+  --color-line: var(--line);
 
-  --color-crimson-400: #fb7185;
-  --color-crimson-500: #f43f5e;
-  --color-crimson-600: #e11d48;
-  --color-crimson-700: #be123c;
-  --color-crimson-800: #9f1239;
-  --color-crimson-900: #881337;
-  --color-crimson-950: #4c0519;
+  /* Legacy remap so untouched components inherit the world */
+  --color-zinc-950: var(--parchment);
+  --color-zinc-900: var(--parchment-2);
+  --color-zinc-800: var(--parchment-3);
+  --color-zinc-300: var(--ink);
+  --color-zinc-200: var(--ink);
+  --color-zinc-100: var(--ink-strong);
+  --color-zinc-500: var(--ink-soft);
+  --color-zinc-400: var(--ink-soft);
+  --color-zinc-600: var(--ink-faint-solid);
 
-  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
-  --font-serif:
-    'Outfit', system-ui, -apple-system, sans-serif; /* Anti-serif for dashboard ui rule */
+  --color-crimson-400: var(--rubric);
+  --color-crimson-500: var(--oxblood);
+  --color-crimson-600: var(--oxblood);
+  --color-crimson-700: var(--oxblood-deep);
+  --color-crimson-800: var(--oxblood-deep);
+  --color-crimson-900: var(--oxblood-deep);
+  --color-crimson-950: var(--oxblood-deep);
+
+  --font-sans: var(--font-body-stack);
+  --font-serif: var(--font-display-stack);
+  --font-display: var(--font-display-stack);
+  --font-incipit: var(--font-incipit-stack);
+  --font-ui: var(--font-ui-stack);
 }
-
-/*
-  Radius scale (keep component usage on these tiers for visual consistency):
-    rounded-md   → tiny controls & inline code (icon buttons, <kbd>, `code`)
-    rounded-lg   → small controls (selects, filter inputs, chips)
-    rounded-xl   → cards, buttons, inputs, thumbnails
-    rounded-2xl  → large surfaces (composer, modals, message bubbles, shrine)
-    rounded-full → pills, avatars, status dots
-*/
 
 @layer base {
   html,
   body {
-    @apply h-full antialiased bg-zinc-950 text-zinc-300 font-sans transition-colors duration-300;
+    @apply h-full antialiased text-ink;
     margin: 0;
+    font-family: var(--font-body-stack);
+    font-size: 17px;
+    background-color: var(--parchment);
+    background-image:
+      radial-gradient(120% 90% at 50% -20%, color-mix(in srgb, var(--gold) 10%, transparent), transparent 60%),
+      radial-gradient(140% 120% at 50% 120%, rgba(0, 0, 0, 0.14), transparent 60%);
+    background-attachment: fixed;
+    transition:
+      background-color 0.5s ease,
+      color 0.5s ease;
   }
 
-  /* Consistent focus ring for keyboard users across ALL interactive elements.
-     Uses !important so it wins over the many `focus:outline-none` utilities,
-     and :focus-visible so it never shows on mouse clicks. */
+  ::selection {
+    background: color-mix(in srgb, var(--gold) 38%, transparent);
+    color: var(--ink-strong);
+  }
+
+  /* Consistent focus ring for keyboard users across ALL interactive elements */
   :where(button, a, input, textarea, select, summary, [role='button'], [tabindex]):focus-visible {
-    outline: 2px solid var(--color-crimson-500) !important;
+    outline: 2px solid var(--gold-bright) !important;
     outline-offset: 2px !important;
   }
 }
 
-/* Scrollbar styling for a cleaner look */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* ── Parchment fibre grain (applied via overlay div) ───────────────────── */
+.parchment-grain {
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+  opacity: 0.06;
+}
+html.night .parchment-grain {
+  mix-blend-mode: overlay;
+  opacity: 0.05;
 }
 
+/* ── Typographic ornaments ─────────────────────────────────────────────── */
+.font-incipit {
+  font-family: var(--font-incipit-stack);
+}
+.font-display {
+  font-family: var(--font-display-stack);
+}
+.font-ui {
+  font-family: var(--font-ui-stack);
+}
+
+/* Small-caps red-ink label used for marginalia / section headings */
+.rubric {
+  font-family: var(--font-ui-stack);
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-weight: 600;
+  color: var(--rubric);
+}
+
+/* Illuminated drop capital on the first paragraph of a scribed answer */
+.dropcap > p:first-of-type::first-letter {
+  font-family: var(--font-incipit-stack);
+  font-weight: 700;
+  font-size: 3.2em;
+  line-height: 0.72;
+  float: left;
+  margin: 0.06em 0.1em 0 0;
+  color: var(--oxblood);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--gold) 40%, transparent);
+}
+html.night .dropcap > p:first-of-type::first-letter {
+  text-shadow: 0 0 14px color-mix(in srgb, var(--gold) 45%, transparent);
+}
+
+/* Gilt divider with a central lozenge (use <div class="rule-gold" />) */
+.rule-gold {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--gold) 22%,
+    var(--gold) 78%,
+    transparent
+  );
+  opacity: 0.65;
+}
+.rule-gold::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--gold);
+  box-shadow: 0 0 0 3px var(--parchment);
+}
+
+/* Wax-seal button (send / affirm) */
+.wax-seal {
+  background: radial-gradient(circle at 34% 28%, #a8402c, var(--oxblood) 46%, var(--oxblood-deep) 100%);
+  color: #f2e2bf;
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.28),
+    inset 0 -3px 7px rgba(0, 0, 0, 0.45),
+    0 5px 12px rgba(60, 12, 8, 0.35);
+  transition:
+    transform 0.12s ease,
+    filter 0.2s ease;
+}
+.wax-seal:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.wax-seal:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.wax-seal:disabled {
+  background: radial-gradient(circle at 34% 28%, var(--parchment-3), var(--parchment-2));
+  color: var(--ink-faint-solid);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* The reading page — a leaf of the codex with a rubricated margin rule */
+.folio-leaf {
+  position: relative;
+}
+.folio-leaf::before {
+  content: '';
+  position: absolute;
+  left: -1.5rem;
+  top: 0.35em;
+  bottom: 0.35em;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--rubric) 55%, transparent),
+    transparent
+  );
+}
+
+/* ── Scrollbars ────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background-color: var(--theme-scroll-thumb);
+  background-color: var(--scroll-thumb);
   border-radius: 9999px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-zinc-500);
+  background-color: var(--gold);
+}
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 
-/* Helper overrides for light mode layout styling */
-html.light .border-white\/5 {
-  border-color: var(--theme-border) !important;
-}
-html.light .border-white\/10 {
-  border-color: var(--theme-border-strong) !important;
-}
-html.light .bg-zinc-900\/50 {
-  background-color: var(--theme-glass-bg) !important;
-}
-html.light .bg-zinc-950\/40 {
-  background-color: rgba(244, 244, 245, 0.4) !important;
-}
-html.light .bg-zinc-900\/30 {
-  background-color: rgba(228, 228, 230, 0.3) !important;
-}
-html.light .text-white {
-  color: var(--theme-text-100) !important;
-}
-html.light .text-zinc-400 {
-  color: var(--theme-text-500) !important;
-}
-html.light .bg-zinc-900\/40 {
-  background-color: rgba(228, 228, 230, 0.4) !important;
-}
-html.light .bg-zinc-900\/10 {
-  background-color: rgba(228, 228, 230, 0.15) !important;
-}
-html.light .bg-zinc-900\/60 {
-  background-color: rgba(228, 228, 230, 0.6) !important;
-}
-html.light .bg-zinc-900\/80 {
-  background-color: rgba(242, 239, 233, 0.85) !important;
-}
-html.light .bg-zinc-900\/90 {
-  background-color: rgba(242, 239, 233, 0.92) !important;
-}
-html.light .bg-zinc-900 {
-  background-color: var(--theme-bg-900) !important;
-}
-html.light .bg-zinc-800,
-html.light .bg-zinc-800\/40 {
-  background-color: var(--theme-bg-800) !important;
-}
-html.light .bg-zinc-950,
-html.light .bg-zinc-950\/40,
-html.light .bg-zinc-950\/80 {
-  background-color: var(--theme-bg-950) !important;
-}
-html.light .bg-zinc-950\/20 {
-  background-color: rgba(250, 249, 246, 0.4) !important;
-}
-/* Keep primary crimson actions readable on the warm light canvas */
-html.light .text-zinc-300,
-html.light .text-zinc-200 {
-  color: var(--theme-text-300) !important;
-}
-html.light .prose-invert {
-  --tw-prose-body: var(--theme-text-300);
-  --tw-prose-headings: var(--theme-text-100);
-  --tw-prose-links: var(--color-crimson-600);
-  --tw-prose-bold: var(--theme-text-100);
-  --tw-prose-pre-bg: var(--theme-bg-950);
+/* ── Prose (markdown answers) tuned for the codex ──────────────────────── */
+.prose-codex {
+  --tw-prose-body: var(--ink);
+  --tw-prose-headings: var(--ink-strong);
+  --tw-prose-links: var(--oxblood);
+  --tw-prose-bold: var(--ink-strong);
+  --tw-prose-quotes: var(--ink-soft);
+  --tw-prose-quote-borders: var(--gold);
+  --tw-prose-bullets: var(--gold);
+  --tw-prose-hr: var(--line);
+  --tw-prose-pre-bg: var(--parchment-3);
+  --tw-prose-code: var(--oxblood);
 }
 
-/* Shimmer animation keyframes for skeleton loader */
+/* ── Animations ────────────────────────────────────────────────────────── */
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
   }
 }
 
-/* Custom CSS animations for smoother performance */
-@keyframes message-enter {
+@keyframes ink-in {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(10px);
+    filter: blur(3px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+    filter: blur(0);
   }
 }
-
-.animate-message-enter {
-  animation: message-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.animate-ink-in {
+  animation: ink-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fade-in {
@@ -190,7 +321,39 @@ html.light .prose-invert {
     opacity: 1;
   }
 }
-
 .animate-fade-in {
-  animation: fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+/* legacy alias */
+.animate-message-enter {
+  animation: ink-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes candle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 0.78;
+  }
+  70% {
+    opacity: 0.9;
+  }
+}
+.animate-candle {
+  animation: candle 3.4s ease-in-out infinite;
+}
+
+@keyframes quill {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+}
+.animate-quill {
+  animation: quill 1.6s ease-in-out infinite;
 }

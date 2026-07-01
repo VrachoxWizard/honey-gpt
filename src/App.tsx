@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 import { useChat } from './hooks/useChat';
-import { Sidebar } from './components/Sidebar';
-import { WelcomeScreen } from './components/WelcomeScreen';
+import { SpineRail } from './components/SpineRail';
+import { Kazalo } from './components/Kazalo';
+import { Incipit } from './components/Incipit';
+import { Invocation } from './components/Invocation';
 import { MessageList } from './components/MessageList';
 import { TypingIndicator } from './components/TypingIndicator';
 import { ChatComposer } from './components/ChatComposer';
-import { ChatHeader } from './components/ChatHeader';
 import { exportChatToMarkdown } from './utils/exportChat';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './components/Toast';
@@ -41,39 +42,31 @@ function AppContent() {
   } = useChat();
 
   const [draft, setDraft] = useState('');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { showToast } = useToast();
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    return (localStorage.getItem('hanicar_gpt_theme') as 'dark' | 'light') || 'dark';
-  });
-  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [kazaloOpen, setKazaloOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const { showToast } = useToast();
 
+  const [theme, setTheme] = useState<'day' | 'night'>(() => {
+    if (typeof localStorage === 'undefined') return 'day';
+    const v = localStorage.getItem('hanicar_codex_theme');
+    if (v === 'day' || v === 'night') return v;
+    return localStorage.getItem('hanicar_gpt_theme') === 'dark' ? 'night' : 'day';
+  });
+
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
 
-  // Toggle theme
   useEffect(() => {
-    if (theme === 'light') {
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.remove('light');
-    }
-    localStorage.setItem('hanicar_gpt_theme', theme);
+    document.documentElement.classList.toggle('night', theme === 'night');
+    localStorage.setItem('hanicar_codex_theme', theme);
   }, [theme]);
 
   const activeSessionTitle = useMemo(
     () => sessions.find((s) => s.id === activeSessionId)?.title,
     [sessions, activeSessionId]
-  );
-
-  const activeModelName = useMemo(
-    () =>
-      activeModel
-        .replace(/^(google\/|qwen\/|meta-llama\/|deepseek\/|mistralai\/)/, '')
-        .split(':')[0],
-    [activeModel]
   );
 
   const lastAssistantMessageId = useMemo(() => {
@@ -87,36 +80,34 @@ function AppContent() {
   }, [messages, isSending]);
 
   useEffect(() => {
-    // Auto-scroll to bottom on new content only when the user is already near the
-    // bottom — never yank them down while they're reading earlier messages.
     if (isNearBottomRef.current) {
       scrollRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
     }
   }, [messages, isSending, showTypingIndicator]);
 
+  const isWelcomeView = messages.length <= 1;
+
   const handleSuggestionSelect = (prompt: string) => {
     sendMessage(prompt);
-    setSidebarOpen(false);
+    setKazaloOpen(false);
   };
 
   const handleExport = () => {
     exportChatToMarkdown(messages);
-    setSidebarOpen(false);
-    showToast('Razgovor izvezen u Markdown!', 'success');
+    setKazaloOpen(false);
+    showToast('Zapis prepisan u datoteku!', 'success');
   };
 
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
-
   useKeyboardShortcuts({
-    onSearch: () => setSearchOpen((prev) => !prev),
+    onSearch: () => setSearchOpen((p) => !p),
     onNewChat: newChat,
     onExport: handleExport,
     onClose: () => {
       setSearchOpen(false);
-      setSidebarOpen(false);
+      setKazaloOpen(false);
       setShortcutsOpen(false);
     },
-    onHelp: () => setShortcutsOpen((prev) => !prev),
+    onHelp: () => setShortcutsOpen((p) => !p),
   });
 
   const handleScroll = () => {
@@ -128,57 +119,64 @@ function AppContent() {
     setShowScrollButton(distanceFromBottom > 300);
   };
 
-  const scrollToBottom = () => {
+  const scrollToBottom = () =>
     scrollRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
-  };
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
 
   return (
-    <div className="grid h-[100dvh] w-full grid-cols-1 md:grid-cols-[340px_1fr] lg:grid-cols-[380px_1fr] bg-zinc-950 overflow-hidden font-sans relative">
-      {/* Background grain noise overlay for premium feel */}
-      <div className="fixed inset-0 pointer-events-none z-40 opacity-[0.012] bg-[url('data:image/svg+xml;utf8,<svg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22><filter id=%22noise%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/></filter><rect width=%22100%%22 height=%22100%%22 filter=%22url(%23noise)%22/></svg>')] bg-repeat" />
+    <div className="flex flex-col md:flex-row h-[100dvh] w-full overflow-hidden relative">
+      {/* Parchment fibre grain */}
+      <div className="parchment-grain fixed inset-0 pointer-events-none z-[5]" />
 
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onNewChat={newChat}
-        onExportChat={handleExport}
-        activeModel={activeModel}
-        onChangeModel={setActiveModel}
-        toneMode={toneMode}
-        onChangeToneMode={setToneMode}
+      <SpineRail
+        theme={theme}
+        onToggleTheme={() => setTheme((t) => (t === 'day' ? 'night' : 'day'))}
+        onNewChat={() => {
+          newChat();
+          setKazaloOpen(false);
+        }}
+        onToggleKazalo={() => setKazaloOpen((o) => !o)}
+        kazaloOpen={kazaloOpen}
+        onSearch={() => setSearchOpen(true)}
+        onHelp={() => setShortcutsOpen(true)}
+      />
+
+      <Kazalo
+        isOpen={kazaloOpen}
+        onClose={() => setKazaloOpen(false)}
         sessions={sessions}
         activeSessionId={activeSessionId}
         onSwitchSession={switchSession}
         onDeleteSession={deleteSession}
         onRenameSession={renameSession}
         onClearAllSessions={clearAllSessions}
+        onNewChat={newChat}
+        onExportChat={handleExport}
+        activeModel={activeModel}
+        onChangeModel={setActiveModel}
       />
 
-      {/* Chat Area */}
-      <main className="flex flex-col min-w-0 bg-zinc-950 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900/30 relative h-[calc(100dvh-56px)] md:h-[100dvh]">
-        <ChatHeader
-          onMenuClick={() => setSidebarOpen(true)}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-          sessionTitle={messages.length > 1 ? activeSessionTitle : undefined}
-          modelName={activeModelName}
+      {/* Reading area */}
+      <main className="flex-1 flex flex-col min-w-0 relative h-[calc(100dvh-56px)] md:h-[100dvh]">
+        <Incipit
+          sessionTitle={isWelcomeView ? undefined : activeSessionTitle}
+          rite={toneMode}
+          onChangeRite={setToneMode}
         />
 
-        {/* Message List Area */}
         <div
           ref={containerRef}
           onScroll={handleScroll}
           className={cn(
-            'flex-1 overflow-y-auto p-4 md:p-8 space-y-8 relative scrollbar-thin flex flex-col',
-            messages.length <= 1 ? 'justify-center' : 'justify-start'
+            'flex-1 overflow-y-auto px-4 md:px-8 py-8 relative scrollbar-thin flex flex-col',
+            isWelcomeView ? 'justify-center' : 'justify-start gap-10'
           )}
         >
-          {messages.length <= 1 ? (
-            <WelcomeScreen onSuggestionSelect={handleSuggestionSelect} />
+          {isWelcomeView ? (
+            <Invocation
+              onSuggestionSelect={handleSuggestionSelect}
+              rite={toneMode}
+              onChangeRite={setToneMode}
+            />
           ) : (
             <MessageList
               messages={messages}
@@ -189,11 +187,9 @@ function AppContent() {
           )}
 
           {showTypingIndicator && <TypingIndicator />}
-
-          <div ref={scrollRef} className="h-4" />
+          <div ref={scrollRef} className="h-2" />
         </div>
 
-        {/* Scroll to Bottom Button */}
         <AnimatePresence>
           {showScrollButton && (
             <motion.button
@@ -201,10 +197,10 @@ function AppContent() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 10 }}
               onClick={scrollToBottom}
-              className="absolute bottom-28 right-6 md:right-8 z-30 p-3 rounded-full bg-crimson-600 hover:bg-crimson-500 text-white shadow-lg shadow-crimson-900/20 transition-colors cursor-pointer"
-              aria-label="Skok na dno"
+              className="wax-seal absolute bottom-32 right-6 md:right-10 z-20 w-11 h-11 flex items-center justify-center rounded-full cursor-pointer"
+              aria-label="Na dno stranice"
             >
-              <ArrowDown size={18} />
+              <ChevronDown size={20} />
             </motion.button>
           )}
         </AnimatePresence>
