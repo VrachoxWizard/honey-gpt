@@ -1,6 +1,7 @@
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, RefreshCcw, Send, Square, Paperclip, X } from 'lucide-react';
+import { cn } from '../utils/cn';
 
 interface ChatComposerProps {
   draft: string;
@@ -11,10 +12,61 @@ interface ChatComposerProps {
   onAbort: () => void;
 }
 
+function compressAndConvertImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDimension = 1024;
+
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(event.target?.result as string);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          resolve(compressedDataUrl);
+        } catch (e) {
+          resolve(event.target?.result as string); // Fallback to raw base64 if canvas drawing fails
+        }
+      };
+      img.onerror = () => {
+        reject(new Error('Učitavanje slike nije uspjelo.'));
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => {
+      reject(new Error('Čitanje datoteke nije uspjelo.'));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 export function ChatComposer({ draft, setDraft, isSending, error, onSubmit, onAbort }: ChatComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -30,20 +82,19 @@ export function ChatComposer({ draft, setDraft, isSending, error, onSubmit, onAb
     }
   }, [isSending]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const processImageFile = async (file: File) => {
+    try {
+      const compressedBase64 = await compressAndConvertImage(file);
+      setAttachedImage(compressedBase64);
+    } catch (err: any) {
+      alert(err.message || 'Greška prilikom obrade slike.');
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Slika je prevelika. Maksimalna dopuštena veličina je 5MB.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setAttachedImage(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    await processImageFile(file);
     e.target.value = ''; // Reset input
   };
 
@@ -64,6 +115,33 @@ export function ChatComposer({ draft, setDraft, isSending, error, onSubmit, onAb
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isSending) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (isSending) return;
+
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      await processImageFile(file);
     }
   };
 
@@ -94,7 +172,16 @@ export function ChatComposer({ draft, setDraft, isSending, error, onSubmit, onAb
           </div>
         )}
         
-        <form onSubmit={handleSubmit} className="relative flex flex-col bg-zinc-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_10px_30px_rgba(0,0,0,0.5)] p-2 focus-within:border-zinc-800 focus-within:bg-zinc-900/80 transition-colors">
+        <form 
+          onSubmit={handleSubmit} 
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={cn(
+            "relative flex flex-col bg-zinc-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_10px_30px_rgba(0,0,0,0.5)] p-2 focus-within:border-zinc-800 focus-within:bg-zinc-900/80 transition-all duration-200",
+            isDragging && "border-crimson-600/50 bg-zinc-900/80 ring-1 ring-crimson-600/20"
+          )}
+        >
           {/* Image preview thumbnail inside bubble */}
           <AnimatePresence>
             {attachedImage && (

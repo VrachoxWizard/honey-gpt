@@ -47,7 +47,12 @@ export function useChat() {
 
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
-  const [activeModel, setActiveModel] = useState<string>(() => localStorage.getItem('hanicar_gpt_active_model') || 'Gemini 2.5 Flash');
+  const [activeModel, setActiveModel] = useState<string>(
+    () => localStorage.getItem('hanicar_gpt_active_model') || 'google/gemini-2.5-flash'
+  );
+  const [toneMode, setToneMode] = useState<'humilis' | 'clericus' | 'sanctus'>(
+    () => (localStorage.getItem('hanicar_gpt_tone_mode') as any) || 'sanctus'
+  );
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Save sessions to localStorage
@@ -59,6 +64,16 @@ export function useChat() {
   useEffect(() => {
     localStorage.setItem(ACTIVE_SESSION_KEY, activeSessionId);
   }, [activeSessionId]);
+
+  // Save toneMode to localStorage
+  useEffect(() => {
+    localStorage.setItem('hanicar_gpt_tone_mode', toneMode);
+  }, [toneMode]);
+
+  const handleSetActiveModel = useCallback((model: string) => {
+    setActiveModel(model);
+    localStorage.setItem('hanicar_gpt_active_model', model);
+  }, []);
 
   // Get active session messages
   const activeSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
@@ -147,6 +162,25 @@ export function useChat() {
     });
   }, [activeSessionId, abortGeneration]);
 
+  const renameSession = useCallback((id: string, newTitle: string) => {
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, title: newTitle } : s))
+    );
+  }, []);
+
+  const clearAllSessions = useCallback(() => {
+    abortGeneration();
+    setError('');
+    const initialSession: ChatSession = {
+      id: crypto.randomUUID(),
+      title: 'Novi razgovor',
+      messages: [{ ...welcomeMessage, timestamp: Date.now() }],
+      createdAt: Date.now(),
+    };
+    setSessions([initialSession]);
+    setActiveSessionId(initialSession.id);
+  }, [abortGeneration]);
+
   const sendMessage = async (content: string, image?: string) => {
     if ((!content.trim() && !image) || isSending) return;
 
@@ -197,7 +231,11 @@ export function useChat() {
           const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: conversation }),
+            body: JSON.stringify({ 
+              messages: conversation,
+              model: activeModel,
+              toneMode: toneMode
+            }),
             signal: newController.signal,
           });
 
@@ -236,8 +274,7 @@ export function useChat() {
                     if (data.token || data.model) {
                       if (data.token) assistantText += data.token;
                       if (data.model) {
-                        setActiveModel(data.model);
-                        localStorage.setItem('hanicar_gpt_active_model', data.model);
+                        handleSetActiveModel(data.model);
                       }
                       updateActiveSessionMessages((currentMessages) =>
                         currentMessages.map((msg) =>
@@ -259,8 +296,7 @@ export function useChat() {
             const payload = await response.json();
             if (!payload.text) throw new Error('Odgovor nema tekst.');
             if (payload.model) {
-              setActiveModel(payload.model);
-              localStorage.setItem('hanicar_gpt_active_model', payload.model);
+              handleSetActiveModel(payload.model);
             }
             updateActiveSessionMessages((currentMessages) =>
               currentMessages.map((msg) =>
@@ -307,6 +343,9 @@ export function useChat() {
     activeSessionId,
     messages,
     activeModel,
+    setActiveModel: handleSetActiveModel,
+    toneMode,
+    setToneMode,
     isSending,
     error,
     sendMessage,
@@ -314,6 +353,8 @@ export function useChat() {
     newChat,
     switchSession,
     deleteSession,
+    renameSession,
+    clearAllSessions,
     abortGeneration,
   };
 }

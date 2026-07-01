@@ -107,4 +107,31 @@ describe('useChat', () => {
     expect(result.current.sessions).toHaveLength(1);
     expect(result.current.activeSessionId).toBe(firstSessionId);
   });
+
+  it('should rename a session', () => {
+    const { result } = renderHook(() => useChat());
+    const sessionId = result.current.activeSessionId;
+
+    act(() => {
+      result.current.renameSession(sessionId, 'Novi Naslov');
+    });
+
+    const session = result.current.sessions.find(s => s.id === sessionId);
+    expect(session?.title).toBe('Novi Naslov');
+  });
+
+  it('should clear all sessions and re-initialize with one new session', () => {
+    const { result } = renderHook(() => useChat());
+    act(() => {
+      result.current.newChat();
+    });
+    expect(result.current.sessions).toHaveLength(2);
+
+    act(() => {
+      result.current.clearAllSessions();
+    });
+
+    expect(result.current.sessions).toHaveLength(1);
+    expect(result.current.sessions[0].title).toBe('Novi razgovor');
+  });
 });

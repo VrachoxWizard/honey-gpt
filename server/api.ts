@@ -1,4 +1,4 @@
-import { createHanicarReply, streamHanicarReply, httpError, type ChatMessage } from './hanicar.js';
+import { createHanicarReply, streamHanicarReply, httpError, type ChatMessage, type HanicarOptions } from './hanicar.js';
 
 export type ClientError = {
   statusCode: number;
@@ -7,7 +7,8 @@ export type ClientError = {
 
 export async function handleChatPayload(payload: unknown) {
   const messages = parseMessages(payload);
-  return createHanicarReply(messages);
+  const options = parseOptions(payload);
+  return createHanicarReply(messages, options);
 }
 
 export async function handleChatPayloadStream(
@@ -15,7 +16,25 @@ export async function handleChatPayloadStream(
   onChunk: (chunk: { token?: string; model?: string }) => void
 ) {
   const messages = parseMessages(payload);
-  return streamHanicarReply(messages, onChunk);
+  const options = parseOptions(payload);
+  return streamHanicarReply(messages, onChunk, options);
+}
+
+export function parseOptions(payload: unknown): HanicarOptions {
+  if (!payload || typeof payload !== 'object') return {};
+  const { model, toneMode } = payload as { model?: unknown; toneMode?: unknown };
+
+  const options: HanicarOptions = {};
+  if (typeof model === 'string' && model.trim()) {
+    options.model = model.trim();
+  }
+  if (
+    typeof toneMode === 'string' &&
+    (toneMode === 'humilis' || toneMode === 'clericus' || toneMode === 'sanctus')
+  ) {
+    options.toneMode = toneMode;
+  }
+  return options;
 }
 
 export function parseMessages(payload: unknown): ChatMessage[] {

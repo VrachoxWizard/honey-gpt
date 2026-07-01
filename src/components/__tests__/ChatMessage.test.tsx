@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ChatMessage } from '../ChatMessage';
 import type { Message } from '../../types';
@@ -72,7 +72,10 @@ describe('ChatMessage', () => {
     const copyButton = screen.getByTitle('Kopiraj');
     expect(copyButton).toBeInTheDocument();
     
-    fireEvent.click(copyButton);
+    await act(async () => {
+      fireEvent.click(copyButton);
+    });
+    
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Tekst za kopiranje');
   });
 });

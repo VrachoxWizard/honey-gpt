@@ -23,6 +23,9 @@ function AppContent() {
     activeSessionId, 
     messages, 
     activeModel, 
+    setActiveModel,
+    toneMode,
+    setToneMode,
     error, 
     isSending, 
     sendMessage, 
@@ -30,6 +33,8 @@ function AppContent() {
     newChat, 
     switchSession, 
     deleteSession, 
+    renameSession,
+    clearAllSessions,
     abortGeneration 
   } = useChat();
 
@@ -141,10 +146,15 @@ function AppContent() {
         onNewChat={newChat}
         onExportChat={handleExport}
         activeModel={activeModel}
+        onChangeModel={setActiveModel}
+        toneMode={toneMode}
+        onChangeToneMode={setToneMode}
         sessions={sessions}
         activeSessionId={activeSessionId}
         onSwitchSession={switchSession}
         onDeleteSession={deleteSession}
+        onRenameSession={renameSession}
+        onClearAllSessions={clearAllSessions}
       />
 
       {/* Chat Area */}

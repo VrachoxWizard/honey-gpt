@@ -28,6 +28,10 @@ describe('Sidebar', () => {
         onExportChat={vi.fn()}
         sessions={mockSessions}
         activeSessionId="session-1"
+        activeModel="google/gemini-2.5-flash"
+        onChangeModel={vi.fn()}
+        toneMode="sanctus"
+        onChangeToneMode={vi.fn()}
       />
     );
 
@@ -46,6 +50,10 @@ describe('Sidebar', () => {
         onExportChat={vi.fn()}
         sessions={mockSessions}
         activeSessionId="session-1"
+        activeModel="google/gemini-2.5-flash"
+        onChangeModel={vi.fn()}
+        toneMode="sanctus"
+        onChangeToneMode={vi.fn()}
         onSwitchSession={onSwitch}
       />
     );
@@ -66,6 +74,10 @@ describe('Sidebar', () => {
         onExportChat={vi.fn()}
         sessions={mockSessions}
         activeSessionId="session-1"
+        activeModel="google/gemini-2.5-flash"
+        onChangeModel={vi.fn()}
+        toneMode="sanctus"
+        onChangeToneMode={vi.fn()}
         onDeleteSession={onDelete}
       />
     );
@@ -88,6 +100,10 @@ describe('Sidebar', () => {
         onExportChat={vi.fn()}
         sessions={mockSessions}
         activeSessionId="session-1"
+        activeModel="google/gemini-2.5-flash"
+        onChangeModel={vi.fn()}
+        toneMode="sanctus"
+        onChangeToneMode={vi.fn()}
       />
     );
 
