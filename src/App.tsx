@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Menu, Feather } from 'lucide-react';
 
 import { useChat } from './hooks/useChat';
-import { SpineRail } from './components/SpineRail';
-import { Kazalo } from './components/Kazalo';
-import { Incipit } from './components/Incipit';
+import { Sidebar } from './components/Sidebar';
+import { SaintPortrait } from './components/SaintPortrait';
 import { Invocation } from './components/Invocation';
 import { MessageList } from './components/MessageList';
 import { TypingIndicator } from './components/TypingIndicator';
@@ -39,7 +38,7 @@ function AppContent() {
   } = useChat();
 
   const [draft, setDraft] = useState('');
-  const [kazaloOpen, setKazaloOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const { showToast } = useToast();
 
@@ -80,21 +79,21 @@ function AppContent() {
 
   const handleSuggestionSelect = (prompt: string) => {
     sendMessage(prompt);
-    setKazaloOpen(false);
+    setSidebarOpen(false);
   };
 
   const handleExport = () => {
     exportChatToMarkdown(messages);
-    setKazaloOpen(false);
+    setSidebarOpen(false);
     showToast('Zapis prepisan u datoteku!', 'success');
   };
 
   useKeyboardShortcuts({
-    onSearch: () => setKazaloOpen((p) => !p),
+    onSearch: () => setSidebarOpen((p) => !p),
     onNewChat: newChat,
     onExport: handleExport,
     onClose: () => {
-      setKazaloOpen(false);
+      setSidebarOpen(false);
       setShortcutsOpen(false);
     },
     onHelp: () => setShortcutsOpen((p) => !p),
@@ -113,94 +112,103 @@ function AppContent() {
     scrollRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
 
   return (
-    <div className="flex flex-col md:flex-row h-[100dvh] w-full overflow-hidden relative">
+    <div className="flex h-[100dvh] w-full overflow-hidden relative">
       {/* Parchment fibre grain */}
       <div className="parchment-grain fixed inset-0 pointer-events-none z-[5]" />
 
-      <SpineRail
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        rite={toneMode}
+        onChangeRite={setToneMode}
         theme={theme}
         onToggleTheme={() => setTheme((t) => (t === 'day' ? 'night' : 'day'))}
-        onNewChat={() => {
-          newChat();
-          setKazaloOpen(false);
-        }}
-        onToggleKazalo={() => setKazaloOpen((o) => !o)}
-        kazaloOpen={kazaloOpen}
-      />
-
-      <Kazalo
-        isOpen={kazaloOpen}
-        onClose={() => setKazaloOpen(false)}
+        onNewChat={newChat}
+        onExportChat={handleExport}
         sessions={sessions}
         activeSessionId={activeSessionId}
         onSwitchSession={switchSession}
         onDeleteSession={deleteSession}
         onRenameSession={renameSession}
         onClearAllSessions={clearAllSessions}
-        onNewChat={newChat}
-        onExportChat={handleExport}
       />
 
-      {/* Reading area */}
-      <main className="flex-1 flex flex-col min-w-0 relative h-[calc(100dvh-56px)] md:h-[100dvh]">
-        <Incipit rite={toneMode} onChangeRite={setToneMode} />
-
-        <div
-          ref={containerRef}
-          onScroll={handleScroll}
-          className={cn(
-            'flex-1 overflow-y-auto px-4 md:px-8 py-8 relative scrollbar-thin flex flex-col',
-            isWelcomeView ? 'justify-center' : 'justify-start gap-10'
-          )}
-        >
-          {isWelcomeView ? (
-            <Invocation
-              onSuggestionSelect={handleSuggestionSelect}
-              rite={toneMode}
-              onChangeRite={setToneMode}
-            />
-          ) : (
-            <MessageList
-              messages={messages}
-              lastAssistantMessageId={lastAssistantMessageId}
-              onRegenerate={regenerateLastResponse}
-              onEdit={editAndResend}
-            />
-          )}
-
-          {showTypingIndicator && <TypingIndicator />}
-          <div ref={scrollRef} className="h-2" />
+      {/* Right column */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+        {/* Mobile bar — keeps the saint present + opens the codex */}
+        <div className="md:hidden flex items-center justify-between h-14 px-3 bg-parchment-2/80 backdrop-blur-md border-b border-line shrink-0">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Otvori bočnu traku"
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <Menu size={20} className="text-ink-soft" />
+            <SaintPortrait size={32} />
+            <span className="font-incipit text-sm tracking-[0.14em] text-ink-strong uppercase">
+              Haničar
+            </span>
+          </button>
+          <button
+            onClick={newChat}
+            aria-label="Novi zapis"
+            className="p-2 text-ink-soft hover:text-ink cursor-pointer"
+          >
+            <Feather size={19} />
+          </button>
         </div>
 
-        <AnimatePresence>
-          {showScrollButton && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 10 }}
-              onClick={scrollToBottom}
-              className="wax-seal absolute bottom-32 right-6 md:right-10 z-20 w-11 h-11 flex items-center justify-center rounded-full cursor-pointer"
-              aria-label="Na dno stranice"
-            >
-              <ChevronDown size={20} />
-            </motion.button>
-          )}
-        </AnimatePresence>
+        {/* Reading area */}
+        <main className="flex-1 flex flex-col min-h-0 relative">
+          <div
+            ref={containerRef}
+            onScroll={handleScroll}
+            className={cn(
+              'flex-1 min-h-0 overflow-y-auto px-4 md:px-10 pt-6 pb-4 relative scrollbar-thin flex flex-col',
+              isWelcomeView ? 'justify-center' : 'justify-start gap-10'
+            )}
+          >
+            {isWelcomeView ? (
+              <Invocation onSuggestionSelect={handleSuggestionSelect} />
+            ) : (
+              <MessageList
+                messages={messages}
+                lastAssistantMessageId={lastAssistantMessageId}
+                onRegenerate={regenerateLastResponse}
+                onEdit={editAndResend}
+              />
+            )}
 
-        <ChatComposer
-          draft={draft}
-          setDraft={setDraft}
-          isSending={isSending}
-          error={error}
-          onSubmit={sendMessage}
-          onAbort={abortGeneration}
-        />
+            {showTypingIndicator && <TypingIndicator />}
+            <div ref={scrollRef} className="h-2 shrink-0" />
+          </div>
 
-        <KeyboardShortcutsModal
-          isOpen={shortcutsOpen}
-          onClose={() => setShortcutsOpen(false)}
-        />
-      </main>
+          <AnimatePresence>
+            {showScrollButton && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                onClick={scrollToBottom}
+                className="wax-seal absolute bottom-32 right-6 md:right-10 z-20 w-11 h-11 flex items-center justify-center rounded-full cursor-pointer"
+                aria-label="Na dno stranice"
+              >
+                <ChevronDown size={20} />
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          <ChatComposer
+            draft={draft}
+            setDraft={setDraft}
+            isSending={isSending}
+            error={error}
+            onSubmit={sendMessage}
+            onAbort={abortGeneration}
+          />
+        </main>
+      </div>
+
+      <KeyboardShortcutsModal isOpen={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </div>
   );
 }
