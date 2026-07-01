@@ -18,7 +18,8 @@ type VercelResponse = {
 };
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
-  response.setHeader('Access-Control-Allow-Origin', '*');
+  const allowedOrigin = process.env.CORS_ORIGIN || 'https://honey-gpt.vercel.app';
+  response.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 

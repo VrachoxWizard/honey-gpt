@@ -29,7 +29,10 @@ export function ShikiHighlighter({ code, language }: ShikiHighlighterProps) {
           });
           if (active) setHtml(out);
         } catch {
-          if (active) setHtml(`<pre class="p-4 overflow-x-auto"><code>${code}</code></pre>`);
+          if (active) {
+            const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            setHtml(`<pre class="p-4 overflow-x-auto"><code>${escaped}</code></pre>`);
+          }
         }
       }
     }

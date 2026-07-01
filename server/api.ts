@@ -1,15 +1,17 @@
 import { z } from 'zod';
-import {
-  createHanicarReply,
-  streamHanicarReply,
-  httpError,
-} from './hanicar.js';
+import { streamHanicarReply } from './hanicar.js';
 import type { ChatMessage } from './shared-types.js';
 
 export type ClientError = {
   statusCode: number;
   message: string;
 };
+
+export function httpError(statusCode: number, message: string): Error & { statusCode: number } {
+  const err = new Error(message) as Error & { statusCode: number };
+  err.statusCode = statusCode;
+  return err;
+}
 
 // Zod definicija sheme za dijelove poruke (tekst ili slika)
 const MessagePartSchema = z.discriminatedUnion('type', [
@@ -54,10 +56,7 @@ export function validateAndParsePayload(payload: unknown) {
   return result.data;
 }
 
-export async function handleChatPayload(payload: unknown) {
-  const { messages, model, toneMode } = validateAndParsePayload(payload);
-  return createHanicarReply(messages as ChatMessage[], { model, toneMode });
-}
+
 
 export async function handleChatPayloadStream(
   payload: unknown,

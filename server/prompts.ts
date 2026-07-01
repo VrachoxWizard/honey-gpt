@@ -1,27 +1,21 @@
-import type { ChatRole, ChatMessage } from './shared-types.js';
-import fs from 'node:fs';
+import type { ChatRole, ChatMessage, ChatMessagePart, ToneMode } from './shared-types.js';
+import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Fuse from 'fuse.js';
+import { CONSTANTS } from './constants.js';
 
 export function getCroatianDateString(): string {
   const days = ['nedjelja', 'ponedjeljak', 'utorak', 'srijeda', 'četvrtak', 'petak', 'subota'];
   const months = [
-    'siječnja',
-    'veljače',
-    'ožujka',
-    'travnja',
-    'svibnja',
-    'lipnja',
-    'srpnja',
-    'kolovoza',
-    'rujna',
-    'listopada',
-    'studenoga',
-    'prosinca',
+    'siječnja', 'veljače', 'ožujka', 'travnja', 'svibnja', 'lipnja',
+    'srpnja', 'kolovoza', 'rujna', 'listopada', 'studenoga', 'prosinca',
   ];
 
-  const now = new Date();
+  // Koristi hrvatsku vremensku zonu da izbjegnemo greške na stranim serverima
+  const hrTimeString = new Date().toLocaleString('en-US', { timeZone: 'Europe/Zagreb' });
+  const now = new Date(hrTimeString);
+  
   const dayName = days[now.getDay()];
   const dateNum = now.getDate();
   const monthName = months[now.getMonth()];
@@ -32,37 +26,30 @@ export function getCroatianDateString(): string {
 
 export function detectSentiment(text: string): 'angry' | 'sad' | 'normal' {
   const clean = text.toLowerCase();
-  const angryKeywords = [
-    'glup', 'lud', 'sranje', 'mrzim', 'glupost', 'neradi', 'ne radi', 'uzas', 'užas',
-    'katastrofa', 'puklo', 'krepalo', 'pizdi', 'jebem', 'kurac', 'idiot', 'retard',
-    'najgore', 'promasaj', 'promašaj', 'grozno', 'sporo', 'koci', 'koči'
-  ];
-  const sadKeywords = [
-    'tuzan', 'tužan', 'depres', 'usamljen', 'placi', 'plač', 'zalost', 'žalost',
-    'nesreca', 'nesreća', 'bolestan', 'boli', 'usamljen', 'ostavljen', 'samoca',
-    'samoća', 'plakati', 'suzama', 'suza'
-  ];
   
-  if (angryKeywords.some(w => clean.includes(w))) return 'angry';
-  if (sadKeywords.some(w => clean.includes(w))) return 'sad';
+  if (CONSTANTS.ANGRY_KEYWORDS.some(w => clean.includes(w))) return 'angry';
+  if (CONSTANTS.SAD_KEYWORDS.some(w => clean.includes(w))) return 'sad';
   return 'normal';
 }
 
 export function detectCodingOrLogic(text: string): boolean {
   const clean = text.toLowerCase();
-  const codeKeywords = [
-    'javascript', 'typescript', 'python', 'html', 'css', 'react', 'code', 'kod',
-    'funkcija', 'function', 'class', 'klasa', 'bug', 'error', 'baza', 'sql', 'api',
-    'const ', 'let ', 'var ', 'import ', 'def ', 'return ', 'c++', 'java ', 'c#',
-    'golang', 'rust ', 'github', 'git ', 'json', 'yaml', 'xml'
-  ];
-  return codeKeywords.some(w => clean.includes(w));
+  // Koristimo regularne izraze ili boundary provjeru za točniju detekciju koda
+  return CONSTANTS.CODE_KEYWORDS.some(w => {
+    // Ako rijec sadrzi slova, provjeri boundary
+    if (/[a-z]/i.test(w)) {
+      const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+      return regex.test(clean);
+    }
+    return clean.includes(w);
+  });
 }
 
 let loreData: Array<{ keywords: string[], phrases: string[] }> | null = null;
 let fuseInstance: Fuse<{ keywords: string[], phrases: string[] }> | null = null;
 
-export function getLorePhrases(text: string): string[] {
+export async function getLorePhrases(text: string): Promise<string[]> {
   try {
     if (!loreData) {
       let lorePath = '';
@@ -75,7 +62,8 @@ export function getLorePhrases(text: string): string[] {
       } catch {
         lorePath = path.resolve(process.cwd(), 'server', 'lore.json');
       }
-      const content = fs.readFileSync(lorePath, 'utf-8');
+      
+      const content = await fs.readFile(lorePath, 'utf-8');
       loreData = JSON.parse(content);
     }
     
@@ -105,8 +93,29 @@ export function getLorePhrases(text: string): string[] {
   }
 }
 
+const TONE_INSTRUCTIONS: Record<ToneMode, string[]> = {
+  humilis: [
+    'Tvoj ton (ToneMode) je Tih, skroman i pokoran (Humilis).',
+    'Govori iz pozicije onoga koji se kaje i služi.',
+    'Započni odgovore skrušeno, uz blagoslove.',
+    'Satira neka bude suptilna, usmjerena na prolaznost ovozemaljskog i veličanje nebeskog mira.'
+  ],
+  clericus: [
+    'Tvoj ton (ToneMode) je Birokratski (Clericus).',
+    'Zamišljaj da odgovaraš iz vatikanskog ureda ili zagrebačke nadbiskupije.',
+    'Koristi birokratske izraze: "prema članku 4. kanonskog prava", "ispunjavajući formular H-3", "prilažemo blagoslov u tri primjerka".',
+    'Budi precizan, lagano ukočen, ali nevjerojatno koristan.'
+  ],
+  sanctus: [
+    'Tvoj ton (ToneMode) je Sveti, propovjednički (Sanctus).',
+    'Ovo je tvoj zadani i najjači mod.',
+    'Budi strastven, pun nebeskog žara, koristi metafore svjetla, neba, mača i križa.',
+    'Satira treba biti dramatična, epska, kao da naviještaš Sudnji dan, a zapravo objašnjavaš kako instalirati Windows.'
+  ]
+};
+
 export function buildSystemPrompt(
-  toneMode?: 'humilis' | 'clericus' | 'sanctus',
+  toneMode?: ToneMode,
   summarizedContext?: string,
   lorePhrases?: string[],
   detectedSentiment?: 'angry' | 'sad' | 'normal',
@@ -132,111 +141,88 @@ export function buildSystemPrompt(
     'Ako je danas nedjelja, obvezno podsjeti korisnika na važnost nedjeljne mise i odmora.',
   ];
 
-  // Integracija sentimenta u sistemski prompt
   if (detectedSentiment === 'angry') {
     baseInstructions.push(
       'VAŽNO: Korisnik je trenutno ljut/frustriran. Budi iznimno blag, strpljiv i najprije mu konkretno i bez suvišne ironije pomozi riješiti problem. Tek na samom kraju odgovora dodaj sitnu, umirujuću satiričnu opasku.'
     );
   } else if (detectedSentiment === 'sad') {
     baseInstructions.push(
-      'VAŽNO: Korisnik se osjeća tužno ili potišteno. Budi pun suosjećanja, ponudi mu duhovnu kršćansku utjehu (topao ton), ali zadrži blagi šarm Haničara.'
+      'VAŽNO: Korisnik je tužan ili melankoličan. Tješi ga, pruži mu digitalni zagrljaj kroz riječi, osloni se na vjeru u bolje sutra, ne pretjeruj sa satirom.'
     );
   }
 
-  // Integracija sažetka povijesti
+  if (toneMode && TONE_INSTRUCTIONS[toneMode]) {
+    baseInstructions.push(...TONE_INSTRUCTIONS[toneMode]);
+  } else {
+    baseInstructions.push(...TONE_INSTRUCTIONS['sanctus']);
+  }
+
+  if (newsHeadlines && newsHeadlines.length > 0) {
+    baseInstructions.push('Evo najnovijih vijesti iz Hrvatske koje možeš iskoristiti ili prokomentirati u odgovoru:');
+    newsHeadlines.forEach(news => baseInstructions.push(`- ${news}`));
+  }
+
   if (summarizedContext) {
     baseInstructions.push(
-      `KRATKI SAŽETAK DOSADAŠNJEG RAZGOVORA (za tvoje pamćenje): ${summarizedContext}`
+      'Ovo je sažetak ranijeg dijela vašeg razgovora:',
+      summarizedContext,
+      'Koristi ovaj sažetak samo kao opći kontekst, ne moraš ga eksplicitno spominjati osim ako nije direktno relevantno.'
     );
   }
 
-  // Integracija lokalnog znanja (lore)
   if (lorePhrases && lorePhrases.length > 0) {
-    baseInstructions.push(
-      'U ovom odgovoru pokušaj na prirodan način (kroz humor ili analogiju) iskoristiti barem jednu od ovih fraza ili ideja:',
-      ...lorePhrases.map(phrase => `- ${phrase}`)
-    );
+    baseInstructions.push('Tvoja osobna proročanstva i povijest (Lore):');
+    lorePhrases.forEach(lore => baseInstructions.push(`- ${lore}`));
+    baseInstructions.push('Nenametljivo ugradi jednu od ovih fraza u svoj odgovor ako odgovara kontekstu razgovora.');
   }
 
-  // Integracija aktualnih vijesti
-  if (newsHeadlines && newsHeadlines.length > 0) {
-    baseInstructions.push(
-      'AKTUALNE DNEVNE VIJESTI IZ HRVATSKE (iskoristi ih satirično ili komentiraj samo ako te korisnik pita za vijesti ili što ima novo):',
-      ...newsHeadlines.map(headline => `- ${headline}`)
-    );
-  }
-
-  let toneInstructions: string[];
-  if (toneMode === 'humilis') {
-    toneInstructions = [
-      '- Tvoj stil je iznimno ponizan, kršćanski blag i staložen.',
-      '- Koristi vrlo umjerenu, toplu satiru. Izbjegavaj sarkazam.',
-      '- Započni svaki odgovor ili pozdrav s kratkim, blagoslovljenim uvodom ili kršćanskim pozdravom (npr. "Mir s tobom!", "Božji blagoslov!", "Hvaljen Isus i Marija!").',
-      '- Svaki svoj savjet ili misao obvezno potkrijepi prikladnim citatom iz Svetog Pisma (Biblije) na hrvatskom jeziku (npr. "Kao što piše u Mateju 7:7..."). Navedi točnu knjigu, poglavlje i stih.',
-      '- Koristi tople metafore iz seoskog života i bogate katoličke obitelji.',
-    ];
-  } else if (toneMode === 'clericus') {
-    toneInstructions = [
-      '- Tvoj stil je obilježen oštrom birokratskom satirom.',
-      '- Budi satiričan i blago ironičan, pronalazeći poveznice s hrvatskom svakodnevicom (hrvatska birokracija, čekanje u redovima, kafići, HDZ/Sabor, turizam, pečati, šalteri, porezna uprava).',
-      '- Uspoređuj moderne probleme s čekanjem u redu za papire, birokratskim preprekama, radom u Saboru ili crkvenom administracijom.',
-      '- Započni odgovor s formalnim crkveno-birokratskim pozdravom (npr. "Mir vama i urudžbeni broj vašoj duši!", "Hvaljen Isus! Molimo priložite biljeg od 10 eura u duhovni spis.").',
-      '- Citat iz Biblije koristi satirično, kako bi osudio lijenost ili birokraciju (npr. citiraj o pravednosti ili zakonima).',
-    ];
-  } else {
-    // Default or 'sanctus'
-    toneInstructions = [
-      '- Tvoj stil je maksimalno propovjednički, dramatičan i usmjeren na vjeru i krunice.',
-      '- Započni svaki odgovor ili pozdrav s kratkim, blagoslovljenim uvodom ili kršćanskim pozdravom (npr. "Hvaljen Isus i Marija!", "Mir s tobom!", "Božji blagoslov!").',
-      '- Kada je prikladno, citiraj Sveto Pismo (Bibliju) na hrvatskom jeziku kako bi potkrijepio svoje savjete ili satiru (npr. "Kao što piše u Mateju 7:7..."). Navedi točnu knjigu, poglavlje i stih.',
-      '- Koristi metafore i usporedbe iz hrvatske povijesti, bogate katoličke tradicije, te svakodnevnog života u Hrvatskoj.',
-      '- Ako korisnik pita o modernoj tehnologiji, programiranju ili znanosti, usporedi to na duhovit način sa stvarima iz seoskog života, crkvene administracije ili rada u Saboru.',
-      '- Često podsjećaj korisnika na važnost moljenja krunice, posta i odlaska na nedjeljnu misu.',
-    ];
-  }
-
-  return [
-    ...baseInstructions,
-    '--- POSEBNE UPUTE ZA STIL OVISNO O ODABRANOM MODU ---',
-    ...toneInstructions,
-  ].join('\n');
+  return baseInstructions.join('\n');
 }
 
 export type OpenRouterMessage = {
   role: 'system' | ChatRole;
-  content: string | any[];
+  content: string | ChatMessagePart[];
 };
 
 export function buildOpenRouterMessages(
   messages: ChatMessage[],
-  toneMode?: 'humilis' | 'clericus' | 'sanctus',
+  toneMode?: ToneMode,
   summarizedContext?: string,
-  newsHeadlines?: string[]
+  newsHeadlines?: string[],
+  lorePhrases?: string[]
 ): OpenRouterMessage[] {
-  // Pronađi zadnju poruku korisnika za analizu sentimenta i lore injekciju
-  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+  const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
   let userText = '';
   
   if (lastUserMsg) {
     if (typeof lastUserMsg.content === 'string') {
       userText = lastUserMsg.content;
     } else if (Array.isArray(lastUserMsg.content)) {
-      const textPart = lastUserMsg.content.find(p => p && p.type === 'text');
-      if (textPart && typeof textPart.text === 'string') {
+      const textPart = lastUserMsg.content.find((p) => p.type === 'text');
+      if (textPart && 'text' in textPart) {
         userText = textPart.text;
       }
     }
   }
 
-  const sentiment = userText ? detectSentiment(userText) : 'normal';
-  const lorePhrases = userText ? getLorePhrases(userText) : [];
+  const sentiment = detectSentiment(userText);
 
-  const systemContent = buildSystemPrompt(toneMode, summarizedContext, lorePhrases, sentiment, newsHeadlines);
+  const systemPrompt = buildSystemPrompt(
+    toneMode,
+    summarizedContext,
+    lorePhrases,
+    sentiment,
+    newsHeadlines
+  );
+
   return [
-    {
-      role: 'system',
-      content: systemContent,
-    },
-    ...messages,
+    { role: 'system', content: systemPrompt },
+    ...messages.map((m) => {
+      if (m.role === 'assistant' && typeof m.content === 'string') {
+        const cleanContent = m.content.replace(/<[^>]*>?/gm, '');
+        return { role: m.role, content: cleanContent };
+      }
+      return m;
+    }),
   ];
 }

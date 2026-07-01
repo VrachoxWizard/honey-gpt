@@ -1,3 +1,11 @@
+export interface OpenRouterStreamChunk {
+  choices?: Array<{
+    delta?: { content?: string };
+  }>;
+  model?: string;
+  error?: string;
+}
+
 /**
  * Parses Server-Sent Events (SSE) data from a text buffer.
  * Processes all complete lines in the buffer, executes onPayload for each parsed JSON data object,
@@ -5,7 +13,7 @@
  */
 export function parseSSEChunks(
   buffer: string,
-  onPayload: (payload: any) => void
+  onPayload: (payload: OpenRouterStreamChunk) => void
 ): string {
   const lines = buffer.split('\n');
   const remaining = lines.pop() || '';

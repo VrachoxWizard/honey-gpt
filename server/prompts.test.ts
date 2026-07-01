@@ -51,19 +51,17 @@ describe('Prompts / Sentiment & Coding Detection', () => {
 
     it('should include sad instructions when user is sad', () => {
       const prompt = buildSystemPrompt('sanctus', undefined, undefined, 'sad');
-      expect(prompt).toContain('Korisnik se osjeća tužno ili potišteno');
+      expect(prompt).toContain('Korisnik je tužan ili melankoličan');
     });
 
     it('should format instructions according to toneMode humilis', () => {
       const prompt = buildSystemPrompt('humilis');
-      expect(prompt).toContain('Tvoj stil je iznimno ponizan');
-      expect(prompt).toContain('Svetog Pisma');
+      expect(prompt).toContain('skroman i pokoran');
     });
 
     it('should format instructions according to toneMode clericus', () => {
       const prompt = buildSystemPrompt('clericus');
-      expect(prompt).toContain('birokratskom');
-      expect(prompt).toContain('HDZ/Sabor');
+      expect(prompt).toContain('Birokratski (Clericus)');
     });
   });
 

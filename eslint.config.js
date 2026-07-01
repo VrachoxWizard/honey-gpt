@@ -35,7 +35,7 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'no-empty': ['error', { allowEmptyCatch: true }]
     },
@@ -73,7 +73,7 @@ export default [
     },
     rules: {
       ...ts.configs.recommended.rules,
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
   }

@@ -1,4 +1,5 @@
-import { useChatStore, welcomeMessage } from '../store/chatStore';
+import { useChatStore } from '../store/chatStore';
+import { welcomeMessage } from '../store/chatStorage';
 
 export { welcomeMessage };
 

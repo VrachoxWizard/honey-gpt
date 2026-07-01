@@ -87,8 +87,9 @@ export function ChatComposer({
     try {
       const compressed = await compressAndConvertImage(file);
       setAttachedImage(compressed);
-    } catch (err: any) {
-      showToast(err?.message || 'Greška prilikom obrade slike.', 'error');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Greška prilikom obrade slike.';
+      showToast(message, 'error');
     }
   };
 

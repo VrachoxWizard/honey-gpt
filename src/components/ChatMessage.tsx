@@ -4,23 +4,24 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { cn } from '../utils/cn';
 import { useToast } from '../hooks/useToast';
+import { useClipboard } from '../hooks/useClipboard';
 import { ShikiHighlighter } from './ShikiHighlighter';
 import { SaintPortrait } from './SaintPortrait';
 import type { Message } from '../types';
 
 function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useClipboard();
   const { showToast } = useToast();
+  
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
+    const success = await copy(text);
+    if (success) {
       showToast('Prepisano u međuspremnik!', 'success');
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
+    } else {
       showToast('Prepisivanje nije uspjelo.', 'error');
     }
   };
+  
   return (
     <button
       onClick={handleCopy}
@@ -34,17 +35,10 @@ function CopyButton({ text }: { text: string }) {
 }
 
 function CopyBlockButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {}
-  };
+  const { copied, copy } = useClipboard();
   return (
     <button
-      onClick={handleCopy}
+      onClick={() => copy(text)}
       className="text-ink-soft hover:text-ink transition-colors flex items-center gap-1 cursor-pointer select-none font-ui text-[11px]"
     >
       {copied ? <Check size={12} className="text-gold-bright" /> : <Copy size={12} />}
@@ -54,7 +48,7 @@ function CopyBlockButton({ text }: { text: string }) {
 }
 
 const markdownComponents = {
-  code({ _node, inline, className, children, ...props }: any) {
+  code({ inline, className, children, ...props }: React.ComponentPropsWithoutRef<'code'> & { inline?: boolean }) {
     const match = /language-(\w+)/.exec(className || '');
     const codeString = String(children).replace(/\n$/, '');
     return !inline && match ? (

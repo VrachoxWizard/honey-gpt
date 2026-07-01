@@ -1,12 +1,19 @@
 import ky from 'ky';
+import { CONSTANTS } from './constants';
 
 const redisUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();
 const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
 
 export const isRedisEnabled = Boolean(redisUrl && redisToken);
 
+type RedisCommand = (string | number)[];
+interface RedisPipelineResult {
+  result: unknown;
+  error?: string;
+}
+
 // Pomocni klijent za slanje zahtjeva Upstash REST API-ju
-async function runRedisCommands(commands: any[][]): Promise<any[]> {
+async function runRedisCommands(commands: RedisCommand[]): Promise<unknown[]> {
   if (!isRedisEnabled) {
     throw new Error('Redis nije konfiguriran.');
   }
@@ -18,9 +25,9 @@ async function runRedisCommands(commands: any[][]): Promise<any[]> {
         'Content-Type': 'application/json',
       },
       json: commands,
-      timeout: 3000, // Kratki timeout od 3 sekunde da ne blokiramo korisnika ako Redis spava
-      retry: 1,
-    }).json<any[]>();
+      timeout: CONSTANTS.REDIS_TIMEOUT_MS, // Kratki timeout da ne blokiramo korisnika ako Redis spava
+      retry: { limit: 1 },
+    }).json<RedisPipelineResult[]>();
 
     return response.map(res => {
       if (res.error) {
@@ -53,7 +60,7 @@ export async function checkRateLimitRedis(ip: string, maxRequests = 20): Promise
   try {
     const results = await runRedisCommands([
       ['INCR', key],
-      ['EXPIRE', key, 120], // Ključ ističe za 2 minute kako bismo spriječili curenje memorije
+      ['EXPIRE', key, CONSTANTS.REDIS_KEY_EXPIRE_SECONDS], // Ključ ističe za sprječavanje curenja memorije
     ]);
 
     const count = Number(results[0]);

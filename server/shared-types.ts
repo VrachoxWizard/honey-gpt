@@ -14,7 +14,9 @@ export interface HanicarReply {
   model: string;
 }
 
+export type ToneMode = 'humilis' | 'clericus' | 'sanctus';
+
 export interface HanicarOptions {
   model?: string;
-  toneMode?: 'humilis' | 'clericus' | 'sanctus';
+  toneMode?: ToneMode;
 }
