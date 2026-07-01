@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Feather } from 'lucide-react';
 import { SaintPortrait } from './SaintPortrait';
@@ -20,7 +20,7 @@ const SCRIBING_MESSAGES = [
   'trese lampu da izađe mudrost…',
 ];
 
-export function TypingIndicator() {
+export const TypingIndicator = memo(function TypingIndicator() {
   const [message] = useState(
     () => SCRIBING_MESSAGES[Math.floor(Math.random() * SCRIBING_MESSAGES.length)]
   );
@@ -38,4 +38,4 @@ export function TypingIndicator() {
       </span>
     </motion.div>
   );
-}
+});

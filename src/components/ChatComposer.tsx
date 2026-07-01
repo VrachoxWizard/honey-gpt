@@ -1,8 +1,10 @@
-import { ChangeEvent, DragEvent, FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, DragEvent, FormEvent, KeyboardEvent, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Feather, Square, Paperclip, X, AlertTriangle } from 'lucide-react';
+import { Square, Paperclip, X, AlertTriangle } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useToast } from '../hooks/useToast';
+import { TextInput } from './chat/ChatComposer/TextInput';
+import { SendButton } from './chat/ChatComposer/SendButton';
 
 interface ChatComposerProps {
   draft: string;
@@ -72,17 +74,6 @@ export function ChatComposer({
   const [isDragging, setIsDragging] = useState(false);
   const { showToast } = useToast();
 
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    textarea.style.height = 'auto';
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 168)}px`;
-  }, [draft]);
-
-  useEffect(() => {
-    if (!isSending) textareaRef.current?.focus();
-  }, [isSending]);
-
   const processImageFile = async (file: File) => {
     try {
       const compressed = await compressAndConvertImage(file);
@@ -100,32 +91,34 @@ export function ChatComposer({
     e.target.value = '';
   };
 
-  const handleSubmit = (e?: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback((e?: FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
     if (isSending) return;
     if (!draft.trim() && !attachedImage) return;
     onSubmit(draft.trim(), attachedImage || undefined);
     setDraft('');
     setAttachedImage(null);
-  };
+  }, [isSending, draft, attachedImage, onSubmit, setDraft]);
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
-  };
+  }, [handleSubmit]);
 
   const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isSending) setIsDragging(true);
   };
+  
   const handleDragLeave = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   };
+  
   const handleDrop = async (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -138,7 +131,6 @@ export function ChatComposer({
   return (
     <div className="px-4 md:px-10 pt-6 pb-3 bg-gradient-to-t from-parchment via-parchment to-transparent">
       <div className="max-w-[720px] mx-auto relative">
-        {/* Stop pero */}
         <AnimatePresence>
           {isSending && (
             <motion.div
@@ -218,50 +210,33 @@ export function ChatComposer({
               <Paperclip size={17} />
             </button>
 
-            <textarea
-              ref={textareaRef}
-              value={draft}
-              rows={1}
-              placeholder="Upiši svoju molbu Haničaru…"
-              aria-label="Upiši molbu"
-              onChange={(e) => setDraft(e.target.value.slice(0, 8000))}
+            <TextInput
+              textareaRef={textareaRef}
+              draft={draft}
+              setDraft={setDraft}
+              isSending={isSending}
               onKeyDown={handleKeyDown}
-              disabled={isSending}
-              className="flex-1 max-h-[150px] bg-transparent resize-none py-2 px-1.5 text-ink placeholder:text-ink-faint focus:outline-none text-[15px] leading-snug font-display disabled:opacity-50"
             />
 
-            <motion.button
-              whileTap={!isSending ? { scale: 0.94 } : {}}
-              type="submit"
-              disabled={(!draft.trim() && !attachedImage) || isSending}
-              aria-label="Zapečati i pošalji"
-              className="wax-seal shrink-0 w-10 h-10 flex items-center justify-center rounded-full mb-0.5 cursor-pointer disabled:cursor-not-allowed"
-            >
-              {isSending ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <Feather size={16} />
-              )}
-            </motion.button>
+            <SendButton
+              isDisabled={(!draft.trim() && !attachedImage) || isSending}
+              isSending={isSending}
+            />
           </div>
 
           {draft.length > 0 && (
             <div className="flex justify-end px-3 pb-1 pt-0.5">
               <span
                 className={cn(
-                  'font-ui text-[10px] font-semibold select-none tabular-nums',
-                  draft.length > 7000 ? 'text-oxblood' : 'text-ink-faint'
+                  'text-[10px]',
+                  draft.length >= 8000 ? 'text-oxblood' : 'text-ink-faint'
                 )}
               >
-                {draft.length}/8000
+                {draft.length} / 8000
               </span>
             </div>
           )}
         </form>
-
-        <p className="text-center font-display italic text-[11px] text-ink-faint mt-2 select-none">
-          Haničar može pogriješiti. Za teške grijehe provjeri kod župnika.
-        </p>
       </div>
     </div>
   );

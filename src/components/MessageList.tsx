@@ -1,7 +1,7 @@
 import { AnimatePresence } from 'framer-motion';
 import { ChatMessage } from './ChatMessage';
-import { welcomeMessage } from '../store/chatStorage';
-import type { Message } from '../types';
+import { welcomeMessage } from '../store/chatStore';
+import type { Message } from '@shared/types';
 
 interface MessageListProps {
   messages: Message[];

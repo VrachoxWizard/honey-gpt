@@ -1,4 +1,4 @@
-import type { ChatRole, ChatMessage, ChatMessagePart, ToneMode } from './shared-types.js';
+import type { ChatRole, ChatMessage, ChatMessagePart, ToneMode } from '@shared/types';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

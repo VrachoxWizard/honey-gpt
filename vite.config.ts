@@ -1,8 +1,10 @@
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import path from 'node:path';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { handleChatPayloadStream, toClientError } from './server/api.js';
 import { checkRateLimit, getClientIp } from './server/limiter.js';
+import { checkEnv } from './server/env.js';
 
 function readRequestBody(request: import('node:http').IncomingMessage) {
   return new Promise<unknown>((resolve, reject) => {
@@ -66,6 +68,7 @@ function localApiPlugin(): Plugin {
         }
 
         try {
+          checkEnv();
           const payload = await readRequestBody(request);
           
           response.statusCode = 200;
@@ -100,6 +103,18 @@ export default defineConfig(({ mode }) => {
   Object.assign(process.env, env);
 
   return {
+    resolve: {
+      alias: {
+        '@shared': path.resolve(process.cwd(), './shared'),
+        '@': path.resolve(process.cwd(), './src'),
+        '@components': path.resolve(process.cwd(), './src/components'),
+        '@hooks': path.resolve(process.cwd(), './src/hooks'),
+        '@store': path.resolve(process.cwd(), './src/store'),
+        '@lib': path.resolve(process.cwd(), './src/lib'),
+        '@utils': path.resolve(process.cwd(), './src/utils'),
+        '@styles': path.resolve(process.cwd(), './src/styles')
+      }
+    },
     plugins: [react(), tailwindcss(), localApiPlugin()],
     server: {
       host: '127.0.0.1',

@@ -1,14 +1,13 @@
+import { memo } from 'react';
 import { cn } from '../utils/cn';
 
 interface SaintPortraitProps {
   size?: number;
   className?: string;
-  /** subtle candle-glow halo (used for the presence portrait) */
   halo?: boolean;
 }
 
-/** The likeness of Sveti Haničar in a gilt medallion — his presence in the codex. */
-export function SaintPortrait({ size = 44, className, halo }: SaintPortraitProps) {
+export const SaintPortrait = memo(function SaintPortrait({ size = 48, className, halo }: SaintPortraitProps) {
   return (
     <div
       style={{ width: size, height: size }}
@@ -29,4 +28,4 @@ export function SaintPortrait({ size = 44, className, halo }: SaintPortraitProps
       <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-white/15" />
     </div>
   );
-}
+});

@@ -1,8 +1,6 @@
 import ky from 'ky';
-import { buildOpenRouterMessages, getLorePhrases } from './prompts.js';
 import { CONSTANTS } from './constants.js';
 import { parseSSEChunks, type OpenRouterStreamChunk } from './sse-parser.js';
-import type { ChatMessage, ToneMode } from './shared-types.js';
 
 export interface OpenRouterResponse {
   id: string;
@@ -29,44 +27,11 @@ export function isQuotaLikeError(message: string): boolean {
   return /\b(429|quota|rate limit|credits|payment|required)\b/i.test(message);
 }
 
-/**
- * Dinamicki odabir modela ovisno o kontekstu.
- * Ako je zadani model neaktivan ili pod opterecenjem, vracamo niz alternativnih modela za fallback.
- */
-export function getModelCandidates(requestedModel?: string, userText: string = ''): string[] {
-  // 1. Ako je odreden specifičan model (npr. u UI), koristimo njega kao primarni
-  if (requestedModel) {
-    if (requestedModel.includes('deepseek-r1') || requestedModel.includes('qwen')) {
-      return [requestedModel, CONSTANTS.DEFAULT_MODEL, 'meta-llama/llama-3.3-70b-instruct'];
-    }
-    return [requestedModel, CONSTANTS.DEFAULT_MODEL];
-  }
-
-  // 2. Ako prepoznajemo kodiranje, usmjeravamo na modele dobre za kodiranje
-  const isCoding = CONSTANTS.CODE_KEYWORDS.some((word) => userText.toLowerCase().includes(word));
-  if (isCoding) {
-    return [
-      'qwen/qwen-2.5-coder-32b-instruct',
-      'google/gemini-2.5-pro',
-      CONSTANTS.DEFAULT_MODEL,
-    ];
-  }
-
-  // 3. Zadani redoslijed: brzi model pa fallback na veci model
-  return [CONSTANTS.DEFAULT_MODEL, 'meta-llama/llama-3.3-70b-instruct'];
-}
-
 export async function callOpenRouter(
   apiKey: string,
   model: string,
-  messages: ChatMessage[],
-  toneMode?: ToneMode,
-  summarizedContext?: string,
-  newsHeadlines?: string[]
+  messages: any[]
 ): Promise<OpenRouterResponse> {
-  const lorePhrases = await getLorePhrases(messages[messages.length - 1]?.content as string || '');
-  const orMessages = buildOpenRouterMessages(messages, toneMode, summarizedContext, newsHeadlines, lorePhrases);
-
   return ky
     .post(CONSTANTS.OPENROUTER_URL, {
       headers: {
@@ -77,7 +42,7 @@ export async function callOpenRouter(
       },
       json: {
         model,
-        messages: orMessages,
+        messages,
         max_tokens: CONSTANTS.DEFAULT_MAX_TOKENS,
         temperature: CONSTANTS.LLM_TEMPERATURE,
       },
@@ -90,15 +55,9 @@ export async function callOpenRouter(
 export async function streamOpenRouter(
   apiKey: string,
   model: string,
-  messages: ChatMessage[],
-  onChunk: (chunk: { token?: string; model?: string }) => void,
-  toneMode?: ToneMode,
-  summarizedContext?: string,
-  newsHeadlines?: string[]
+  messages: any[],
+  onChunk: (chunk: { token?: string; model?: string }) => void
 ): Promise<string> {
-  const lorePhrases = await getLorePhrases(messages[messages.length - 1]?.content as string || '');
-  const orMessages = buildOpenRouterMessages(messages, toneMode, summarizedContext, newsHeadlines, lorePhrases);
-  
   const response = await ky.post(CONSTANTS.OPENROUTER_URL, {
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -108,7 +67,7 @@ export async function streamOpenRouter(
     },
     json: {
       model,
-      messages: orMessages,
+      messages,
       max_tokens: CONSTANTS.DEFAULT_MAX_TOKENS,
       temperature: CONSTANTS.LLM_TEMPERATURE,
       stream: true,
@@ -149,49 +108,4 @@ export async function streamOpenRouter(
   }
 
   return fullResponseText;
-}
-
-export async function summarizeConversationIfNeeded(
-  messages: ChatMessage[],
-  apiKey: string
-): Promise<string> {
-  if (messages.length < CONSTANTS.SUMMARIZATION_THRESHOLD) return '';
-
-  const earlyMessages = messages.slice(0, -CONSTANTS.SUMMARIZED_CONTEXT_MESSAGES).filter(m => m.role === 'user' || m.role === 'assistant');
-  if (earlyMessages.length === 0) return '';
-
-  try {
-    const payload = await ky.post(CONSTANTS.OPENROUTER_URL, {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      json: {
-        model: CONSTANTS.DEFAULT_MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: 'Ti si pomocnik koji sazima razgovore na hrvatskom jeziku. Sazmi kljucne teme dosadasnjeg razgovora u maksimalno dvije recenice na hrvatskom jeziku. Fokusiraj se na ono sto je korisnik trazio i sto mu je sugovornik odgovorio.'
-          },
-          ...earlyMessages.map(m => ({
-            role: m.role,
-            content: typeof m.content === 'string' ? m.content : 'Slika ili nespecificiran sadržaj'
-          }))
-        ],
-        max_tokens: CONSTANTS.SUMMARIZATION_MAX_TOKENS,
-        temperature: CONSTANTS.SUMMARIZATION_TEMPERATURE,
-      },
-      retry: { limit: 2 },
-      timeout: 8000,
-    }).json<OpenRouterResponse>().catch(() => null);
-
-    const text = payload?.choices?.[0]?.message?.content?.trim();
-    if (text) {
-      return text;
-    }
-  } catch (e) {
-    console.error('Neuspjelo sazimanja povijesti:', e);
-  }
-
-  return '';
 }

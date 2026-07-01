@@ -6,11 +6,12 @@ import {
   isConfiguredOpenRouterKey,
   isRetryableOpenRouterError,
   isQuotaLikeError,
-  getModelCandidates,
   streamOpenRouter,
-  summarizeConversationIfNeeded,
 } from './openrouter.js';
-import type { ChatMessage, HanicarOptions } from './shared-types.js';
+import { getModelCandidates } from './models.js';
+import { summarizeConversationIfNeeded } from './summary.js';
+import { buildOpenRouterMessages, getLorePhrases } from './prompts.js';
+import type { ChatMessage, HanicarOptions } from '@shared/types';
 
 interface PreparedRequest {
   apiKey: string;
@@ -19,6 +20,7 @@ interface PreparedRequest {
   cacheKey: string;
   newsHeadlines: string[];
   summarizedContext: string;
+  lorePhrases: string[];
 }
 
 function sanitizeMessages(messages: ChatMessage[], limit: number = CONSTANTS.MAX_MESSAGES): ChatMessage[] {
@@ -78,7 +80,10 @@ async function prepareHanicarRequest(
   // 4. Dinamičko usmjeravanje modela
   const models = getModelCandidates(options?.model, userText);
 
-  // 5. Cache kljuc
+  // 5. Zazivanje Hanicar lore-a
+  const lorePhrases = await getLorePhrases(userText);
+
+  // 6. Cache kljuc
   const primaryModel = models[0];
   const cacheKey = generateCacheKey(cleanMessages, primaryModel, options?.toneMode, newsHeadlines);
 
@@ -89,6 +94,7 @@ async function prepareHanicarRequest(
     cacheKey,
     newsHeadlines,
     summarizedContext,
+    lorePhrases,
   };
 }
 
@@ -104,6 +110,7 @@ export async function streamHanicarReply(
     cacheKey,
     newsHeadlines,
     summarizedContext,
+    lorePhrases,
   } = await prepareHanicarRequest(messages, options);
   
   const cachedReply = await getCachedReply(cacheKey);
@@ -124,23 +131,28 @@ export async function streamHanicarReply(
   }
 
   let lastError = '';
+  
+  const orMessages = buildOpenRouterMessages(
+    cleanMessages, 
+    options?.toneMode, 
+    summarizedContext, 
+    newsHeadlines, 
+    lorePhrases
+  );
 
   for (const model of models) {
     try {
       const fullText = await streamOpenRouter(
         apiKey,
         model,
-        cleanMessages,
-        onChunk,
-        options?.toneMode,
-        summarizedContext,
-        newsHeadlines
+        orMessages,
+        onChunk
       );
 
       // Spremanje u cache nakon sto stream zavrsi uspjesno
       const reply = {
         text: fullText,
-        model: model, // ideally should be parsed from stream payload if possible
+        model: model,
       };
       await setCachedReply(cacheKey, reply);
       return;

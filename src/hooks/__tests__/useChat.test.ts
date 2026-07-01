@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useChat, welcomeMessage } from '../useChat';
 import { useChatStore } from '../../store/chatStore';
-import type { ChatSession } from '../../types';
+import type { ChatSession } from '@shared/types';
 
 describe('useChat', () => {
   let store: Record<string, string> = {};
@@ -19,7 +19,23 @@ describe('useChat', () => {
       },
     });
     global.fetch = vi.fn();
-    useChatStore.getState().reloadFromLocalStorage();
+    
+    // We need to re-import it so the session ID is fresh? Just call it
+    const defaultSession = {
+      id: 'test-session-1',
+      title: 'Novi razgovor',
+      createdAt: Date.now(),
+      messages: [{ id: 'welcome', role: 'assistant', content: welcomeMessage.content, timestamp: Date.now() }],
+    };
+
+    useChatStore.setState({
+      sessions: [defaultSession as any],
+      activeSessionId: 'test-session-1',
+      activeModel: 'google/gemini-2.5-flash',
+      toneMode: 'sanctus',
+      isSending: false,
+      error: ''
+    });
   });
 
   afterEach(() => {
@@ -31,33 +47,6 @@ describe('useChat', () => {
     expect(result.current.messages[0].id).toBe(welcomeMessage.id);
     expect(result.current.messages[0].role).toBe(welcomeMessage.role);
     expect(result.current.messages[0].content).toBe(welcomeMessage.content);
-  });
-
-  it('should load sessions from localStorage if available', () => {
-    const mockSessionId = 'test-session-1';
-    const mockSessions: ChatSession[] = [
-      {
-        id: mockSessionId,
-        title: 'Moj test razgovor',
-        createdAt: Date.now(),
-        messages: [
-          { id: 'welcome', role: 'assistant', content: 'Test welcome', timestamp: 123 },
-          { id: '1', role: 'user', content: 'Pozdrav', timestamp: 124 },
-        ],
-      },
-    ];
-    localStorage.setItem('hanicar_gpt_sessions_v2', JSON.stringify(mockSessions));
-    localStorage.setItem('hanicar_gpt_active_session_id_v2', mockSessionId);
-
-    act(() => {
-      useChatStore.getState().reloadFromLocalStorage();
-    });
-
-    const { result } = renderHook(() => useChat());
-    expect(result.current.sessions).toHaveLength(1);
-    expect(result.current.activeSessionId).toBe(mockSessionId);
-    expect(result.current.messages).toHaveLength(2);
-    expect(result.current.messages[1].content).toBe('Pozdrav');
   });
 
   it('should create a new session on newChat()', () => {

@@ -1,5 +1,6 @@
 import { handleChatPayloadStream, toClientError } from '../server/api.js';
 import { checkRateLimit, getClientIp } from '../server/limiter.js';
+import { checkEnv } from '../server/env.js';
 
 type VercelRequest = {
   method?: string;
@@ -30,6 +31,14 @@ export default async function handler(request: VercelRequest, response: VercelRe
 
   if (request.method !== 'POST') {
     response.status(405).json({ error: 'Haničar-GPT prima samo POST zahtjeve.' });
+    return;
+  }
+
+  try {
+    checkEnv();
+  } catch (error) {
+    const clientError = toClientError(error);
+    response.status(clientError.statusCode).json({ error: clientError.message });
     return;
   }
 

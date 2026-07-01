@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../utils/cn';
 import { RITES, type ToneMode } from '../lib/codex';
@@ -13,7 +14,7 @@ interface PersonaSealsProps {
  * The three rites of Haničar rendered as wax seals — the signature control.
  * `full` shows names + latin beneath each seal; `bare` is seals only.
  */
-export function PersonaSeals({
+export const PersonaSeals = memo(function PersonaSeals({
   active,
   onChange,
   variant = 'full',
@@ -70,4 +71,4 @@ export function PersonaSeals({
       })}
     </div>
   );
-}
+});

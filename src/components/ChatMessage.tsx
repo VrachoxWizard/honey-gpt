@@ -1,13 +1,11 @@
 import { Check, Copy, Pencil, RefreshCcw } from 'lucide-react';
 import React, { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { cn } from '../utils/cn';
 import { useToast } from '../hooks/useToast';
 import { useClipboard } from '../hooks/useClipboard';
-import { ShikiHighlighter } from './ShikiHighlighter';
 import { SaintPortrait } from './SaintPortrait';
-import type { Message } from '../types';
+import type { Message } from '@shared/types';
+import { MessageContent } from './chat/MessageContent';
 
 function CopyButton({ text }: { text: string }) {
   const { copied, copy } = useClipboard();
@@ -33,45 +31,6 @@ function CopyButton({ text }: { text: string }) {
     </button>
   );
 }
-
-function CopyBlockButton({ text }: { text: string }) {
-  const { copied, copy } = useClipboard();
-  return (
-    <button
-      onClick={() => copy(text)}
-      className="text-ink-soft hover:text-ink transition-colors flex items-center gap-1 cursor-pointer select-none font-ui text-[11px]"
-    >
-      {copied ? <Check size={12} className="text-gold-bright" /> : <Copy size={12} />}
-      <span>{copied ? 'Prepisano' : 'Prepiši'}</span>
-    </button>
-  );
-}
-
-const markdownComponents = {
-  code({ inline, className, children, ...props }: React.ComponentPropsWithoutRef<'code'> & { inline?: boolean }) {
-    const match = /language-(\w+)/.exec(className || '');
-    const codeString = String(children).replace(/\n$/, '');
-    return !inline && match ? (
-      <div className="rounded-lg overflow-hidden my-4 border border-line not-prose">
-        <div className="bg-parchment-3 px-4 py-2 text-xs font-ui font-semibold text-ink-soft uppercase tracking-widest border-b border-line flex justify-between items-center select-none">
-          <span>{match[1]}</span>
-          <CopyBlockButton text={codeString} />
-        </div>
-        <ShikiHighlighter code={codeString} language={match[1]} />
-      </div>
-    ) : (
-      <code
-        {...props}
-        className={cn(
-          className,
-          'bg-parchment-3/70 text-oxblood px-1.5 py-0.5 rounded text-[0.9em] font-mono'
-        )}
-      >
-        {children}
-      </code>
-    );
-  },
-};
 
 interface ChatMessageProps {
   message: Message;
@@ -101,7 +60,6 @@ export const ChatMessage = React.memo(function ChatMessage({
 
   return (
     <div className="group w-full max-w-[720px] mx-auto animate-ink-in">
-      {/* Marginalia: author + time + actions */}
       <div
         className={cn(
           'flex items-center gap-2.5 mb-2',
@@ -153,7 +111,6 @@ export const ChatMessage = React.memo(function ChatMessage({
         )}
       </div>
 
-      {/* Body */}
       {isEditing ? (
         <div className="flex flex-col gap-2">
           <textarea
@@ -202,25 +159,9 @@ export const ChatMessage = React.memo(function ChatMessage({
           </div>
         </div>
       ) : (
-        <div className="folio-leaf pl-2">
-          {message.image && (
-            <div className="mb-3 rounded-lg overflow-hidden border border-line max-w-[260px]">
-              <img
-                src={message.image}
-                alt="Privitak"
-                className="w-full h-auto object-cover max-h-[200px]"
-              />
-            </div>
-          )}
-          <div
-            className={cn(
-              'prose prose-codex max-w-none font-display text-[17px] leading-[1.75] text-ink',
-              message.content.length > 40 && 'dropcap'
-            )}
-          >
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {message.content}
-            </ReactMarkdown>
+        <div className="flex justify-start">
+          <div className="max-w-[90%] rounded-2xl rounded-tl-sm bg-parchment-2 border border-gold/30 px-5 py-3.5 shadow-[0_2px_10px_rgba(60,20,0,0.15)] prose prose-sm md:prose-base prose-headings:font-ui prose-headings:font-bold prose-headings:tracking-wider prose-headings:text-ink prose-p:font-display prose-p:text-ink prose-a:text-oxblood prose-a:underline hover:prose-a:text-oxblood-deep prose-strong:font-bold prose-strong:text-ink prose-code:text-oxblood prose-pre:bg-transparent prose-pre:p-0 prose-pre:m-0">
+            <MessageContent content={message.content} />
           </div>
         </div>
       )}

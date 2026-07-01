@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { LRUCache } from 'lru-cache';
 import { getCacheRedis, setCacheRedis } from './redis.js';
 import { CONSTANTS } from './constants.js';
-import type { ChatMessage, HanicarReply, ToneMode } from './shared-types.js';
+import type { ChatMessage, HanicarReply, ToneMode } from '@shared/types';
 
 // Lokalna predmemorija (LRU) u memoriji poslužitelja
 export const chatCache = new LRUCache<string, HanicarReply>({

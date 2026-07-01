@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { streamHanicarReply } from './hanicar.js';
-import type { ChatMessage } from './shared-types.js';
+import type { ChatMessage } from '@shared/types';
 
 export type ClientError = {
   statusCode: number;

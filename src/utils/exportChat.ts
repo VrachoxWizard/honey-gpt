@@ -1,4 +1,4 @@
-import type { Message } from '../types';
+import type { Message } from '@shared/types';
 
 export function exportChatToMarkdown(messages: Message[]) {
   let content = '# Razgovor s Haničar GPT-om\n\n';
