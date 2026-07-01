@@ -62,19 +62,6 @@ export function Sidebar({
 
         {/* Brand Block */}
         <div className="flex items-center gap-4 mb-8 mt-2 md:mt-0">
-          <div
-            className="w-14 h-14 rounded-xl flex items-center justify-center font-black text-2xl text-white border-2 border-white shadow-[0_6px_20px_rgba(225,29,72,0.25)] select-none shrink-0"
-            style={{
-              backgroundColor: '#f4f4f5',
-              backgroundImage:
-                'linear-gradient(45deg, #be123c 25%, transparent 25%), linear-gradient(-45deg, #be123c 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #be123c 75%), linear-gradient(-45deg, transparent 75%, #be123c 75%)',
-              backgroundSize: '12px 12px',
-              backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0',
-              textShadow: '0 2px 4px rgba(0,0,0,0.6)',
-            }}
-          >
-            H
-          </div>
           <div>
             <p className="text-[10px] font-bold tracking-widest text-crimson-500 uppercase mb-1">
               † Prvi moralni AI †
