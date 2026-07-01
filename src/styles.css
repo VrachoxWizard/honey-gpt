@@ -85,6 +85,8 @@ html.night {
   --color-oxblood-deep: var(--oxblood-deep);
   --color-rubric: var(--rubric);
   --color-line: var(--line);
+  /* Fixed warm cream for text on oxblood/wax surfaces — never flips with theme */
+  --color-seal: #f4e7c8;
 
   /* Legacy remap so untouched components inherit the world */
   --color-zinc-950: var(--parchment);

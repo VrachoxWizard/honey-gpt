@@ -18,10 +18,16 @@ export function MessageList({
 }: MessageListProps) {
   // Filter out the welcome message if there are other messages to avoid cluttering,
   // or show it if it's the welcome message.
+  // Hide the empty assistant placeholder while it's streaming — the typing
+  // indicator stands in for it, so we don't show two avatars at once.
+  const visible = messages.filter(
+    (m) => !(m.role === 'assistant' && m.content === '')
+  );
+
   return (
     <AnimatePresence initial={false}>
-      <div className="space-y-8 w-full">
-        {messages.map((message) => (
+      <div className="space-y-10 w-full">
+        {visible.map((message) => (
           <ChatMessage
             key={message.id}
             message={message}

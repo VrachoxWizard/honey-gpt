@@ -1,34 +1,43 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Feather } from 'lucide-react';
 import { SaintPortrait } from './SaintPortrait';
 
+const SCRIBING_MESSAGES = [
+  'upisuje uz Božju pomoć…',
+  'moli krunicu za točan odgovor…',
+  'konzultira se sa svecima…',
+  'umače pero u sveto crnilo…',
+  'lista po Svetom pismu…',
+  'pali svijeću i razmišlja…',
+  'prevodi s latinskog…',
+  'zaziva Duha Svetoga…',
+  'provjerava kod župnika…',
+  'briše prašinu sa šahovnice…',
+  'traži blagoslov za odgovor…',
+  'šalje golubicu po mudrost…',
+  'razmišlja uz tamjan…',
+  'trese lampu da izađe mudrost…',
+];
+
 export function TypingIndicator() {
+  const [message] = useState(
+    () => SCRIBING_MESSAGES[Math.floor(Math.random() * SCRIBING_MESSAGES.length)]
+  );
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-[720px] mx-auto"
     >
-      <div className="flex items-center gap-2.5 mb-2">
-        <span className="rubric text-[9px] flex items-center gap-2">
-          <SaintPortrait size={24} />
-          Haničar
+      <div className="rule-gold mb-4 opacity-50" />
+      <div className="flex items-center gap-2.5">
+        <SaintPortrait size={24} />
+        <span className="font-display italic text-[15px] text-ink-soft flex items-center gap-2">
+          <Feather size={13} className="text-oxblood animate-quill" />
+          Haničar {message}
         </span>
-        <span className="font-display italic text-[11px] text-ink-faint flex items-center gap-1.5">
-          <Feather size={12} className="text-oxblood animate-quill" />
-          upisuje uz Božju pomoć…
-        </span>
-      </div>
-
-      <div className="folio-leaf pl-2 space-y-2.5 max-w-md">
-        {['w-11/12', 'w-full', 'w-2/3'].map((w, i) => (
-          <div
-            key={i}
-            className={`h-3.5 ${w} rounded bg-parchment-3/60 relative overflow-hidden`}
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gold/15 to-transparent -translate-x-full animate-[shimmer_1.6s_infinite]" />
-          </div>
-        ))}
       </div>
     </motion.div>
   );

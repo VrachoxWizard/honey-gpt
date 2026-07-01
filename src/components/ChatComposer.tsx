@@ -104,6 +104,7 @@ export function ChatComposer({
     if (isSending) return;
     if (!draft.trim() && !attachedImage) return;
     onSubmit(draft.trim(), attachedImage || undefined);
+    setDraft('');
     setAttachedImage(null);
   };
 
@@ -134,7 +135,7 @@ export function ChatComposer({
   };
 
   return (
-    <div className="px-4 md:px-8 pb-4 md:pb-6 pt-2 bg-gradient-to-t from-parchment via-parchment to-transparent">
+    <div className="px-4 md:px-10 pt-3 pb-4 md:pb-5 bg-parchment border-t border-line">
       <div className="max-w-[720px] mx-auto relative">
         {/* Stop pero */}
         <AnimatePresence>
@@ -169,7 +170,7 @@ export function ChatComposer({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            'relative flex flex-col bg-vellum/70 backdrop-blur-sm rounded-2xl border border-line shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_8px_28px_rgba(60,30,10,0.14)] p-2 focus-within:border-gold/50 transition-all duration-200',
+            'relative flex flex-col bg-vellum rounded-2xl border border-line shadow-[0_4px_18px_rgba(60,30,10,0.10)] p-1.5 focus-within:border-gold/55 transition-colors',
             isDragging && 'border-gold/70 ring-2 ring-gold/25'
           )}
         >

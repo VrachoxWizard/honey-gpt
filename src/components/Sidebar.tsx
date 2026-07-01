@@ -121,8 +121,8 @@ function SidebarBody({
             className="relative w-full h-[184px] object-cover object-[center_16%]"
           />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-oxblood-deep/95 via-oxblood-deep/40 to-transparent px-3 pt-9 pb-2.5 text-center">
-            <span className="font-incipit text-[12px] tracking-[0.24em] text-parchment uppercase">
-              ✠ Sveti Haničar ✠
+            <span className="font-incipit text-[12px] tracking-[0.24em] text-seal uppercase">
+              Sveti Haničar
             </span>
           </div>
         </div>
@@ -142,7 +142,7 @@ function SidebarBody({
             onNewChat();
             onClose();
           }}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-oxblood text-parchment font-ui text-xs font-semibold uppercase tracking-[0.14em] hover:brightness-110 transition-all cursor-pointer shadow-[0_3px_10px_rgba(60,12,8,0.25)]"
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-oxblood text-seal font-ui text-xs font-semibold uppercase tracking-[0.14em] hover:brightness-110 transition-all cursor-pointer shadow-[0_3px_10px_rgba(60,12,8,0.25)]"
         >
           <Feather size={15} /> Novi zapis
         </button>
@@ -287,10 +287,15 @@ function SidebarBody({
       <div className="shrink-0 border-t border-line px-3 py-2.5">
         <button
           onClick={onToggleTheme}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-ink-soft hover:text-ink hover:bg-vellum/40 transition-colors cursor-pointer font-ui text-[10px] uppercase tracking-[0.16em]"
+          title={
+            theme === 'night'
+              ? 'Fiat lux — i bi svjetlost'
+              : 'Fiat nox — i pade blagoslovljena tama'
+          }
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-ink-soft hover:text-ink hover:bg-vellum/40 transition-colors cursor-pointer font-incipit text-[12px] tracking-[0.2em] uppercase"
         >
           {theme === 'night' ? <Sun size={14} /> : <Moon size={14} />}
-          {theme === 'night' ? 'Upali dan' : 'Zapali svijeću'}
+          {theme === 'night' ? 'Fiat lux' : 'Fiat nox'}
         </button>
       </div>
     </div>

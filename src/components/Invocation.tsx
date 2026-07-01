@@ -18,9 +18,7 @@ export function Invocation({ onSuggestionSelect }: InvocationProps) {
       transition={{ type: 'spring', stiffness: 90, damping: 18 }}
       className="max-w-[540px] w-full mx-auto py-8 px-4 flex flex-col items-center text-center"
     >
-      <p className="rubric text-[10px] mb-3 flex items-center gap-2">
-        <span className="text-gold">✠</span> Prvi moralni stroj <span className="text-gold">✠</span>
-      </p>
+      <p className="rubric text-[10px] mb-3">Prvi moralni stroj</p>
       <h1 className="font-incipit text-4xl sm:text-5xl text-ink-strong tracking-wide leading-none mb-5">
         Mir s tobom, sine
       </h1>

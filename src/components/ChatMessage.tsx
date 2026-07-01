@@ -184,7 +184,7 @@ export const ChatMessage = React.memo(function ChatMessage({
                   setIsEditing(false);
                 }
               }}
-              className="px-3 py-1.5 rounded-lg bg-oxblood text-parchment text-xs font-ui font-semibold uppercase tracking-wider hover:brightness-110 cursor-pointer"
+              className="px-3 py-1.5 rounded-lg bg-oxblood text-seal text-xs font-ui font-semibold uppercase tracking-wider hover:brightness-110 cursor-pointer"
             >
               Zapečati i pošalji
             </button>
