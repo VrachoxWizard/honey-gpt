@@ -3,6 +3,7 @@ import { buildOpenRouterMessages, detectCodingOrLogic } from './prompts.js';
 import { parseSSEChunks } from './sse-parser.js';
 import { fetchCroatianNews } from './news.js';
 import ky from 'ky';
+import { LRUCache } from 'lru-cache';
 
 type OpenRouterChoice = {
   message?: {
@@ -24,6 +25,28 @@ const DEFAULT_MODEL = 'google/gemini-2.5-flash';
 const DEFAULT_MAX_TOKENS = 2048;
 const MAX_MESSAGES = 18;
 const MAX_MESSAGE_CHARS = 8_000;
+
+// Inicijalizacija LRU cache-a na poslužitelju (sprema do 150 odgovora u trajanju od 30 minuta)
+const chatCache = new LRUCache<string, { text: string; model: string }>({
+  max: 150,
+  ttl: 1000 * 60 * 30, // 30 minuta
+});
+
+/**
+ * Generira jedinstveni cache kljuc na temelju poruka, modela, tona i vijesti.
+ */
+function generateCacheKey(
+  messages: ChatMessage[],
+  model: string,
+  toneMode?: string,
+  newsHeadlines?: string[]
+): string {
+  const serializedMessages = messages
+    .map((m) => `${m.role}:${typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}`)
+    .join('|');
+  const serializedNews = newsHeadlines ? newsHeadlines.join(',') : '';
+  return `${model}#${toneMode || 'default'}#${serializedNews}#${serializedMessages}`;
+}
 
 export async function createHanicarReply(
   messages: ChatMessage[],
@@ -57,6 +80,17 @@ export async function createHanicarReply(
 
   // 4. Dinamičko usmjeravanje modela
   const models = getModelCandidates(options?.model, userText);
+  
+  // Provjera Cachea za sinkroni odgovor
+  const primaryModel = models[0];
+  const cacheKey = generateCacheKey(cleanMessages, primaryModel, options?.toneMode, newsHeadlines);
+  const cachedReply = chatCache.get(cacheKey);
+
+  if (cachedReply) {
+    console.log('Cache HIT: Vracam spremljeni odgovor s poslužitelja.');
+    return cachedReply;
+  }
+
   let lastError = '';
 
   for (const model of models) {
@@ -76,10 +110,14 @@ export async function createHanicarReply(
         continue;
       }
 
-      return {
+      const reply = {
         text,
         model: response.model || model,
       };
+
+      // Spremanje u cache
+      chatCache.set(cacheKey, reply);
+      return reply;
     } catch (error: any) {
       lastError = getErrorMessage(error);
 
@@ -129,7 +167,6 @@ async function callOpenRouter(
   summarizedContext?: string,
   newsHeadlines?: string[]
 ) {
-  // Korištenje ky klijenta s automatskim retries i timeout-om
   const payload = await ky.post(OPENROUTER_URL, {
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -300,11 +337,31 @@ export async function streamHanicarReply(
 
   // 4. Dinamičko usmjeravanje modela
   const models = getModelCandidates(options?.model, userText);
+
+  // Provjera Cachea za streaming odgovor
+  const primaryModel = models[0];
+  const cacheKey = generateCacheKey(cleanMessages, primaryModel, options?.toneMode, newsHeadlines);
+  const cachedReply = chatCache.get(cacheKey);
+
+  if (cachedReply) {
+    console.log('Cache HIT (Stream): Simuliram streaming iz spremljenog cachea.');
+    onChunk({ model: cachedReply.model });
+    
+    // Simulacija glatkog streaminga ispisivanjem spremljenog teksta u komadima (chunkovima)
+    const text = cachedReply.text;
+    const chunkSize = 4;
+    for (let i = 0; i < text.length; i += chunkSize) {
+      const token = text.slice(i, i + chunkSize);
+      onChunk({ token });
+      await new Promise((resolve) => setTimeout(resolve, 6)); // 6ms razmak za glatki efekt ispisa
+    }
+    return;
+  }
+
   let lastError = '';
 
   for (const model of models) {
     try {
-      // Korištenje ky klijenta za streaming zahtjev
       const response = await ky.post(OPENROUTER_URL, {
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -333,16 +390,27 @@ export async function streamHanicarReply(
 
       const decoder = new TextDecoder('utf-8');
       let buffer = '';
+      let accumulatedText = '';
+      let finalModel = model;
 
       for await (const chunk of response.body as any) {
         buffer += decoder.decode(chunk, { stream: true });
         buffer = parseSSEChunks(buffer, (data) => {
           const token = data.choices?.[0]?.delta?.content;
           const responseModel = data.model;
-          if (token || responseModel) {
+          if (token) {
+            accumulatedText += token;
             onChunk({ token, model: responseModel });
+          } else if (responseModel) {
+            finalModel = responseModel;
+            onChunk({ model: responseModel });
           }
         });
+      }
+
+      // Ako smo uspješno dobili odgovor, spremamo ga u cache
+      if (accumulatedText.trim()) {
+        chatCache.set(cacheKey, { text: accumulatedText, model: finalModel });
       }
 
       return;
