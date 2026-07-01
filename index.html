@@ -2,6 +2,17 @@
 <html lang="hr">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          names.forEach(function(name) {
+            if (name !== 'hanicar-v3') {
+              caches.delete(name);
+            }
+          });
+        });
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Haničar GPT — Satirični AI Chatbot pod Božjim okriljem</title>
     <meta

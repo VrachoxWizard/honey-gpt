@@ -1,12 +1,13 @@
 {
   "version": 2,
+  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/chat",
       "destination": "/api/chat.ts"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|hanicar-the-genie.jpeg|manifest.json|robots.txt|sitemap.xml|sw.js).*)$",
       "destination": "/index.html"
     }
   ]
