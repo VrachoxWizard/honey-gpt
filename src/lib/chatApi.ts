@@ -1,5 +1,5 @@
 import type { ToneMode } from './codex';
-import { parseSSEChunks, type OpenRouterStreamChunk } from '../../server/sse-parser';
+import { parseSSEChunks } from '../../server/sse-parser';
 
 export interface SendConversationOptions {
   messages: Array<{ role: string; content: string | object[] }>;
@@ -13,6 +13,12 @@ export interface SendConversationOptions {
 function getChatEndpoints() {
   const configuredEndpoint = import.meta.env.VITE_CHAT_ENDPOINT;
   return configuredEndpoint ? [configuredEndpoint] : ['/api/chat'];
+}
+
+export interface ServerStreamChunk {
+  token?: string;
+  model?: string;
+  error?: string;
 }
 
 export async function sendConversation(options: SendConversationOptions): Promise<void> {
@@ -52,14 +58,10 @@ export async function sendConversation(options: SendConversationOptions): Promis
           const { done, value } = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
-          buffer = parseSSEChunks(buffer, (data: OpenRouterStreamChunk) => {
+          buffer = parseSSEChunks<ServerStreamChunk>(buffer, (data) => {
             if (data.error) throw new Error(data.error);
             if (data.token) options.onToken(data.token);
             if (data.model) options.onModel(data.model);
-            
-            // Handle fallback OpenRouter chunk mapping if needed (the server already strips choices mostly)
-            const token = data.choices?.[0]?.delta?.content;
-            if (token) options.onToken(token);
           });
         }
         success = true;

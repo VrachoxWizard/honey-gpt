@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion';
 import { ChatMessage } from './ChatMessage';
-import { welcomeMessage } from '../store/chatStore';
+import { welcomeMessage } from '../store/chatStorage';
 import type { Message } from '../types';
 
 interface MessageListProps {

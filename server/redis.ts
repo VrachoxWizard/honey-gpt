@@ -94,7 +94,8 @@ export async function getCacheRedis(key: string): Promise<string | null> {
     const results = await runRedisCommands([
       ['GET', `hanicar:cache:${key}`],
     ]);
-    return results[0] || null;
+    const result = results[0];
+    return typeof result === 'string' ? result : null;
   } catch {
     return null;
   }

@@ -11,9 +11,9 @@ export interface OpenRouterStreamChunk {
  * Processes all complete lines in the buffer, executes onPayload for each parsed JSON data object,
  * and returns the remaining incomplete line data to be buffered for the next chunk.
  */
-export function parseSSEChunks(
+export function parseSSEChunks<T = OpenRouterStreamChunk>(
   buffer: string,
-  onPayload: (payload: OpenRouterStreamChunk) => void
+  onPayload: (payload: T) => void
 ): string {
   const lines = buffer.split('\n');
   const remaining = lines.pop() || '';

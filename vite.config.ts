@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
-import { handleChatPayload, handleChatPayloadStream, toClientError } from './server/api.js';
+import { handleChatPayloadStream, toClientError } from './server/api.js';
 import { checkRateLimit, getClientIp } from './server/limiter.js';
 
 function readRequestBody(request: import('node:http').IncomingMessage) {
