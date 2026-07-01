@@ -14,7 +14,6 @@ import { exportChatToMarkdown } from './utils/exportChat';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './components/Toast';
 import { useToast } from './hooks/useToast';
-import { SearchOverlay } from './components/SearchOverlay';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { cn } from './utils/cn';
@@ -24,8 +23,6 @@ function AppContent() {
     sessions,
     activeSessionId,
     messages,
-    activeModel,
-    setActiveModel,
     toneMode,
     setToneMode,
     error,
@@ -43,7 +40,6 @@ function AppContent() {
 
   const [draft, setDraft] = useState('');
   const [kazaloOpen, setKazaloOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const { showToast } = useToast();
 
@@ -63,11 +59,6 @@ function AppContent() {
     document.documentElement.classList.toggle('night', theme === 'night');
     localStorage.setItem('hanicar_codex_theme', theme);
   }, [theme]);
-
-  const activeSessionTitle = useMemo(
-    () => sessions.find((s) => s.id === activeSessionId)?.title,
-    [sessions, activeSessionId]
-  );
 
   const lastAssistantMessageId = useMemo(() => {
     return [...messages].reverse().find((m) => m.role === 'assistant' && m.id !== 'welcome')?.id;
@@ -99,11 +90,10 @@ function AppContent() {
   };
 
   useKeyboardShortcuts({
-    onSearch: () => setSearchOpen((p) => !p),
+    onSearch: () => setKazaloOpen((p) => !p),
     onNewChat: newChat,
     onExport: handleExport,
     onClose: () => {
-      setSearchOpen(false);
       setKazaloOpen(false);
       setShortcutsOpen(false);
     },
@@ -136,7 +126,6 @@ function AppContent() {
         }}
         onToggleKazalo={() => setKazaloOpen((o) => !o)}
         kazaloOpen={kazaloOpen}
-        onSearch={() => setSearchOpen(true)}
         onHelp={() => setShortcutsOpen(true)}
       />
 
@@ -151,17 +140,11 @@ function AppContent() {
         onClearAllSessions={clearAllSessions}
         onNewChat={newChat}
         onExportChat={handleExport}
-        activeModel={activeModel}
-        onChangeModel={setActiveModel}
       />
 
       {/* Reading area */}
       <main className="flex-1 flex flex-col min-w-0 relative h-[calc(100dvh-56px)] md:h-[100dvh]">
-        <Incipit
-          sessionTitle={isWelcomeView ? undefined : activeSessionTitle}
-          rite={toneMode}
-          onChangeRite={setToneMode}
-        />
+        <Incipit rite={toneMode} onChangeRite={setToneMode} />
 
         <div
           ref={containerRef}
@@ -212,14 +195,6 @@ function AppContent() {
           error={error}
           onSubmit={sendMessage}
           onAbort={abortGeneration}
-        />
-
-        <SearchOverlay
-          key={searchOpen ? 'open' : 'closed'}
-          isOpen={searchOpen}
-          onClose={() => setSearchOpen(false)}
-          sessions={sessions}
-          onSwitchSession={switchSession}
         />
 
         <KeyboardShortcutsModal

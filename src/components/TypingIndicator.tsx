@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Feather } from 'lucide-react';
+import { SaintPortrait } from './SaintPortrait';
 
 export function TypingIndicator() {
   return (
@@ -9,8 +10,8 @@ export function TypingIndicator() {
       className="w-full max-w-[720px] mx-auto"
     >
       <div className="flex items-center gap-2.5 mb-2">
-        <span className="rubric text-[9px] flex items-center gap-1.5">
-          <span className="text-gold text-xs leading-none">✠</span>
+        <span className="rubric text-[9px] flex items-center gap-2">
+          <SaintPortrait size={24} />
           Haničar
         </span>
         <span className="font-display italic text-[11px] text-ink-faint flex items-center gap-1.5">

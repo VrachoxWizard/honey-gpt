@@ -2,7 +2,6 @@ import { useState, KeyboardEvent, MouseEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Feather, Download, Search, Check, Pencil, Trash2, X, BookOpen } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { AVAILABLE_MODELS, modelDisplayName } from '../lib/codex';
 import type { ChatSession } from '../types';
 
 interface KazaloProps {
@@ -16,8 +15,6 @@ interface KazaloProps {
   onClearAllSessions: () => void;
   onNewChat: () => void;
   onExportChat: () => void;
-  activeModel: string;
-  onChangeModel: (model: string) => void;
 }
 
 const romanish = (n: number) => {
@@ -48,8 +45,6 @@ export function Kazalo({
   onClearAllSessions,
   onNewChat,
   onExportChat,
-  activeModel,
-  onChangeModel,
 }: KazaloProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -271,48 +266,16 @@ export function Kazalo({
               )}
             </div>
 
-            {/* Footer — the scribe's tools */}
-            <div className="shrink-0 border-t border-line px-4 py-3 space-y-2.5 bg-parchment-3/30">
-              <div className="flex items-center justify-between gap-2">
-                <label
-                  htmlFor="kazalo-model"
-                  className="rubric text-[9px] shrink-0"
+            {sessions.length > 1 && (
+              <div className="shrink-0 border-t border-line px-4 py-3 flex justify-end">
+                <button
+                  onClick={clearAll}
+                  className="font-ui text-[9px] uppercase tracking-wider text-ink-faint hover:text-oxblood transition-colors cursor-pointer"
                 >
-                  Pisar
-                </label>
-                <div className="relative flex-1 min-w-0">
-                  <select
-                    id="kazalo-model"
-                    value={AVAILABLE_MODELS.some((m) => m.id === activeModel) ? activeModel : ''}
-                    onChange={(e) => onChangeModel(e.target.value)}
-                    className="w-full bg-vellum/50 border border-line rounded-lg px-2.5 py-1.5 text-xs text-ink font-medium focus:outline-none focus:border-gold/50 cursor-pointer appearance-none truncate"
-                  >
-                    {!AVAILABLE_MODELS.some((m) => m.id === activeModel) && activeModel && (
-                      <option value={activeModel}>{modelDisplayName(activeModel)}</option>
-                    )}
-                    {AVAILABLE_MODELS.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  Spali sve zapise
+                </button>
               </div>
-
-              <div className="flex items-center justify-between">
-                <p className="font-display italic text-[11px] text-ink-faint">
-                  Vjera u Boga: 100% · ključ blagoslovljen
-                </p>
-                {sessions.length > 1 && (
-                  <button
-                    onClick={clearAll}
-                    className="font-ui text-[9px] uppercase tracking-wider text-ink-faint hover:text-oxblood transition-colors cursor-pointer"
-                  >
-                    Spali sve
-                  </button>
-                )}
-              </div>
-            </div>
+            )}
           </motion.aside>
         </>
       )}

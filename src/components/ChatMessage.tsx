@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { cn } from '../utils/cn';
 import { useToast } from '../hooks/useToast';
 import { ShikiHighlighter } from './ShikiHighlighter';
+import { SaintPortrait } from './SaintPortrait';
 import type { Message } from '../types';
 
 function CopyButton({ text }: { text: string }) {
@@ -116,8 +117,8 @@ export const ChatMessage = React.memo(function ChatMessage({
         {isUser ? (
           <span className="rubric text-[9px]">Molba</span>
         ) : (
-          <span className="rubric text-[9px] flex items-center gap-1.5">
-            <span className="text-gold text-xs leading-none">✠</span>
+          <span className="rubric text-[9px] flex items-center gap-2">
+            <SaintPortrait size={24} />
             Haničar
           </span>
         )}

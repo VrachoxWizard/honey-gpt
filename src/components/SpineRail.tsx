@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Feather, Library, Search, Sun, Moon, Keyboard } from 'lucide-react';
+import { Feather, Library, Sun, Moon } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { SaintPortrait } from './SaintPortrait';
 
 interface SpineRailProps {
   theme: 'day' | 'night';
@@ -8,54 +10,45 @@ interface SpineRailProps {
   onNewChat: () => void;
   onToggleKazalo: () => void;
   kazaloOpen: boolean;
-  onSearch: () => void;
-  onHelp: () => void;
 }
 
 function RailButton({
-  label,
+  caption,
+  title,
   active,
   onClick,
   children,
 }: {
-  label: string;
+  caption: string;
+  title: string;
   active?: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <motion.button
-      whileHover={{ scale: 1.08 }}
-      whileTap={{ scale: 0.92 }}
+      whileTap={{ scale: 0.94 }}
       onClick={onClick}
-      title={label}
-      aria-label={label}
+      title={title}
+      aria-label={title}
       aria-pressed={active}
       className={cn(
-        'relative flex items-center justify-center w-11 h-11 rounded-xl transition-colors cursor-pointer',
+        'relative flex flex-col items-center gap-1 w-[70px] py-2 rounded-xl transition-colors cursor-pointer',
         active
-          ? 'text-oxblood bg-vellum/60 border border-gold/40'
+          ? 'text-oxblood bg-vellum/70 border border-gold/40'
           : 'text-ink-soft hover:text-ink hover:bg-vellum/40 border border-transparent'
       )}
     >
       {children}
+      <span className="font-ui text-[9px] uppercase tracking-[0.12em] leading-none">
+        {caption}
+      </span>
       {active && (
-        <span className="absolute -left-[7px] top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-full bg-oxblood" />
+        <span className="absolute -left-[6px] top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-full bg-oxblood" />
       )}
     </motion.button>
   );
 }
-
-const Emblem = () => (
-  <div className="relative w-11 h-11 rounded-full overflow-hidden shrink-0 border-2 border-gold/50 shadow-[0_0_0_1px_var(--parchment),0_2px_8px_rgba(60,12,8,0.25)]">
-    <img
-      src="/hanicar-the-genie.jpeg"
-      alt="Sveti Haničar"
-      className="w-full h-full object-cover"
-    />
-    <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-white/10" />
-  </div>
-);
 
 export function SpineRail({
   theme,
@@ -63,36 +56,39 @@ export function SpineRail({
   onNewChat,
   onToggleKazalo,
   kazaloOpen,
-  onSearch,
-  onHelp,
 }: SpineRailProps) {
   return (
     <>
-      {/* Desktop: vertical spine */}
-      <aside className="hidden md:flex flex-col items-center gap-2 w-[76px] py-5 bg-parchment-2/60 border-r border-line relative z-30">
-        <Emblem />
-        <div className="rule-gold w-8 my-2.5" />
+      {/* Desktop: labelled vertical spine */}
+      <aside className="hidden md:flex flex-col items-center gap-1.5 w-[94px] py-4 bg-parchment-2/60 border-r border-line relative z-30">
+        <div className="flex flex-col items-center gap-1.5 pb-1">
+          <SaintPortrait size={52} />
+          <span className="font-incipit text-[11px] tracking-[0.18em] text-ink-strong uppercase">
+            Haničar
+          </span>
+        </div>
+        <div className="rule-gold w-10 my-1.5" />
 
-        <RailButton label="Novi zapis — započni razgovor" onClick={onNewChat}>
-          <Feather size={19} />
+        <RailButton caption="Novi" title="Novi zapis — započni razgovor" onClick={onNewChat}>
+          <Feather size={20} />
         </RailButton>
-        <RailButton label="Kazalo — povijest razgovora" active={kazaloOpen} onClick={onToggleKazalo}>
-          <Library size={19} />
-        </RailButton>
-        <RailButton label="Traži po zapisima (Ctrl K)" onClick={onSearch}>
-          <Search size={19} />
+        <RailButton
+          caption="Kazalo"
+          title="Kazalo — povijest razgovora (Ctrl K)"
+          active={kazaloOpen}
+          onClick={onToggleKazalo}
+        >
+          <Library size={20} />
         </RailButton>
 
         <div className="flex-1" />
 
         <RailButton
-          label={theme === 'night' ? 'Upali dan (svjetlo)' : 'Zapali svijeću (tama)'}
+          caption={theme === 'night' ? 'Dan' : 'Noć'}
+          title={theme === 'night' ? 'Upali dan (svjetlo)' : 'Zapali svijeću (tama)'}
           onClick={onToggleTheme}
         >
-          {theme === 'night' ? <Sun size={18} /> : <Moon size={18} />}
-        </RailButton>
-        <RailButton label="Kratice tipkovnice (?)" onClick={onHelp}>
-          <Keyboard size={18} />
+          {theme === 'night' ? <Sun size={19} /> : <Moon size={19} />}
         </RailButton>
       </aside>
 
@@ -102,25 +98,19 @@ export function SpineRail({
           <button
             onClick={onToggleKazalo}
             aria-label="Kazalo — povijest razgovora"
-            className="p-2 -ml-1 text-ink-soft hover:text-ink cursor-pointer"
+            className="flex items-center gap-1 p-1.5 -ml-1 text-ink-soft hover:text-ink cursor-pointer"
           >
             <Library size={20} />
+            <span className="font-ui text-[10px] uppercase tracking-wider">Kazalo</span>
           </button>
           <div className="flex items-center gap-2">
-            <Emblem />
+            <SaintPortrait size={34} />
             <span className="font-incipit text-sm tracking-[0.15em] text-ink-strong uppercase">
               Haničar
             </span>
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button
-            onClick={onSearch}
-            aria-label="Traži"
-            className="p-2 text-ink-soft hover:text-ink cursor-pointer"
-          >
-            <Search size={19} />
-          </button>
           <button
             onClick={onNewChat}
             aria-label="Novi zapis"

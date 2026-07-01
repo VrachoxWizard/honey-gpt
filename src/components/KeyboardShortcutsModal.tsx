@@ -13,9 +13,9 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
   useFocusTrap(isOpen, dialogRef);
 
   const shortcuts = [
-    { keys: ['Ctrl', 'K'], desc: 'Otvori pretragu razgovora' },
+    { keys: ['Ctrl', 'K'], desc: 'Otvori kazalo (povijest)' },
     { keys: ['Ctrl', 'N'], desc: 'Započni novi razgovor' },
-    { keys: ['Ctrl', 'Shift', 'S'], desc: 'Izvezi razgovor u Markdown' },
+    { keys: ['Ctrl', 'Shift', 'S'], desc: 'Prepiši razgovor u datoteku' },
     { keys: ['?'], desc: 'Prikaži kratice tipkovnice' },
     { keys: ['Esc'], desc: 'Zatvori aktivni modal ili izbornik' },
   ];
