@@ -126,7 +126,6 @@ function AppContent() {
         }}
         onToggleKazalo={() => setKazaloOpen((o) => !o)}
         kazaloOpen={kazaloOpen}
-        onHelp={() => setShortcutsOpen(true)}
       />
 
       <Kazalo
