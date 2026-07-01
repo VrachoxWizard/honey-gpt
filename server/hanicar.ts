@@ -1,5 +1,5 @@
 import type { ChatMessage, HanicarReply, HanicarOptions } from './shared-types.js';
-import { buildOpenRouterMessages } from './prompts.js';
+import { buildOpenRouterMessages, detectCodingOrLogic } from './prompts.js';
 import { parseSSEChunks } from './sse-parser.js';
 
 type OpenRouterChoice = {
@@ -36,18 +36,32 @@ export async function createHanicarReply(
     );
   }
 
-  const cleanMessages = sanitizeMessages(messages);
+  const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
+  const userText = typeof lastUserMsg?.content === 'string' ? lastUserMsg.content : '';
+
+  // 1. Automatsko sažimanje povijesti ako je predugačka
+  const summarizedContext = await summarizeConversationIfNeeded(messages, apiKey!);
+
+  // 2. Skraćivanje poruka ako imamo sažetak (zadrži samo zadnjih 6 poruka za neposredni kontekst)
+  const cleanMessages = sanitizeMessages(messages, summarizedContext ? 6 : MAX_MESSAGES);
 
   if (!cleanMessages.some((message) => message.role === 'user')) {
     throw httpError(400, 'Posalji barem jednu korisnicku poruku.');
   }
 
-  const models = getModelCandidates(options?.model);
+  // 3. Dinamičko usmjeravanje modela
+  const models = getModelCandidates(options?.model, userText);
   let lastError = '';
 
   for (const model of models) {
     try {
-      const response = await callOpenRouter(apiKey!, model, cleanMessages, options?.toneMode);
+      const response = await callOpenRouter(
+        apiKey!,
+        model,
+        cleanMessages,
+        options?.toneMode,
+        summarizedContext
+      );
       const text = response.choices?.[0]?.message?.content?.trim();
 
       if (!text) {
@@ -74,7 +88,7 @@ export async function createHanicarReply(
   );
 }
 
-function sanitizeMessages(messages: ChatMessage[]) {
+function sanitizeMessages(messages: ChatMessage[], limit: number = MAX_MESSAGES) {
   return messages
     .filter((message) => message.role === 'user' || message.role === 'assistant')
     .map((message) => {
@@ -97,14 +111,15 @@ function sanitizeMessages(messages: ChatMessage[]) {
       }
       return Array.isArray(message.content) && message.content.length > 0;
     })
-    .slice(-MAX_MESSAGES);
+    .slice(-limit);
 }
 
 async function callOpenRouter(
   apiKey: string,
   model: string,
   messages: ChatMessage[],
-  toneMode?: 'humilis' | 'clericus' | 'sanctus'
+  toneMode?: 'humilis' | 'clericus' | 'sanctus',
+  summarizedContext?: string
 ) {
   const response = await fetch(OPENROUTER_URL, {
     method: 'POST',
@@ -116,7 +131,7 @@ async function callOpenRouter(
     },
     body: JSON.stringify({
       model,
-      messages: buildOpenRouterMessages(messages, toneMode),
+      messages: buildOpenRouterMessages(messages, toneMode, summarizedContext),
       max_tokens: readNumberEnv('OPENROUTER_MAX_TOKENS', DEFAULT_MAX_TOKENS),
       temperature: 0.9,
       stream: false,
@@ -137,8 +152,18 @@ async function callOpenRouter(
   return payload;
 }
 
-function getModelCandidates(userModel?: string) {
-  const configuredModel = userModel || process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
+function getModelCandidates(userModel?: string, userText?: string) {
+  let configuredModel = userModel || process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
+
+  // Dinamičko usmjeravanje: Ako je odabran zadani model, a upit se tiče kodiranja/tehnologije,
+  // prebaci na Qwen Coder model koji je bolji za te zadatke.
+  if (userText && (!userModel || userModel === DEFAULT_MODEL)) {
+    if (detectCodingOrLogic(userText)) {
+      configuredModel = 'qwen/qwen-2.5-coder-32b-instruct';
+      console.log('Semantic Routing: preusmjeren tehnicki upit na Qwen Coder.');
+    }
+  }
+
   const fallbacks = String(
     process.env.OPENROUTER_FALLBACK_MODELS ||
       'meta-llama/llama-3.3-70b-instruct,qwen/qwen-2.5-coder-32b-instruct,google/gemini-2.0-flash-lite-preview-02-05:free'
@@ -190,6 +215,56 @@ export function httpError(statusCode: number, message: string) {
   return Object.assign(new Error(message), { statusCode });
 }
 
+// Pozadinska funkcija za brzo sažimanje ranog konteksta
+async function summarizeConversationIfNeeded(
+  messages: ChatMessage[],
+  apiKey: string
+): Promise<string> {
+  // Radimo sažetak tek kada imamo 10 ili više poruka u povijesti
+  if (messages.length < 10) return '';
+
+  // Uzimamo sve poruke osim zadnje 4 kako bismo sačuvali neposredni tijek razgovora
+  const earlyMessages = messages.slice(0, -4).filter(m => m.role === 'user' || m.role === 'assistant');
+  if (earlyMessages.length === 0) return '';
+
+  try {
+    const response = await fetch(OPENROUTER_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'system',
+            content: 'Ti si pomocnik koji sazima razgovore na hrvatskom jeziku. Sazmi kljucne teme dosadasnjeg razgovora u maksimalno dvije recenice na hrvatskom jeziku. Fokusiraj se na ono sto je korisnik trazio i sto mu je sugovornik odgovorio.'
+          },
+          ...earlyMessages.map(m => ({
+            role: m.role,
+            content: typeof m.content === 'string' ? m.content : 'Slika ili nespecificiran sadržaj'
+          }))
+        ],
+        max_tokens: 150,
+        temperature: 0.3,
+      }),
+    });
+
+    if (response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as OpenRouterResponse;
+      const text = payload.choices?.[0]?.message?.content?.trim();
+      if (text) {
+        return text;
+      }
+    }
+  } catch (e) {
+    console.error('Neuspjelo sazimanja povijesti:', e);
+  }
+
+  return '';
+}
+
 export async function streamHanicarReply(
   messages: ChatMessage[],
   onChunk: (chunk: { token?: string; model?: string }) => void,
@@ -204,13 +279,21 @@ export async function streamHanicarReply(
     );
   }
 
-  const cleanMessages = sanitizeMessages(messages);
+  const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
+  const userText = typeof lastUserMsg?.content === 'string' ? lastUserMsg.content : '';
+
+  // 1. Automatsko sažimanje povijesti
+  const summarizedContext = await summarizeConversationIfNeeded(messages, apiKey!);
+
+  // 2. Skraćivanje poruka
+  const cleanMessages = sanitizeMessages(messages, summarizedContext ? 6 : MAX_MESSAGES);
 
   if (!cleanMessages.some((message) => message.role === 'user')) {
     throw httpError(400, 'Posalji barem jednu korisnicku poruku.');
   }
 
-  const models = getModelCandidates(options?.model);
+  // 3. Dinamičko usmjeravanje modela
+  const models = getModelCandidates(options?.model, userText);
   let lastError = '';
 
   for (const model of models) {
@@ -225,7 +308,7 @@ export async function streamHanicarReply(
         },
         body: JSON.stringify({
           model,
-          messages: buildOpenRouterMessages(cleanMessages, options?.toneMode),
+          messages: buildOpenRouterMessages(cleanMessages, options?.toneMode, summarizedContext),
           max_tokens: readNumberEnv('OPENROUTER_MAX_TOKENS', DEFAULT_MAX_TOKENS),
           temperature: 0.9,
           stream: true,

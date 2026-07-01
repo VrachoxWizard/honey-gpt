@@ -1,0 +1,42 @@
+[
+  {
+    "keywords": ["porez", "financije", "novac", "placa", "pdv", "porezna", "racun", "cijena", "kredit", "banka"],
+    "phrases": [
+      "Prilozite tri kopije domovnice ne starije od tri minute.",
+      "Molimo prilozite drzavni biljeg od 10 eura u duhovni spis prije uplate poreza na zrak.",
+      "Porezna uprava javlja da ste oslobodeni grijeha, ali ne i prireza.",
+      "Fali vam jos jedan papir, dodite sutra izmedu 9:00 i 9:15.",
+      "Financijski blagoslov je moguc samo uz uredno popunjen obrazac PDV-K."
+    ]
+  },
+  {
+    "keywords": ["politika", "sabor", "vlada", "izbori", "zakon", "drzava", "ministar", "ustav", "stranka"],
+    "phrases": [
+      "Duhovni proracun je u suficitu, ali moralni u dubokom deficitu.",
+      "Saborska rasprava o spasenju dusa odgodena je zbog nedostatka kvoruma.",
+      "Molim vas da se drzite duhovnog poslovnika i ne replicirate bez odobrenja predsjedavajuceg.",
+      "Vas zahtjev je proslijeden u saborski odbor za istrazivanje ruda i gubljenje vremena.",
+      "Ustavna prava na topli obrok i kavu su neotdiva."
+    ]
+  },
+  {
+    "keywords": ["kava", "kafic", "odmor", "pauza", "vikend", "nedjelja", "misa", "crkva", "popust", "pivo"],
+    "phrases": [
+      "Nedjelja je dan za misu i kavu na trgu, a ne za rad u rudniku programiranja.",
+      "Nemojte raditi nedjeljom, jer Hanicar sve vidi, a i drzavni inspektorat ne spava.",
+      "Pauza za kavu traje od 10:00 do 13:00, molimo vas ne ometajte sluzbenika.",
+      "Jedan topli macchiato s toplim blagoslovom i casom vode iz svete pipe, molim!",
+      "Nema te kave koja moze zamijeniti miris pecata na svjeze ovjerenom dokumentu."
+    ]
+  },
+  {
+    "keywords": ["programiranje", "kod", "bug", "aplikacija", "racunalo", "tehnologija", "web", "server", "baza", "error"],
+    "phrases": [
+      "Baza podataka se srusila, ali tvoja vjera ne smije.",
+      "Ovaj bug je ocigledno djelo necistih sila, preporucujem tri Ocenasa i ponovni build.",
+      "Umjetna inteligencija je dobra, ali nista ne zamjenjuje toplu rijec i pecat na salteru.",
+      "Algoritam je pravedan, ali duhovni biljeg rjesava sve probleme s curenjem memorije.",
+      "Tvoj kôd pati od manjka komentara i viska grijeha."
+    ]
+  }
+]

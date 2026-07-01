@@ -1,4 +1,6 @@
 import type { ChatRole, ChatMessage } from './shared-types.js';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 export function getCroatianDateString(): string {
   const days = ['nedjelja', 'ponedjeljak', 'utorak', 'srijeda', 'četvrtak', 'petak', 'subota'];
@@ -26,7 +28,69 @@ export function getCroatianDateString(): string {
   return `Danas je ${dayName}, ${dateNum}. ${monthName} ${year}.`;
 }
 
-export function buildSystemPrompt(toneMode?: 'humilis' | 'clericus' | 'sanctus'): string {
+export function detectSentiment(text: string): 'angry' | 'sad' | 'normal' {
+  const clean = text.toLowerCase();
+  const angryKeywords = [
+    'glup', 'lud', 'sranje', 'mrzim', 'glupost', 'neradi', 'ne radi', 'uzas', 'užas',
+    'katastrofa', 'puklo', 'krepalo', 'pizdi', 'jebem', 'kurac', 'idiot', 'retard',
+    'najgore', 'promasaj', 'promašaj', 'grozno', 'sporo', 'koci', 'koči'
+  ];
+  const sadKeywords = [
+    'tuzan', 'tužan', 'depres', 'usamljen', 'placi', 'plač', 'zalost', 'žalost',
+    'nesreca', 'nesreća', 'bolestan', 'boli', 'usamljen', 'ostavljen', 'samoca',
+    'samoća', 'plakati', 'suzama', 'suza'
+  ];
+  
+  if (angryKeywords.some(w => clean.includes(w))) return 'angry';
+  if (sadKeywords.some(w => clean.includes(w))) return 'sad';
+  return 'normal';
+}
+
+export function detectCodingOrLogic(text: string): boolean {
+  const clean = text.toLowerCase();
+  const codeKeywords = [
+    'javascript', 'typescript', 'python', 'html', 'css', 'react', 'code', 'kod',
+    'funkcija', 'function', 'class', 'klasa', 'bug', 'error', 'baza', 'sql', 'api',
+    'const ', 'let ', 'var ', 'import ', 'def ', 'return ', 'c++', 'java ', 'c#',
+    'golang', 'rust ', 'github', 'git ', 'json', 'yaml', 'xml'
+  ];
+  return codeKeywords.some(w => clean.includes(w));
+}
+
+let loreData: Array<{ keywords: string[], phrases: string[] }> | null = null;
+
+export function getLorePhrases(text: string): string[] {
+  try {
+    if (!loreData) {
+      const lorePath = fileURLToPath(new URL('./lore.json', import.meta.url));
+      const content = fs.readFileSync(lorePath, 'utf-8');
+      loreData = JSON.parse(content);
+    }
+    
+    const cleanText = text.toLowerCase();
+    const matchedPhrases: string[] = [];
+    
+    loreData!.forEach(entry => {
+      const hasKeyword = entry.keywords.some(kw => cleanText.includes(kw));
+      if (hasKeyword) {
+        const shuffled = [...entry.phrases].sort(() => 0.5 - Math.random());
+        matchedPhrases.push(...shuffled.slice(0, 2));
+      }
+    });
+    
+    return matchedPhrases.slice(0, 3); // Maksimalno 3 fraze
+  } catch (e) {
+    console.error('Neuspjelo ucitavanje lore.json', e);
+    return [];
+  }
+}
+
+export function buildSystemPrompt(
+  toneMode?: 'humilis' | 'clericus' | 'sanctus',
+  summarizedContext?: string,
+  lorePhrases?: string[],
+  detectedSentiment?: 'angry' | 'sad' | 'normal'
+): string {
   const dateString = getCroatianDateString();
 
   const baseInstructions = [
@@ -46,6 +110,32 @@ export function buildSystemPrompt(toneMode?: 'humilis' | 'clericus' | 'sanctus')
     `Vremenski kontekst: ${dateString}`,
     'Ako je danas nedjelja, obvezno podsjeti korisnika na važnost nedjeljne mise i odmora.',
   ];
+
+  // Integracija sentimenta u sistemski prompt
+  if (detectedSentiment === 'angry') {
+    baseInstructions.push(
+      'VAŽNO: Korisnik je trenutno ljut/frustriran. Budi iznimno blag, strpljiv i najprije mu konkretno i bez suvišne ironije pomozi riješiti problem. Tek na samom kraju odgovora dodaj sitnu, umirujuću satiričnu opasku.'
+    );
+  } else if (detectedSentiment === 'sad') {
+    baseInstructions.push(
+      'VAŽNO: Korisnik se osjeća tužno ili potišteno. Budi pun suosjećanja, ponudi mu duhovnu kršćansku utjehu (topao ton), ali zadrži blagi šarm Haničara.'
+    );
+  }
+
+  // Integracija sažetka povijesti
+  if (summarizedContext) {
+    baseInstructions.push(
+      `KRATKI SAŽETAK DOSADAŠNJEG RAZGOVORA (za tvoje pamćenje): ${summarizedContext}`
+    );
+  }
+
+  // Integracija lokalnog znanja (lore)
+  if (lorePhrases && lorePhrases.length > 0) {
+    baseInstructions.push(
+      'U ovom odgovoru pokušaj na prirodan način (kroz humor ili analogiju) iskoristiti barem jednu od ovih fraza ili ideja:',
+      ...lorePhrases.map(phrase => `- ${phrase}`)
+    );
+  }
 
   let toneInstructions: string[];
   if (toneMode === 'humilis') {
@@ -90,9 +180,28 @@ export type OpenRouterMessage = {
 
 export function buildOpenRouterMessages(
   messages: ChatMessage[],
-  toneMode?: 'humilis' | 'clericus' | 'sanctus'
+  toneMode?: 'humilis' | 'clericus' | 'sanctus',
+  summarizedContext?: string
 ): OpenRouterMessage[] {
-  const systemContent = buildSystemPrompt(toneMode);
+  // Pronađi zadnju poruku korisnika za analizu sentimenta i lore injekciju
+  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+  let userText = '';
+  
+  if (lastUserMsg) {
+    if (typeof lastUserMsg.content === 'string') {
+      userText = lastUserMsg.content;
+    } else if (Array.isArray(lastUserMsg.content)) {
+      const textPart = lastUserMsg.content.find(p => p && p.type === 'text');
+      if (textPart && typeof textPart.text === 'string') {
+        userText = textPart.text;
+      }
+    }
+  }
+
+  const sentiment = userText ? detectSentiment(userText) : 'normal';
+  const lorePhrases = userText ? getLorePhrases(userText) : [];
+
+  const systemContent = buildSystemPrompt(toneMode, summarizedContext, lorePhrases, sentiment);
   return [
     {
       role: 'system',
