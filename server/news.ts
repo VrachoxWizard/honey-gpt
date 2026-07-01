@@ -11,11 +11,22 @@ const RSS_FEEDS = [
   'https://www.index.hr/rss/najnovije',
 ];
 
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minuta
+let cachedNews: string[] | null = null;
+let cacheExpiry = 0;
+
 /**
  * Dohvaca najnovije vijesti s hrvatskih portala putem RSS feeda.
  * Vraca top 4 naslova. U slucaju greske vraca prazan niz.
+ * Koristi in-memory cache od 5 minuta za smanjenje latencije i opterecenja feedova.
  */
 export async function fetchCroatianNews(): Promise<string[]> {
+  const now = Date.now();
+  if (cachedNews && now < cacheExpiry) {
+    console.log('News Cache HIT: Vracam spremljene vijesti iz predmemorije.');
+    return cachedNews;
+  }
+
   for (const url of RSS_FEEDS) {
     try {
       // Postavljamo timeout od 4 sekunde kako ne bismo usporili chatbot
@@ -25,13 +36,26 @@ export async function fetchCroatianNews(): Promise<string[]> {
       ]);
       
       const items = feed.items || [];
-      return items
+      const titles = items
         .slice(0, 4)
         .map(item => item.title || '')
         .filter(title => title.trim().length > 0);
+
+      if (titles.length > 0) {
+        cachedNews = titles;
+        cacheExpiry = now + CACHE_DURATION_MS;
+        return titles;
+      }
     } catch (e) {
       console.error(`Neuspjelo dohvacanje RSS feeda s ${url}:`, e);
     }
   }
+
+  // Ako dohvat nije uspio, a imamo stare vijesti u predmemoriji, radije vrati njih nego nista
+  if (cachedNews) {
+    console.warn('Dohvat vijesti nije uspio, vracam istekle vijesti iz predmemorije.');
+    return cachedNews;
+  }
+
   return [];
 }

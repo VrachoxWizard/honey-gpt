@@ -1,3 +1,5 @@
+import { checkRateLimitRedis } from './redis.js';
+
 const WINDOW_MS = 60 * 1000; // 1 minuta
 const MAX_REQUESTS = 20; // Maksimalno 20 zahtjeva u minuti po IP-u
 
@@ -29,7 +31,14 @@ export type RateLimitResult = {
   resetTime: number;
 };
 
-export function checkRateLimit(ip: string): RateLimitResult {
+export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
+  // Pokusaj provjeriti rate limit preko Redisa (ako je konfiguriran)
+  const redisRes = await checkRateLimitRedis(ip, MAX_REQUESTS);
+  if (redisRes !== null) {
+    return redisRes;
+  }
+
+  // Fallback na in-memory limiter
   const now = Date.now();
   let record = ipCache.get(ip);
 

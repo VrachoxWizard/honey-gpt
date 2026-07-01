@@ -2,6 +2,7 @@ import type { ChatMessage, HanicarReply, HanicarOptions } from './shared-types.j
 import { buildOpenRouterMessages, detectCodingOrLogic } from './prompts.js';
 import { parseSSEChunks } from './sse-parser.js';
 import { fetchCroatianNews } from './news.js';
+import { getCacheRedis, setCacheRedis } from './redis.js';
 import ky from 'ky';
 import { LRUCache } from 'lru-cache';
 
@@ -84,7 +85,22 @@ export async function createHanicarReply(
   // Provjera Cachea za sinkroni odgovor
   const primaryModel = models[0];
   const cacheKey = generateCacheKey(cleanMessages, primaryModel, options?.toneMode, newsHeadlines);
-  const cachedReply = chatCache.get(cacheKey);
+  
+  let cachedReply = chatCache.get(cacheKey);
+  if (!cachedReply) {
+    const redisCacheVal = await getCacheRedis(cacheKey);
+    if (redisCacheVal) {
+      try {
+        cachedReply = JSON.parse(redisCacheVal);
+        if (cachedReply) {
+          // Spremi lokalno za buduce brze upite na istoj instanci
+          chatCache.set(cacheKey, cachedReply);
+        }
+      } catch {
+        // Ignoriramo neispravan JSON iz predmemorije
+      }
+    }
+  }
 
   if (cachedReply) {
     console.log('Cache HIT: Vracam spremljeni odgovor s poslužitelja.');
@@ -117,6 +133,7 @@ export async function createHanicarReply(
 
       // Spremanje u cache
       chatCache.set(cacheKey, reply);
+      await setCacheRedis(cacheKey, JSON.stringify(reply));
       return reply;
     } catch (error: any) {
       lastError = getErrorMessage(error);
@@ -341,7 +358,21 @@ export async function streamHanicarReply(
   // Provjera Cachea za streaming odgovor
   const primaryModel = models[0];
   const cacheKey = generateCacheKey(cleanMessages, primaryModel, options?.toneMode, newsHeadlines);
-  const cachedReply = chatCache.get(cacheKey);
+  
+  let cachedReply = chatCache.get(cacheKey);
+  if (!cachedReply) {
+    const redisCacheVal = await getCacheRedis(cacheKey);
+    if (redisCacheVal) {
+      try {
+        cachedReply = JSON.parse(redisCacheVal);
+        if (cachedReply) {
+          chatCache.set(cacheKey, cachedReply);
+        }
+      } catch {
+        // Ignoriramo neispravan JSON iz predmemorije
+      }
+    }
+  }
 
   if (cachedReply) {
     console.log('Cache HIT (Stream): Simuliram streaming iz spremljenog cachea.');
@@ -410,7 +441,9 @@ export async function streamHanicarReply(
 
       // Ako smo uspješno dobili odgovor, spremamo ga u cache
       if (accumulatedText.trim()) {
-        chatCache.set(cacheKey, { text: accumulatedText, model: finalModel });
+        const reply = { text: accumulatedText, model: finalModel };
+        chatCache.set(cacheKey, reply);
+        await setCacheRedis(cacheKey, JSON.stringify(reply));
       }
 
       return;

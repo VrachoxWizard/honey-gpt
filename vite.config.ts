@@ -48,7 +48,7 @@ function localApiPlugin(): Plugin {
         }
 
         const clientIp = getClientIp(request.headers, request.socket.remoteAddress);
-        const limiterRes = checkRateLimit(clientIp);
+        const limiterRes = await checkRateLimit(clientIp);
 
         response.setHeader('X-RateLimit-Limit', '20');
         response.setHeader('X-RateLimit-Remaining', String(limiterRes.remaining));

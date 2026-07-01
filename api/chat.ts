@@ -34,7 +34,7 @@ export default async function handler(request: VercelRequest, response: VercelRe
 
   const headers = request.headers || {};
   const clientIp = getClientIp(headers, request.socket?.remoteAddress);
-  const limiterRes = checkRateLimit(clientIp);
+  const limiterRes = await checkRateLimit(clientIp);
 
   response.setHeader('X-RateLimit-Limit', '20');
   response.setHeader('X-RateLimit-Remaining', String(limiterRes.remaining));

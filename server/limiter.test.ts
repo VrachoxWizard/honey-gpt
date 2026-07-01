@@ -19,17 +19,17 @@ describe('Rate Limiter', () => {
     expect(ip).toBe('192.168.1.1');
   });
 
-  it('should allow requests within limit and block when exceeded', () => {
+  it('should allow requests within limit and block when exceeded', async () => {
     const ip = 'test-limiter-ip';
 
     // Limit je 20 zahtjeva u minuti po IP-u
     for (let i = 0; i < 20; i++) {
-      const res = checkRateLimit(ip);
+      const res = await checkRateLimit(ip);
       expect(res.allowed).toBe(true);
       expect(res.remaining).toBe(20 - (i + 1));
     }
 
-    const blocked = checkRateLimit(ip);
+    const blocked = await checkRateLimit(ip);
     expect(blocked.allowed).toBe(false);
     expect(blocked.remaining).toBe(0);
     expect(blocked.resetTime).toBeGreaterThan(Date.now());

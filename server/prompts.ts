@@ -1,5 +1,6 @@
 import type { ChatRole, ChatMessage } from './shared-types.js';
 import fs from 'node:fs';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Fuse from 'fuse.js';
 
@@ -64,7 +65,16 @@ let fuseInstance: Fuse<{ keywords: string[], phrases: string[] }> | null = null;
 export function getLorePhrases(text: string): string[] {
   try {
     if (!loreData) {
-      const lorePath = fileURLToPath(new URL('./lore.json', import.meta.url));
+      let lorePath = '';
+      try {
+        if (typeof import.meta.url === 'string' && import.meta.url.startsWith('file:')) {
+          lorePath = fileURLToPath(new URL('./lore.json', import.meta.url));
+        } else {
+          lorePath = path.resolve(process.cwd(), 'server', 'lore.json');
+        }
+      } catch {
+        lorePath = path.resolve(process.cwd(), 'server', 'lore.json');
+      }
       const content = fs.readFileSync(lorePath, 'utf-8');
       loreData = JSON.parse(content);
     }
