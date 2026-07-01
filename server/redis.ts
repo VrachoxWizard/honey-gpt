@@ -78,8 +78,9 @@ export async function checkRateLimitRedis(ip: string, maxRequests = 20): Promise
       remaining: maxRequests - count,
       resetTime,
     };
-  } catch {
+  } catch (err) {
     // U slucaju greske na Redisu, vracamo null kako bi pozivatelj pao natrag na in-memory limiter
+    console.warn(`[Redis] Rate limit greška, fallback na in-memory: ${(err as Error).message}`);
     return null;
   }
 }

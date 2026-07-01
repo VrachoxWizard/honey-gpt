@@ -32,9 +32,12 @@ const ChatPayloadSchema = z.object({
   messages: z.array(
     z.object({
       role: z.enum(['user', 'assistant']),
-      content: z.union([z.string(), z.array(MessagePartSchema)]),
+      content: z.union([
+        z.string().max(100000, "Tekst poruke prelazi dozvoljenu duljinu (100k znakova)."), 
+        z.array(MessagePartSchema)
+      ]),
     })
-  ),
+  ).max(50, "Maksimalno 50 poruka je dopušteno po zahtjevu."),
   model: z.string().trim().optional(),
   toneMode: z.enum(['humilis', 'clericus', 'sanctus']).optional(),
 });

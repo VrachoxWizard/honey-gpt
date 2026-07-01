@@ -47,7 +47,12 @@ export async function callOpenRouter(
         temperature: CONSTANTS.LLM_TEMPERATURE,
       },
       timeout: CONSTANTS.SYNC_TIMEOUT_MS,
-      retry: { limit: 1 },
+      retry: { 
+        limit: 3, 
+        methods: ['post'],
+        statusCodes: [429, 500, 502, 503, 504],
+        delay: (attemptCount) => 0.5 * (2 ** (attemptCount - 1)) * 1000
+      },
     })
     .json<OpenRouterResponse>();
 }

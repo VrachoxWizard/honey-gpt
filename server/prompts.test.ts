@@ -40,28 +40,28 @@ describe('Prompts / Sentiment & Coding Detection', () => {
   describe('buildSystemPrompt', () => {
     it('should generate system prompt with base instructions', () => {
       const prompt = buildSystemPrompt('sanctus');
-      expect(prompt).toContain('Haničar GPT');
-      expect(prompt).toContain('standardnom, književnom');
+      expect(prompt).toContain('HANIČAR GPT');
+      expect(prompt).toContain('besprijekornom, književnom');
     });
 
     it('should include angry instructions when user is angry', () => {
       const prompt = buildSystemPrompt('sanctus', undefined, undefined, 'angry');
-      expect(prompt).toContain('Korisnik je trenutno ljut/frustriran');
+      expect(prompt).toContain('Korisnik je vidno frustriran');
     });
 
     it('should include sad instructions when user is sad', () => {
       const prompt = buildSystemPrompt('sanctus', undefined, undefined, 'sad');
-      expect(prompt).toContain('Korisnik je tužan ili melankoličan');
+      expect(prompt).toContain('Korisnik je melankoličan ili tužan');
     });
 
     it('should format instructions according to toneMode humilis', () => {
       const prompt = buildSystemPrompt('humilis');
-      expect(prompt).toContain('skroman i pokoran');
+      expect(prompt).toContain('Skroman, tih, pokajnički');
     });
 
     it('should format instructions according to toneMode clericus', () => {
       const prompt = buildSystemPrompt('clericus');
-      expect(prompt).toContain('Birokratski (Clericus)');
+      expect(prompt).toContain('MODUS: CLERICUS (Birokratski)');
     });
   });
 
