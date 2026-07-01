@@ -9,14 +9,14 @@ describe('Sidebar', () => {
       id: 'session-1',
       title: 'Prvi razgovor',
       createdAt: Date.now(),
-      messages: []
+      messages: [],
     },
     {
       id: 'session-2',
       title: 'Drugi razgovor',
       createdAt: Date.now(),
-      messages: []
-    }
+      messages: [],
+    },
   ];
 
   it('renders brand block and session list', () => {
@@ -60,7 +60,7 @@ describe('Sidebar', () => {
 
     const secondSessionNode = screen.getByText('Drugi razgovor');
     fireEvent.click(secondSessionNode);
-    
+
     expect(onSwitch).toHaveBeenCalledWith('session-2');
   });
 

@@ -1,9 +1,11 @@
-const CACHE_NAME = 'hanicar-v1';
+const CACHE_NAME = 'hanicar-v2';
 const ASSETS = [
   '/',
   '/index.html',
   '/hanicar-the-genie.jpeg',
-  '/manifest.json'
+  '/manifest.json',
+  '/robots.txt',
+  '/sitemap.xml'
 ];
 
 self.addEventListener('install', (event) => {

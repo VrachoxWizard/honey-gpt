@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://honey-gpt.vercel.app/sitemap.xml

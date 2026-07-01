@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { Message, ChatSession } from '../types';
 
 const SESSIONS_KEY = 'hanicar_gpt_sessions_v2';
@@ -76,32 +76,40 @@ export function useChat() {
   }, []);
 
   // Get active session messages
-  const activeSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
-  const messages = activeSession ? activeSession.messages : [welcomeMessage];
+  const activeSession = useMemo(() => {
+    return sessions.find((s) => s.id === activeSessionId) || sessions[0];
+  }, [sessions, activeSessionId]);
+
+  const messages = useMemo(() => {
+    return activeSession ? activeSession.messages : [welcomeMessage];
+  }, [activeSession]);
 
   // Helper to update messages inside the active session
-  const updateActiveSessionMessages = useCallback((updater: (curr: Message[]) => Message[]) => {
-    setSessions((prevSessions) =>
-      prevSessions.map((s) => {
-        if (s.id === activeSessionId) {
-          const nextMsgs = updater(s.messages);
-          let nextTitle = s.title;
-          
-          // Generate a title based on the first user message if it's still 'Novi razgovor'
-          if (s.title === 'Novi razgovor') {
-            const firstUserMsg = nextMsgs.find((m) => m.role === 'user');
-            if (firstUserMsg) {
-              nextTitle =
-                firstUserMsg.content.slice(0, 30) +
-                (firstUserMsg.content.length > 30 ? '...' : '');
+  const updateActiveSessionMessages = useCallback(
+    (updater: (curr: Message[]) => Message[]) => {
+      setSessions((prevSessions) =>
+        prevSessions.map((s) => {
+          if (s.id === activeSessionId) {
+            const nextMsgs = updater(s.messages);
+            let nextTitle = s.title;
+
+            // Generate a title based on the first user message if it's still 'Novi razgovor'
+            if (s.title === 'Novi razgovor') {
+              const firstUserMsg = nextMsgs.find((m) => m.role === 'user');
+              if (firstUserMsg) {
+                nextTitle =
+                  firstUserMsg.content.slice(0, 30) +
+                  (firstUserMsg.content.length > 30 ? '...' : '');
+              }
             }
+            return { ...s, messages: nextMsgs, title: nextTitle };
           }
-          return { ...s, messages: nextMsgs, title: nextTitle };
-        }
-        return s;
-      })
-    );
-  }, [activeSessionId]);
+          return s;
+        })
+      );
+    },
+    [activeSessionId]
+  );
 
   const abortGeneration = useCallback(() => {
     if (abortControllerRef.current) {
@@ -112,9 +120,7 @@ export function useChat() {
   }, []);
 
   const clearChat = useCallback(() => {
-    updateActiveSessionMessages(() => [
-      { ...welcomeMessage, timestamp: Date.now() },
-    ]);
+    updateActiveSessionMessages(() => [{ ...welcomeMessage, timestamp: Date.now() }]);
     setError('');
     abortGeneration();
   }, [updateActiveSessionMessages, abortGeneration]);
@@ -132,40 +138,44 @@ export function useChat() {
     abortGeneration();
   }, [abortGeneration]);
 
-  const switchSession = useCallback((id: string) => {
-    setActiveSessionId(id);
-    setError('');
-    abortGeneration();
-  }, [abortGeneration]);
+  const switchSession = useCallback(
+    (id: string) => {
+      setActiveSessionId(id);
+      setError('');
+      abortGeneration();
+    },
+    [abortGeneration]
+  );
 
-  const deleteSession = useCallback((id: string) => {
-    abortGeneration();
-    setError('');
+  const deleteSession = useCallback(
+    (id: string) => {
+      abortGeneration();
+      setError('');
 
-    setSessions((prev) => {
-      const next = prev.filter((s) => s.id !== id);
-      if (next.length === 0) {
-        const initial: ChatSession = {
-          id: crypto.randomUUID(),
-          title: 'Novi razgovor',
-          messages: [{ ...welcomeMessage, timestamp: Date.now() }],
-          createdAt: Date.now(),
-        };
-        setActiveSessionId(initial.id);
-        return [initial];
-      }
+      setSessions((prev) => {
+        const next = prev.filter((s) => s.id !== id);
+        if (next.length === 0) {
+          const initial: ChatSession = {
+            id: crypto.randomUUID(),
+            title: 'Novi razgovor',
+            messages: [{ ...welcomeMessage, timestamp: Date.now() }],
+            createdAt: Date.now(),
+          };
+          setActiveSessionId(initial.id);
+          return [initial];
+        }
 
-      if (activeSessionId === id) {
-        setActiveSessionId(next[0].id);
-      }
-      return next;
-    });
-  }, [activeSessionId, abortGeneration]);
+        if (activeSessionId === id) {
+          setActiveSessionId(next[0].id);
+        }
+        return next;
+      });
+    },
+    [activeSessionId, abortGeneration]
+  );
 
   const renameSession = useCallback((id: string, newTitle: string) => {
-    setSessions((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, title: newTitle } : s))
-    );
+    setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, title: newTitle } : s)));
   }, []);
 
   const clearAllSessions = useCallback(() => {
@@ -181,21 +191,11 @@ export function useChat() {
     setActiveSessionId(initialSession.id);
   }, [abortGeneration]);
 
-  const sendMessage = async (content: string, image?: string) => {
-    if ((!content.trim() && !image) || isSending) return;
-
+  const sendConversation = useCallback(async (nextMessages: Message[]) => {
     abortGeneration();
     const newController = new AbortController();
     abortControllerRef.current = newController;
 
-    const userMessage: Message = { 
-      id: crypto.randomUUID(), 
-      role: 'user', 
-      content,
-      timestamp: Date.now(),
-      image
-    };
-    const nextMessages = [...messages, userMessage];
     updateActiveSessionMessages(() => nextMessages);
     setError('');
     setIsSending(true);
@@ -214,8 +214,8 @@ export function useChat() {
             role,
             content: [
               { type: 'text', text: content },
-              { type: 'image_url', image_url: { url: image } }
-            ]
+              { type: 'image_url', image_url: { url: image } },
+            ],
           };
         }
         return { role, content };
@@ -231,10 +231,10 @@ export function useChat() {
           const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
               messages: conversation,
               model: activeModel,
-              toneMode: toneMode
+              toneMode: toneMode,
             }),
             signal: newController.signal,
           });
@@ -278,14 +278,12 @@ export function useChat() {
                       }
                       updateActiveSessionMessages((currentMessages) =>
                         currentMessages.map((msg) =>
-                          msg.id === assistantMessageId
-                            ? { ...msg, content: assistantText }
-                            : msg
+                          msg.id === assistantMessageId ? { ...msg, content: assistantText } : msg
                         )
                       );
                     }
-                  } catch (e) {
-                    if (e instanceof Error && e.message) throw e;
+                  } catch {
+                    // Ignore partial JSON parsing errors
                   }
                 }
               }
@@ -300,9 +298,7 @@ export function useChat() {
             }
             updateActiveSessionMessages((currentMessages) =>
               currentMessages.map((msg) =>
-                msg.id === assistantMessageId
-                  ? { ...msg, content: payload.text }
-                  : msg
+                msg.id === assistantMessageId ? { ...msg, content: payload.text } : msg
               )
             );
             success = true;
@@ -336,7 +332,46 @@ export function useChat() {
         abortControllerRef.current = null;
       }
     }
-  };
+  }, [activeModel, toneMode, handleSetActiveModel, updateActiveSessionMessages, abortGeneration]);
+
+  const sendMessage = useCallback(async (content: string, image?: string) => {
+    if ((!content.trim() && !image) || isSending) return;
+
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content,
+      timestamp: Date.now(),
+      image,
+    };
+    const nextMessages = [...messages, userMessage];
+    await sendConversation(nextMessages);
+  }, [messages, isSending, sendConversation]);
+
+  const regenerateLastResponse = useCallback(async () => {
+    if (isSending) return;
+    const lastUserIndex = [...messages].reverse().findIndex((m) => m.role === 'user');
+    if (lastUserIndex === -1) return;
+
+    const realIndex = messages.length - 1 - lastUserIndex;
+    const pruned = messages.slice(0, realIndex + 1);
+    await sendConversation(pruned);
+  }, [messages, isSending, sendConversation]);
+
+  const editAndResend = useCallback(async (messageId: string, newContent: string) => {
+    if (isSending) return;
+    const msgIndex = messages.findIndex((m) => m.id === messageId);
+    if (msgIndex === -1) return;
+
+    const updatedUserMessage = {
+      ...messages[msgIndex],
+      content: newContent,
+      timestamp: Date.now(),
+    };
+
+    const pruned = [...messages.slice(0, msgIndex), updatedUserMessage];
+    await sendConversation(pruned);
+  }, [messages, isSending, sendConversation]);
 
   return {
     sessions,
@@ -349,6 +384,8 @@ export function useChat() {
     isSending,
     error,
     sendMessage,
+    regenerateLastResponse,
+    editAndResend,
     clearChat,
     newChat,
     switchSession,

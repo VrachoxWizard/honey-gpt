@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --theme-bg-950: #09090b; /* zinc-950 */
@@ -36,7 +36,7 @@ html.light {
   --color-zinc-200: var(--theme-text-200);
   --color-zinc-100: var(--theme-text-100);
   --color-zinc-500: var(--theme-text-500);
-  
+
   --color-crimson-400: #fb7185;
   --color-crimson-500: #f43f5e;
   --color-crimson-600: #e11d48;
@@ -44,13 +44,15 @@ html.light {
   --color-crimson-800: #9f1239;
   --color-crimson-900: #881337;
   --color-crimson-950: #4c0519;
-  
-  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
-  --font-serif: "Outfit", system-ui, -apple-system, sans-serif; /* Anti-serif for dashboard ui rule */
+
+  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-serif:
+    'Outfit', system-ui, -apple-system, sans-serif; /* Anti-serif for dashboard ui rule */
 }
 
 @layer base {
-  html, body {
+  html,
+  body {
     @apply h-full antialiased bg-zinc-950 text-zinc-300 font-sans transition-colors duration-300;
     margin: 0;
   }
@@ -109,4 +111,11 @@ html.light .prose-invert {
   --tw-prose-links: var(--color-crimson-600);
   --tw-prose-bold: var(--theme-text-100);
   --tw-prose-pre-bg: var(--theme-bg-950);
+}
+
+/* Shimmer animation keyframes for skeleton loader */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }

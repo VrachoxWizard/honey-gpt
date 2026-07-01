@@ -50,7 +50,7 @@ export async function createHanicarReply(
   if (!isConfiguredOpenRouterKey(apiKey)) {
     throw httpError(
       500,
-      'Nedostaje OPENROUTER_API_KEY. Dodaj ga u .env lokalno ili u Vercel Environment Variables.',
+      'Nedostaje OPENROUTER_API_KEY. Dodaj ga u .env lokalno ili u Vercel Environment Variables.'
     );
   }
 
@@ -86,7 +86,10 @@ export async function createHanicarReply(
     }
   }
 
-  throw httpError(isQuotaLikeError(lastError) ? 429 : 502, lastError || 'OpenRouter trenutno nije dostupan.');
+  throw httpError(
+    isQuotaLikeError(lastError) ? 429 : 502,
+    lastError || 'OpenRouter trenutno nije dostupan.'
+  );
 }
 
 function sanitizeMessages(messages: ChatMessage[]) {
@@ -96,7 +99,9 @@ function sanitizeMessages(messages: ChatMessage[]) {
       if (typeof message.content === 'string') {
         return {
           role: message.role,
-          content: String(message.content || '').trim().slice(0, MAX_MESSAGE_CHARS),
+          content: String(message.content || '')
+            .trim()
+            .slice(0, MAX_MESSAGE_CHARS),
         };
       }
       return {
@@ -153,16 +158,26 @@ async function callOpenRouter(
 function getCroatianDateString(): string {
   const days = ['nedjelja', 'ponedjeljak', 'utorak', 'srijeda', 'četvrtak', 'petak', 'subota'];
   const months = [
-    'siječnja', 'veljače', 'ožujka', 'travnja', 'svibnja', 'lipnja',
-    'srpnja', 'kolovoza', 'rujna', 'listopada', 'studenoga', 'prosinca'
+    'siječnja',
+    'veljače',
+    'ožujka',
+    'travnja',
+    'svibnja',
+    'lipnja',
+    'srpnja',
+    'kolovoza',
+    'rujna',
+    'listopada',
+    'studenoga',
+    'prosinca',
   ];
-  
+
   const now = new Date();
   const dayName = days[now.getDay()];
   const dateNum = now.getDate();
   const monthName = months[now.getMonth()];
   const year = now.getFullYear();
-  
+
   return `Danas je ${dayName}, ${dateNum}. ${monthName} ${year}.`;
 }
 
@@ -171,7 +186,7 @@ function buildOpenRouterMessages(
   toneMode?: 'humilis' | 'clericus' | 'sanctus'
 ): OpenRouterMessage[] {
   const dateString = getCroatianDateString();
-  
+
   const baseInstructions = [
     'Ti si Haničar GPT, satirični AI chatbot na hrvatskom jeziku.',
     'Uvijek piši na standardnom, književnom i stopostotno gramatički i pravopisno točnom hrvatskom jeziku.',
@@ -187,17 +202,17 @@ function buildOpenRouterMessages(
     'Koristi markdown formatiranje za bolju čitljivost: **boldaj** ključne riječi, koristi numerirane liste za korake i citate (>) za biblijske stihove.',
     'Ako korisnik piše na engleskom ili drugom jeziku, odgovori mu na hrvatskom i ljubazno ga podsjeti da se ovdje govori hrvatski jezik pod Božjim okriljem.',
     `Vremenski kontekst: ${dateString}`,
-    'Ako je danas nedjelja, obvezno podsjeti korisnika na važnost nedjeljne mise i odmora.'
+    'Ako je danas nedjelja, obvezno podsjeti korisnika na važnost nedjeljne mise i odmora.',
   ];
 
-  let toneInstructions: string[] = [];
+  let toneInstructions: string[];
   if (toneMode === 'humilis') {
     toneInstructions = [
       '- Tvoj stil je iznimno ponizan, kršćanski blag i staložen.',
       '- Koristi vrlo umjerenu, toplu satiru. Izbjegavaj sarkazam.',
       '- Započni svaki odgovor ili pozdrav s kratkim, blagoslovljenim uvodom ili kršćanskim pozdravom (npr. "Mir s tobom!", "Božji blagoslov!", "Hvaljen Isus i Marija!").',
       '- Svaki svoj savjet ili misao obvezno potkrijepi prikladnim citatom iz Svetog Pisma (Biblije) na hrvatskom jeziku (npr. "Kao što piše u Mateju 7:7..."). Navedi točnu knjigu, poglavlje i stih.',
-      '- Koristi tople metafore iz seoskog života i bogate katoličke obitelji.'
+      '- Koristi tople metafore iz seoskog života i bogate katoličke obitelji.',
     ];
   } else if (toneMode === 'clericus') {
     toneInstructions = [
@@ -205,7 +220,7 @@ function buildOpenRouterMessages(
       '- Budi satiričan i blago ironičan, pronalazeći poveznice s hrvatskom svakodnevicom (hrvatska birokracija, čekanje u redovima, kafići, HDZ/Sabor, turizam, pečati, šalteri, porezna uprava).',
       '- Uspoređuj moderne probleme s čekanjem u redu za papire, birokratskim preprekama, radom u Saboru ili crkvenom administracijom.',
       '- Započni odgovor s formalnim crkveno-birokratskim pozdravom (npr. "Mir vama i urudžbeni broj vašoj duši!", "Hvaljen Isus! Molimo priložite biljeg od 10 eura u duhovni spis.").',
-      '- Citat iz Biblije koristi satirično, kako bi osudio lijenost ili birokraciju (npr. citiraj o pravednosti ili zakonima).'
+      '- Citat iz Biblije koristi satirično, kako bi osudio lijenost ili birokraciju (npr. citiraj o pravednosti ili zakonima).',
     ];
   } else {
     // Default or 'sanctus'
@@ -215,11 +230,15 @@ function buildOpenRouterMessages(
       '- Kada je prikladno, citiraj Sveto Pismo (Bibliju) na hrvatskom jeziku kako bi potkrijepio svoje savjete ili satiru (npr. "Kao što piše u Mateju 7:7..."). Navedi točnu knjigu, poglavlje i stih.',
       '- Koristi metafore i usporedbe iz hrvatske povijesti, bogate katoličke tradicije, te svakodnevnog života u Hrvatskoj.',
       '- Ako korisnik pita o modernoj tehnologiji, programiranju ili znanosti, usporedi to na duhovit način sa stvarima iz seoskog života, crkvene administracije ili rada u Saboru.',
-      '- Često podsjećaj korisnika na važnost moljenja krunice, posta i odlaska na nedjeljnu misu.'
+      '- Često podsjećaj korisnika na važnost moljenja krunice, posta i odlaska na nedjeljnu misu.',
     ];
   }
 
-  const systemContent = [...baseInstructions, '--- POSEBNE UPUTE ZA STIL OVISNO O ODABRANOM MODU ---', ...toneInstructions].join('\n');
+  const systemContent = [
+    ...baseInstructions,
+    '--- POSEBNE UPUTE ZA STIL OVISNO O ODABRANOM MODU ---',
+    ...toneInstructions,
+  ].join('\n');
 
   return [
     {
@@ -232,7 +251,10 @@ function buildOpenRouterMessages(
 
 function getModelCandidates(userModel?: string) {
   const configuredModel = userModel || process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
-  const fallbacks = String(process.env.OPENROUTER_FALLBACK_MODELS || 'meta-llama/llama-3.3-70b-instruct,qwen/qwen-2.5-coder-32b-instruct,google/gemini-2.0-flash-lite-preview-02-05:free')
+  const fallbacks = String(
+    process.env.OPENROUTER_FALLBACK_MODELS ||
+      'meta-llama/llama-3.3-70b-instruct,qwen/qwen-2.5-coder-32b-instruct,google/gemini-2.0-flash-lite-preview-02-05:free'
+  )
     .split(',')
     .map((model) => model.trim())
     .filter(Boolean);
@@ -255,7 +277,9 @@ function readNumberEnv(name: string, fallback: number) {
 }
 
 function isRetryableOpenRouterError(message: string) {
-  return /\b(429|500|502|503|504|rate limit|timeout|temporarily|unavailable|overloaded)\b/i.test(message);
+  return /\b(429|500|502|503|504|rate limit|timeout|temporarily|unavailable|overloaded)\b/i.test(
+    message
+  );
 }
 
 function isQuotaLikeError(message: string) {
@@ -288,7 +312,7 @@ export async function streamHanicarReply(
   if (!isConfiguredOpenRouterKey(apiKey)) {
     throw httpError(
       500,
-      'Nedostaje OPENROUTER_API_KEY. Dodaj ga u .env lokalno ili u Vercel Environment Variables.',
+      'Nedostaje OPENROUTER_API_KEY. Dodaj ga u .env lokalno ili u Vercel Environment Variables.'
     );
   }
 
@@ -332,12 +356,12 @@ export async function streamHanicarReply(
 
       const decoder = new TextDecoder('utf-8');
       let buffer = '';
-      
+
       for await (const chunk of response.body as any) {
         buffer += decoder.decode(chunk, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
-        
+
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed) continue;
@@ -351,13 +375,13 @@ export async function streamHanicarReply(
               if (token || responseModel) {
                 onChunk({ token, model: responseModel });
               }
-            } catch (e) {
+            } catch {
               // Ignore partial JSON parsing errors
             }
           }
         }
       }
-      
+
       return;
     } catch (error) {
       lastError = getErrorMessage(error);
@@ -368,5 +392,8 @@ export async function streamHanicarReply(
     }
   }
 
-  throw httpError(isQuotaLikeError(lastError) ? 429 : 502, lastError || 'OpenRouter trenutno nije dostupan.');
+  throw httpError(
+    isQuotaLikeError(lastError) ? 429 : 502,
+    lastError || 'OpenRouter trenutno nije dostupan.'
+  );
 }

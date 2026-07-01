@@ -2,6 +2,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { handleChatPayload, handleChatPayloadStream, toClientError } from './server/api.js';
+import { checkRateLimit, getClientIp } from './server/limiter.js';
 
 function readRequestBody(request: import('node:http').IncomingMessage) {
   return new Promise<unknown>((resolve, reject) => {
@@ -43,6 +44,24 @@ function localApiPlugin(): Plugin {
           response.statusCode = 405;
           response.setHeader('Content-Type', 'application/json; charset=utf-8');
           response.end(JSON.stringify({ error: 'Haničar-GPT prima samo POST zahtjeve.' }));
+          return;
+        }
+
+        const clientIp = getClientIp(request.headers, request.socket.remoteAddress);
+        const limiterRes = checkRateLimit(clientIp);
+
+        response.setHeader('X-RateLimit-Limit', '20');
+        response.setHeader('X-RateLimit-Remaining', String(limiterRes.remaining));
+        response.setHeader('X-RateLimit-Reset', String(limiterRes.resetTime));
+
+        if (!limiterRes.allowed) {
+          response.statusCode = 429;
+          response.setHeader('Content-Type', 'application/json; charset=utf-8');
+          response.end(
+            JSON.stringify({
+              error: 'Previše zahtjeva. Molimo pričekajte trenutak prije novih pitanja za Haničara.',
+            })
+          );
           return;
         }
 
@@ -113,6 +132,31 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '127.0.0.1',
       port: 5173,
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react-dom') || id.includes('react/')) {
+                return 'vendor-react';
+              }
+              if (id.includes('framer-motion')) {
+                return 'vendor-motion';
+              }
+              if (
+                id.includes('react-markdown') ||
+                id.includes('remark-gfm') ||
+                id.includes('unist') ||
+                id.includes('mdast') ||
+                id.includes('micromark')
+              ) {
+                return 'vendor-markdown';
+              }
+            }
+          },
+        },
+      },
     },
     test: {
       environment: 'jsdom',

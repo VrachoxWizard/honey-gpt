@@ -1,4 +1,4 @@
-import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, DragEvent, FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, RefreshCcw, Send, Square, Paperclip, X } from 'lucide-react';
 import { cn } from '../utils/cn';
@@ -46,7 +46,7 @@ function compressAndConvertImage(file: File): Promise<string> {
           ctx.drawImage(img, 0, 0, width, height);
           const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
           resolve(compressedDataUrl);
-        } catch (e) {
+        } catch {
           resolve(event.target?.result as string); // Fallback to raw base64 if canvas drawing fails
         }
       };
@@ -62,7 +62,14 @@ function compressAndConvertImage(file: File): Promise<string> {
   });
 }
 
-export function ChatComposer({ draft, setDraft, isSending, error, onSubmit, onAbort }: ChatComposerProps) {
+export function ChatComposer({
+  draft,
+  setDraft,
+  isSending,
+  error,
+  onSubmit,
+  onAbort,
+}: ChatComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
@@ -91,7 +98,7 @@ export function ChatComposer({ draft, setDraft, isSending, error, onSubmit, onAb
     }
   };
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     await processImageFile(file);
@@ -118,7 +125,7 @@ export function ChatComposer({ draft, setDraft, isSending, error, onSubmit, onAb
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isSending) {
@@ -126,13 +133,13 @@ export function ChatComposer({ draft, setDraft, isSending, error, onSubmit, onAb
     }
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
+  const handleDragLeave = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = async (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
@@ -148,7 +155,6 @@ export function ChatComposer({ draft, setDraft, isSending, error, onSubmit, onAb
   return (
     <div className="p-4 md:p-6 bg-zinc-950/40 border-t border-white/5 backdrop-blur-md">
       <div className="max-w-[900px] mx-auto relative">
-        
         {/* Floating Stop Button when sending */}
         {isSending && (
           <div className="absolute -top-14 left-1/2 -translate-x-1/2 z-10">
@@ -171,27 +177,31 @@ export function ChatComposer({ draft, setDraft, isSending, error, onSubmit, onAb
             <span className="leading-snug">{error}</span>
           </div>
         )}
-        
-        <form 
-          onSubmit={handleSubmit} 
+
+        <form
+          onSubmit={handleSubmit}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            "relative flex flex-col bg-zinc-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_10px_30px_rgba(0,0,0,0.5)] p-2 focus-within:border-zinc-800 focus-within:bg-zinc-900/80 transition-all duration-200",
-            isDragging && "border-crimson-600/50 bg-zinc-900/80 ring-1 ring-crimson-600/20"
+            'relative flex flex-col bg-zinc-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_10px_30px_rgba(0,0,0,0.5)] p-2 focus-within:border-zinc-800 focus-within:bg-zinc-900/80 transition-all duration-200',
+            isDragging && 'border-crimson-600/50 bg-zinc-900/80 ring-1 ring-crimson-600/20'
           )}
         >
           {/* Image preview thumbnail inside bubble */}
           <AnimatePresence>
             {attachedImage && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 5 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 5 }}
                 className="relative inline-block w-20 h-20 mb-2 ml-2 select-none group shrink-0"
               >
-                <img src={attachedImage} alt="Pretpregled privitka" className="w-20 h-20 object-cover rounded-xl border border-white/10" />
+                <img
+                  src={attachedImage}
+                  alt="Pretpregled privitka"
+                  className="w-20 h-20 object-cover rounded-xl border border-white/10"
+                />
                 <button
                   type="button"
                   onClick={() => setAttachedImage(null)}
@@ -235,20 +245,26 @@ export function ChatComposer({ draft, setDraft, isSending, error, onSubmit, onAb
               disabled={isSending}
               className="flex-1 max-h-[200px] bg-transparent resize-none py-3 px-4 text-zinc-100 placeholder:text-zinc-500 focus:outline-none text-[15px] leading-relaxed disabled:opacity-50"
             />
-            
-            <motion.button 
-              whileHover={!isSending ? { scale: 1.05 } : {}} 
+
+            <motion.button
+              whileHover={!isSending ? { scale: 1.05 } : {}}
               whileTap={!isSending ? { scale: 0.95 } : {}}
-              type="submit" 
+              type="submit"
               disabled={(!draft.trim() && !attachedImage) || isSending}
               aria-label="Pošalji poruku"
               className="shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-crimson-600 hover:bg-crimson-500 text-white disabled:opacity-50 disabled:bg-zinc-800 disabled:text-zinc-500 transition-colors mb-0.5 mr-0.5 shadow-md shadow-crimson-900/20 cursor-pointer"
             >
-              {isSending ? <Loader2 size={20} className="animate-spin" /> : <Send size={18} className="ml-0.5" />}
+              {isSending ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : (
+                <Send size={18} className="ml-0.5" />
+              )}
             </motion.button>
           </div>
         </form>
-        <p className="text-center text-[10px] text-zinc-600 mt-3 font-medium select-none">Haničar GPT može pogriješiti. Provjerite važne informacije kod župnika.</p>
+        <p className="text-center text-[10px] text-zinc-600 mt-3 font-medium select-none">
+          Haničar GPT može pogriješiti. Provjerite važne informacije kod župnika.
+        </p>
       </div>
     </div>
   );

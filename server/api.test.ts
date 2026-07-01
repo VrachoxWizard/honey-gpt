@@ -6,7 +6,7 @@ describe('Backend options parsing', () => {
     const payload = {
       messages: [],
       model: 'google/gemini-2.5-flash',
-      toneMode: 'clericus'
+      toneMode: 'clericus',
     };
     const options = parseOptions(payload);
     expect(options.model).toBe('google/gemini-2.5-flash');
@@ -16,7 +16,7 @@ describe('Backend options parsing', () => {
   it('should ignore invalid toneMode values', () => {
     const payload = {
       messages: [],
-      toneMode: 'invalid_mode'
+      toneMode: 'invalid_mode',
     };
     const options = parseOptions(payload);
     expect(options.toneMode).toBeUndefined();

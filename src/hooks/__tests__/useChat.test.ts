@@ -40,9 +40,9 @@ describe('useChat', () => {
         createdAt: Date.now(),
         messages: [
           { id: 'welcome', role: 'assistant', content: 'Test welcome', timestamp: 123 },
-          { id: '1', role: 'user', content: 'Pozdrav', timestamp: 124 }
-        ]
-      }
+          { id: '1', role: 'user', content: 'Pozdrav', timestamp: 124 },
+        ],
+      },
     ];
     localStorage.setItem('hanicar_gpt_sessions_v2', JSON.stringify(mockSessions));
     localStorage.setItem('hanicar_gpt_active_session_id_v2', mockSessionId);
@@ -68,18 +68,17 @@ describe('useChat', () => {
 
   it('should switch sessions', () => {
     const { result } = renderHook(() => useChat());
-    
+
     act(() => {
       result.current.newChat();
     });
-    
+
     const secondSessionId = result.current.activeSessionId;
-    
+
     act(() => {
       result.current.newChat();
     });
-    
-    const thirdSessionId = result.current.activeSessionId;
+
     expect(result.current.sessions).toHaveLength(3);
 
     act(() => {
@@ -116,7 +115,7 @@ describe('useChat', () => {
       result.current.renameSession(sessionId, 'Novi Naslov');
     });
 
-    const session = result.current.sessions.find(s => s.id === sessionId);
+    const session = result.current.sessions.find((s) => s.id === sessionId);
     expect(session?.title).toBe('Novi Naslov');
   });
 

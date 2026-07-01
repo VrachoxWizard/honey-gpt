@@ -3,6 +3,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ChatMessage } from '../ChatMessage';
 import type { Message } from '../../types';
 
+vi.mock('../../hooks/useToast', () => ({
+  useToast: () => ({
+    showToast: vi.fn(),
+  }),
+}));
+
 describe('ChatMessage', () => {
   beforeEach(() => {
     vi.stubGlobal('navigator', {
@@ -25,7 +31,7 @@ describe('ChatMessage', () => {
     };
 
     render(<ChatMessage message={message} isWelcome={true} />);
-    
+
     expect(screen.getByText('Mir s tobom!')).toBeInTheDocument();
     expect(screen.getByText('† Haničar GPT †')).toBeInTheDocument();
   });
@@ -39,7 +45,7 @@ describe('ChatMessage', () => {
     };
 
     render(<ChatMessage message={message} />);
-    
+
     expect(screen.getByText('Pozdrav Haničaru')).toBeInTheDocument();
     expect(screen.getAllByText('Ti').length).toBeGreaterThan(0);
   });
@@ -54,7 +60,7 @@ describe('ChatMessage', () => {
     };
 
     render(<ChatMessage message={message} />);
-    
+
     // check if formatted time like '15:30' exists in the document
     expect(screen.getByText('15:30')).toBeInTheDocument();
   });
@@ -68,14 +74,14 @@ describe('ChatMessage', () => {
     };
 
     render(<ChatMessage message={message} />);
-    
+
     const copyButton = screen.getByTitle('Kopiraj');
     expect(copyButton).toBeInTheDocument();
-    
+
     await act(async () => {
       fireEvent.click(copyButton);
     });
-    
+
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Tekst za kopiranje');
   });
 });

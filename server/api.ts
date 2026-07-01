@@ -1,4 +1,10 @@
-import { createHanicarReply, streamHanicarReply, httpError, type ChatMessage, type HanicarOptions } from './hanicar.js';
+import {
+  createHanicarReply,
+  streamHanicarReply,
+  httpError,
+  type ChatMessage,
+  type HanicarOptions,
+} from './hanicar.js';
 
 export type ClientError = {
   statusCode: number;

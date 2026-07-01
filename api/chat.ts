@@ -1,8 +1,11 @@
 import { handleChatPayloadStream, toClientError } from '../server/api.js';
+import { checkRateLimit, getClientIp } from '../server/limiter.js';
 
 type VercelRequest = {
   method?: string;
   body: unknown;
+  headers?: Record<string, string | string[] | undefined>;
+  socket?: { remoteAddress?: string };
 };
 
 type VercelResponse = {
@@ -26,6 +29,21 @@ export default async function handler(request: VercelRequest, response: VercelRe
 
   if (request.method !== 'POST') {
     response.status(405).json({ error: 'Haničar-GPT prima samo POST zahtjeve.' });
+    return;
+  }
+
+  const headers = request.headers || {};
+  const clientIp = getClientIp(headers, request.socket?.remoteAddress);
+  const limiterRes = checkRateLimit(clientIp);
+
+  response.setHeader('X-RateLimit-Limit', '20');
+  response.setHeader('X-RateLimit-Remaining', String(limiterRes.remaining));
+  response.setHeader('X-RateLimit-Reset', String(limiterRes.resetTime));
+
+  if (!limiterRes.allowed) {
+    response.status(429).json({
+      error: 'Previše zahtjeva. Molimo pričekajte trenutak prije novih pitanja za Haničara.',
+    });
     return;
   }
 
