@@ -70,8 +70,10 @@ function AppContent() {
   }, [messages, isSending]);
 
   useEffect(() => {
+    // Instant (not smooth) so streaming tokens don't fight the user's scroll,
+    // and only when they're already pinned to the bottom.
     if (isNearBottomRef.current) {
-      scrollRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+      scrollRef.current?.scrollIntoView({ block: 'end' });
     }
   }, [messages, isSending, showTypingIndicator]);
 
@@ -104,8 +106,8 @@ function AppContent() {
     if (!container) return;
     const distanceFromBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight;
-    isNearBottomRef.current = distanceFromBottom < 120;
-    setShowScrollButton(distanceFromBottom > 300);
+    isNearBottomRef.current = distanceFromBottom < 48;
+    setShowScrollButton(distanceFromBottom > 260);
   };
 
   const scrollToBottom = () =>
@@ -185,14 +187,14 @@ function AppContent() {
           <AnimatePresence>
             {showScrollButton && !isWelcomeView && (
               <motion.button
-                initial={{ opacity: 0, scale: 0.8, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 onClick={scrollToBottom}
-                className="wax-seal absolute bottom-32 right-6 md:right-10 z-20 w-11 h-11 flex items-center justify-center rounded-full cursor-pointer"
+                className="wax-seal absolute bottom-[104px] left-1/2 -translate-x-1/2 z-20 w-9 h-9 flex items-center justify-center rounded-full cursor-pointer"
                 aria-label="Na dno stranice"
               >
-                <ChevronDown size={20} />
+                <ChevronDown size={17} />
               </motion.button>
             )}
           </AnimatePresence>

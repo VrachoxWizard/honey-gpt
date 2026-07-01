@@ -29,16 +29,13 @@ export function TypingIndicator() {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-[720px] mx-auto"
+      className="w-full max-w-[720px] mx-auto flex items-center gap-2.5"
     >
-      <div className="rule-gold mb-4 opacity-50" />
-      <div className="flex items-center gap-2.5">
-        <SaintPortrait size={24} />
-        <span className="font-display italic text-[15px] text-ink-soft flex items-center gap-2">
-          <Feather size={13} className="text-oxblood animate-quill" />
-          Haničar {message}
-        </span>
-      </div>
+      <SaintPortrait size={24} />
+      <span className="font-display italic text-[15px] text-ink-soft flex items-center gap-2">
+        <Feather size={13} className="text-oxblood animate-quill" />
+        Haničar {message}
+      </span>
     </motion.div>
   );
 }

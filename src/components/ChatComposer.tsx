@@ -135,7 +135,7 @@ export function ChatComposer({
   };
 
   return (
-    <div className="px-4 md:px-10 pt-3 pb-4 md:pb-5 bg-parchment border-t border-line">
+    <div className="px-4 md:px-10 pt-6 pb-3 bg-gradient-to-t from-parchment via-parchment to-transparent">
       <div className="max-w-[720px] mx-auto relative">
         {/* Stop pero */}
         <AnimatePresence>
@@ -212,9 +212,9 @@ export function ChatComposer({
               onClick={() => fileInputRef.current?.click()}
               disabled={isSending}
               aria-label="Priloži sliku"
-              className="shrink-0 w-11 h-11 flex items-center justify-center rounded-xl text-ink-soft hover:text-ink hover:bg-vellum disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 ml-0.5 cursor-pointer"
+              className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-ink-soft hover:text-ink hover:bg-vellum disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 cursor-pointer"
             >
-              <Paperclip size={18} />
+              <Paperclip size={17} />
             </button>
 
             <textarea
@@ -226,7 +226,7 @@ export function ChatComposer({
               onChange={(e) => setDraft(e.target.value.slice(0, 8000))}
               onKeyDown={handleKeyDown}
               disabled={isSending}
-              className="flex-1 max-h-[168px] bg-transparent resize-none py-3 px-2 text-ink placeholder:text-ink-faint focus:outline-none text-[16px] leading-relaxed font-display disabled:opacity-50"
+              className="flex-1 max-h-[150px] bg-transparent resize-none py-2 px-1.5 text-ink placeholder:text-ink-faint focus:outline-none text-[15px] leading-snug font-display disabled:opacity-50"
             />
 
             <motion.button
@@ -234,12 +234,12 @@ export function ChatComposer({
               type="submit"
               disabled={(!draft.trim() && !attachedImage) || isSending}
               aria-label="Zapečati i pošalji"
-              className="wax-seal shrink-0 w-12 h-12 flex items-center justify-center rounded-full mb-0.5 mr-0.5 cursor-pointer disabled:cursor-not-allowed"
+              className="wax-seal shrink-0 w-10 h-10 flex items-center justify-center rounded-full mb-0.5 cursor-pointer disabled:cursor-not-allowed"
             >
               {isSending ? (
-                <Loader2 size={20} className="animate-spin" />
+                <Loader2 size={18} className="animate-spin" />
               ) : (
-                <Feather size={18} />
+                <Feather size={16} />
               )}
             </motion.button>
           </div>
@@ -258,7 +258,7 @@ export function ChatComposer({
           )}
         </form>
 
-        <p className="text-center font-display italic text-[12px] text-ink-faint mt-3 select-none">
+        <p className="text-center font-display italic text-[11px] text-ink-faint mt-2 select-none">
           Haničar može pogriješiti. Za teške grijehe provjeri kod župnika.
         </p>
       </div>
