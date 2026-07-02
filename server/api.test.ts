@@ -27,4 +27,17 @@ describe('Backend payload validation', () => {
     expect(() => validateAndParsePayload(null)).toThrow();
     expect(() => validateAndParsePayload('string')).toThrow();
   });
+
+  it('should reject invalid image data URLs', () => {
+    expect(() =>
+      validateAndParsePayload({
+        messages: [
+          {
+            role: 'user',
+            content: [{ type: 'image_url', image_url: { url: 'https://example.com/x.png' } }],
+          },
+        ],
+      })
+    ).toThrow();
+  });
 });

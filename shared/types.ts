@@ -13,35 +13,58 @@ export type ClientMessage = {
   role: ChatRole;
   content: string;
   timestamp?: number;
-  image?: string; // base64 image
+  image?: string;
 };
 
 export type Message = ClientMessage;
 
-export type Persona = 'hanicar' | 'scholar' | 'jester';
 export type ToneMode = 'humilis' | 'clericus' | 'sanctus';
+export type RiskLevel = 'safe' | 'caution' | 'block';
 
 export interface HanicarReply {
   text: string;
   model: string;
 }
 
+export interface HanicarStreamContext {
+  requestId: string;
+  clientIp: string;
+  onCacheHit?: (cacheHit: boolean) => void;
+  onUsage?: (usage: { totalTokens: number }) => Promise<void>;
+  logger?: {
+    info: (
+      message: string,
+      context?: Record<string, string | number | boolean | undefined>
+    ) => void;
+    warn: (
+      message: string,
+      context?: Record<string, string | number | boolean | undefined>
+    ) => void;
+    error: (
+      message: string,
+      context?: Record<string, string | number | boolean | undefined>
+    ) => void;
+  };
+}
+
 export interface HanicarOptions {
   model?: string;
   toneMode?: ToneMode;
-}
-
-export interface ChatRequest {
-  messages: ChatMessage[];
-  persona: Persona;
+  riskLevel?: RiskLevel;
+  context?: HanicarStreamContext;
 }
 
 export type ChatSession = {
   id: string;
   title: string;
-  persona?: Persona;
   messages: ClientMessage[];
   activeModel?: string;
   createdAt: number;
   updatedAt?: number;
+};
+
+export type ExportedSession = {
+  version: 2;
+  exportedAt: number;
+  session: ChatSession;
 };

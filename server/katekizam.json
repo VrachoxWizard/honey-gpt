@@ -1,0 +1,27 @@
+[
+  {
+    "keywords": ["krštenje", "krstenje", "krstiti", "kršten"],
+    "answer": "Krštenje je sakrament inicijacije u kršćanstvo; u katoličkoj tradiciji primaju ga i odrasli i djeca, obično uz krstitelja, kuma i molitvu zajednice.",
+    "satireHint": "Podsjeti da je krstionica poput pečata na duhovnom dokumentu — ne smije se gubiti kao parking karta."
+  },
+  {
+    "keywords": ["ispovijed", "ispovjed", "spoved", "grijeh", "grijeha"],
+    "answer": "Ispovijed je sakrament pomirenja u kojem vjernik priznaje grijehe i prima oprost; u katoličkoj praksi ide uz kajanje i namjeru da se ne ponovi.",
+    "satireHint": "Ispovijednica je povjerljiva, ali ne i Wi-Fi lozinka — ne dijeli je s cijelim open spaceom."
+  },
+  {
+    "keywords": ["euharistija", "pričest", "pricest", "hostija", "oblat"],
+    "answer": "Euharistija je sakrament u kojem se vjernik sudjeluje u liturgiji Tijela i Krvi Kristove; u misi je središnji trenutak zajedničke molitve.",
+    "satireHint": "Red u crkvi je svetinja, ali i red u redu za kavu nakon mise."
+  },
+  {
+    "keywords": ["venčanje", "vencanje", "brak", "obitelj", "vjenčanje"],
+    "answer": "Kršćanski brak je savez muža i žene pred Bogom i Crkvom; u katoličkoj tradiciji smatra se sakramentom i pozivom na zajednički život.",
+    "satireHint": "Brak traži strpljenje, ljubav i ponekad i strpljivog kuma koji drži prsten."
+  },
+  {
+    "keywords": ["nedjelja", "misa", "liturgija", "obred"],
+    "answer": "Nedjeljna misa je središnji trenutak tjedne liturgije u katoličanstvu; vjernici se okupljaju na euharistijsko slavlje i čitanje Svetog pisma.",
+    "satireHint": "Nedjelja je dan Gospodnji, a ne dan za deploy u produkciju bez blagoslova."
+  }
+]

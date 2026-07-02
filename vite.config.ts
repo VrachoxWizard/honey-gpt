@@ -2,9 +2,9 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
-import { handleChatPayloadStream, toClientError } from './server/api.js';
-import { checkRateLimit, getClientIp } from './server/limiter.js';
-import { checkEnv } from './server/env.js';
+import { handleChatRequest } from './server/handler.js';
+import { checkEnv, getEnv, isRedisConfigured } from './server/env.js';
+import { isConfiguredOpenRouterKey } from './server/openrouter.js';
 
 function readRequestBody(request: import('node:http').IncomingMessage) {
   return new Promise<unknown>((resolve, reject) => {
@@ -35,63 +35,81 @@ function localApiPlugin(): Plugin {
   return {
     name: 'hanicar-local-api',
     configureServer(server) {
-      server.middlewares.use('/api/chat', async (request, response) => {
+      server.middlewares.use('/api/health', async (request, response) => {
+        const env = getEnv();
+        response.setHeader('Access-Control-Allow-Origin', env.corsOrigin);
+        response.setHeader('Content-Type', 'application/json; charset=utf-8');
+
         if (request.method === 'OPTIONS') {
           response.statusCode = 204;
           response.end();
           return;
         }
 
-        if (request.method !== 'POST') {
+        if (request.method !== 'GET') {
           response.statusCode = 405;
-          response.setHeader('Content-Type', 'application/json; charset=utf-8');
-          response.end(JSON.stringify({ error: 'Haničar-GPT prima samo POST zahtjeve.' }));
+          response.end(JSON.stringify({ error: 'Health endpoint podržava samo GET.' }));
           return;
         }
 
-        const clientIp = getClientIp(request.headers, request.socket.remoteAddress);
-        const limiterRes = await checkRateLimit(clientIp);
-
-        response.setHeader('X-RateLimit-Limit', '20');
-        response.setHeader('X-RateLimit-Remaining', String(limiterRes.remaining));
-        response.setHeader('X-RateLimit-Reset', String(limiterRes.resetTime));
-
-        if (!limiterRes.allowed) {
-          response.statusCode = 429;
-          response.setHeader('Content-Type', 'application/json; charset=utf-8');
-          response.end(
-            JSON.stringify({
-              error: 'Previše zahtjeva. Molimo pričekajte trenutak prije novih pitanja za Haničara.',
-            })
-          );
-          return;
-        }
-
+        let openRouterKeyConfigured = false;
         try {
           checkEnv();
-          const payload = await readRequestBody(request);
-          
-          response.statusCode = 200;
-          response.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-          response.setHeader('Cache-Control', 'no-cache');
-          response.setHeader('Connection', 'keep-alive');
-          
-          await handleChatPayloadStream(payload, (chunk) => {
-            response.write(`data: ${JSON.stringify(chunk)}\n\n`);
-          });
-          
-          response.write('data: [DONE]\n\n');
-          response.end();
-        } catch (error) {
-          const clientError = toClientError(error);
-          if (response.headersSent) {
-            response.write(`data: ${JSON.stringify({ error: clientError.message })}\n\n`);
-            response.end();
-          } else {
-            response.statusCode = clientError.statusCode;
+          openRouterKeyConfigured = isConfiguredOpenRouterKey(env.openRouterApiKey);
+        } catch {
+          openRouterKeyConfigured = false;
+        }
+
+        response.statusCode = 200;
+        response.end(
+          JSON.stringify({
+            ok: openRouterKeyConfigured,
+            redis: isRedisConfigured(),
+            openrouterKeyConfigured: openRouterKeyConfigured,
+            version: '2.0.0',
+          })
+        );
+      });
+
+      server.middlewares.use('/api/chat', async (request, response) => {
+        let body: unknown = {};
+        if (request.method === 'POST') {
+          try {
+            body = await readRequestBody(request);
+          } catch (error) {
+            response.statusCode = 400;
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
-            response.end(JSON.stringify({ error: clientError.message }));
+            response.end(
+              JSON.stringify({
+                error: error instanceof Error ? error.message : 'Neispravan zahtjev.',
+              })
+            );
+            return;
           }
+        }
+
+        const result = await handleChatRequest(
+          {
+            method: request.method,
+            body,
+            headers: request.headers as Record<string, string | string[] | undefined>,
+            socketRemoteAddress: request.socket.remoteAddress,
+          },
+          {
+            write: (chunk) => response.write(chunk),
+            setHeader: (name, value) => {
+              response.setHeader(name, value);
+            },
+            writeHead: (statusCode, headers) => {
+              response.writeHead(statusCode, headers);
+            },
+            end: () => response.end(),
+          }
+        );
+
+        if (!result.streamed) {
+          response.writeHead(result.statusCode, result.headers);
+          response.end(result.body);
         }
       });
     },
@@ -147,17 +165,22 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: 'jsdom',
+      environmentMatchGlobs: [
+        ['server/**', 'node'],
+        ['api/**', 'node'],
+      ],
       globals: true,
       setupFiles: './src/setupTests.ts',
+      exclude: ['**/node_modules/**', '**/e2e/**'],
       coverage: {
         provider: 'v8',
         include: ['server/**/*.ts', 'api/**/*.ts', 'shared/**/*.ts'],
         exclude: ['**/*.test.ts', '**/*.d.ts'],
         thresholds: {
-          lines: 55,
-          functions: 55,
-          statements: 55,
-          branches: 45,
+          lines: 60,
+          functions: 60,
+          statements: 60,
+          branches: 50,
         },
       },
     }

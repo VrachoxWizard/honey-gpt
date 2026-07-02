@@ -53,7 +53,7 @@ export const createMessageSlice: StateCreator<
     abortController = newController;
 
     updateActiveSessionMessages(() => nextMessages);
-    set({ error: '', isSending: true }, false, 'executeSendStart');
+    set({ error: '', isSending: true, lastRequestId: '' }, false, 'executeSendStart');
 
     const assistantMessageId = crypto.randomUUID();
     updateActiveSessionMessages((msgs) => [
@@ -94,6 +94,9 @@ export const createMessageSlice: StateCreator<
         onModel: (model) => {
           set({ activeModel: model }, false, 'updateActiveModel');
         },
+        onRequestId: (requestId) => {
+          set({ lastRequestId: requestId }, false, 'setLastRequestId');
+        },
       });
     } catch (requestError: unknown) {
       if (requestError instanceof Error && requestError.name === 'AbortError') {
@@ -124,6 +127,7 @@ export const createMessageSlice: StateCreator<
   return {
     isSending: false,
     error: '',
+    lastRequestId: '',
 
     abortGeneration,
 

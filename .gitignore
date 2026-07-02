@@ -11,3 +11,5 @@ pnpm-debug.log*
 dev-server*.log
 ollama-serve*.log
 coverage/
+test-results/
+playwright-report/

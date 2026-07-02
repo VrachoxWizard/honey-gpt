@@ -1,7 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { streamHanicarReply } from './hanicar';
-import { resetCacheForTests } from './cache';
-import { resetEnvCache } from './env';
 
 vi.mock('./openrouter.js', () => ({
   isConfiguredOpenRouterKey: vi.fn(() => true),
@@ -22,13 +19,24 @@ vi.mock('./news.js', () => ({
   fetchCroatianNews: vi.fn(async () => []),
 }));
 
+vi.mock('./circuit-breaker.js', () => ({
+  isCircuitOpen: vi.fn(async () => false),
+  recordProviderFailure: vi.fn(async () => {}),
+  recordProviderSuccess: vi.fn(async () => {}),
+}));
+
 vi.mock('./prompts.js', async () => {
   const actual = await vi.importActual<typeof import('./prompts')>('./prompts');
   return {
     ...actual,
     getLorePhrases: vi.fn(async () => []),
+    getKatekizamSnippet: vi.fn(async () => null),
   };
 });
+
+import { streamHanicarReply } from './hanicar';
+import { resetEnvCache } from './env';
+import { resetCacheForTests } from './cache';
 
 describe('hanicar', () => {
   beforeEach(() => {

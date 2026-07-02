@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import type { Message, ChatSession } from '@shared/types';
+import type { Message, ChatSession, ExportedSession } from '@shared/types';
 import type { ChatState, ChatSlice } from './types';
 
 export const welcomeMessage: Message = {
@@ -121,5 +121,48 @@ export const createChatSlice: StateCreator<
       false,
       'clearChat'
     );
+  },
+
+  exportSession: (id) => {
+    const session = get().sessions.find((entry) => entry.id === id);
+    if (!session) return null;
+
+    const payload: ExportedSession = {
+      version: 2,
+      exportedAt: Date.now(),
+      session,
+    };
+
+    return JSON.stringify(payload, null, 2);
+  },
+
+  importSession: (json) => {
+    try {
+      const parsed = JSON.parse(json) as ExportedSession;
+      if (parsed.version !== 2 || !parsed.session?.id) {
+        return null;
+      }
+
+      const importedSession: ChatSession = {
+        ...parsed.session,
+        id: crypto.randomUUID(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      set(
+        (state) => ({
+          sessions: [importedSession, ...state.sessions],
+          activeSessionId: importedSession.id,
+          error: '',
+        }),
+        false,
+        'importSession'
+      );
+
+      return importedSession.id;
+    } catch {
+      return null;
+    }
   },
 });

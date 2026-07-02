@@ -13,6 +13,9 @@ const envSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   API_SECRET: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
+  DAILY_TOKEN_BUDGET_PER_IP: z.coerce.number().int().nonnegative().default(50_000),
+  PROMPT_VERSION: z.string().optional(),
+  MODERATION_MODEL: z.string().optional(),
 });
 
 export type AppEnv = {
@@ -27,6 +30,9 @@ export type AppEnv = {
   upstashRedisToken: string | undefined;
   apiSecret: string | undefined;
   sentryDsn: string | undefined;
+  dailyTokenBudgetPerIp: number;
+  promptVersion: string | undefined;
+  moderationModel: string | undefined;
   isProduction: boolean;
 };
 
@@ -61,6 +67,9 @@ export function getEnv(): AppEnv {
     upstashRedisToken: data.UPSTASH_REDIS_REST_TOKEN?.trim(),
     apiSecret: data.API_SECRET?.trim(),
     sentryDsn: data.SENTRY_DSN?.trim(),
+    dailyTokenBudgetPerIp: data.DAILY_TOKEN_BUDGET_PER_IP,
+    promptVersion: data.PROMPT_VERSION?.trim(),
+    moderationModel: data.MODERATION_MODEL?.trim(),
     isProduction: process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production',
   };
 

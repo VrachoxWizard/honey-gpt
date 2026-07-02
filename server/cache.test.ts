@@ -24,7 +24,7 @@ describe('cache', () => {
     expect(keyA).not.toBe(keyC);
   });
 
-  it('caches only sanctus single-turn conversations', () => {
+  it('caches only sanctus conversations up to five user turns', () => {
     const singleTurn = [{ role: 'user' as const, content: 'Pozdrav' }];
     const multiTurn = [
       { role: 'user' as const, content: 'Prvo' },
@@ -34,7 +34,7 @@ describe('cache', () => {
 
     expect(shouldUseResponseCache(singleTurn, 'sanctus')).toBe(true);
     expect(shouldUseResponseCache(singleTurn, 'humilis')).toBe(false);
-    expect(shouldUseResponseCache(multiTurn, 'sanctus')).toBe(false);
+    expect(shouldUseResponseCache(multiTurn, 'sanctus')).toBe(true);
   });
 
   it('uses shorter TTL for multi-turn cache keys', () => {

@@ -2,6 +2,9 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import '@styles/styles.css';
+import { initClientMonitoring } from '@lib/monitoring';
+
+initClientMonitoring();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -16,7 +19,6 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     });
   });
 
-  // Automatski osvježi klijenta kada novi Service Worker preuzme kontrolu
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!refreshing) {

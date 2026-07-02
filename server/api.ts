@@ -1,13 +1,37 @@
 import { z } from 'zod';
 import { streamHanicarReply } from './hanicar.js';
 import { validateRequestedModel } from './models.js';
-import { assertSafeUserContent, extractLatestUserText } from './security.js';
+import {
+  assertSafeUserContent,
+  classifyRiskLevel,
+  extractLatestUserText,
+  isValidImageDataUrl,
+} from './security.js';
 import { CONSTANTS } from './constants.js';
-import type { ChatMessage } from '@shared/types';
+import type { ChatMessage, HanicarStreamContext } from '@shared/types';
+import type { RequestLogger } from './logger.js';
 
 export type ClientError = {
   statusCode: number;
   message: string;
+};
+
+export type StreamChunk = {
+  token?: string;
+  model?: string;
+  error?: string;
+  meta?: {
+    requestId?: string;
+    model?: string;
+    cacheHit?: boolean;
+    promptVersion?: string;
+    tokensUsed?: number;
+  };
+  done?: boolean;
+};
+
+export type ChatStreamContext = HanicarStreamContext & {
+  logger: RequestLogger;
 };
 
 export function httpError(statusCode: number, message: string): Error & { statusCode: number } {
@@ -15,6 +39,15 @@ export function httpError(statusCode: number, message: string): Error & { status
   err.statusCode = statusCode;
   return err;
 }
+
+const imageUrlSchema = z
+  .string()
+  .refine((url) => isValidImageDataUrl(url), {
+    message: 'Slika mora biti valjan data URL (jpeg, png ili webp).',
+  })
+  .refine((url) => url.length <= CONSTANTS.MAX_IMAGE_DATA_URL_CHARS, {
+    message: 'Slika je prevelika za upload.',
+  });
 
 const MessagePartSchema = z.discriminatedUnion('type', [
   z.object({
@@ -24,7 +57,7 @@ const MessagePartSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('image_url'),
     image_url: z.object({
-      url: z.string(),
+      url: imageUrlSchema,
     }),
   }),
 ]);
@@ -76,15 +109,22 @@ export function validateAndParsePayload(payload: unknown) {
   return {
     ...result.data,
     model: validatedModel,
+    riskLevel: classifyRiskLevel(latestUserText),
   };
 }
 
 export async function handleChatPayloadStream(
   payload: unknown,
-  onChunk: (chunk: { token?: string; model?: string }) => void
+  onChunk: (chunk: StreamChunk) => void,
+  context?: ChatStreamContext
 ) {
-  const { messages, model, toneMode } = validateAndParsePayload(payload);
-  return streamHanicarReply(messages as ChatMessage[], onChunk, { model, toneMode });
+  const { messages, model, toneMode, riskLevel } = validateAndParsePayload(payload);
+  return streamHanicarReply(messages as ChatMessage[], onChunk, {
+    model,
+    toneMode,
+    riskLevel,
+    context,
+  });
 }
 
 export function toClientError(error: unknown): ClientError {

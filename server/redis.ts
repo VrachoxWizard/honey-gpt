@@ -13,7 +13,6 @@ interface RedisPipelineResult {
   error?: string;
 }
 
-// Pomocni klijent za slanje zahtjeva Upstash REST API-ju
 async function runRedisCommands(commands: RedisCommand[]): Promise<unknown[]> {
   if (!isRedisEnabled()) {
     throw new Error('Redis nije konfiguriran.');
@@ -27,7 +26,7 @@ async function runRedisCommands(commands: RedisCommand[]): Promise<unknown[]> {
           'Content-Type': 'application/json',
         },
         json: commands,
-        timeout: CONSTANTS.REDIS_TIMEOUT_MS, // Kratki timeout da ne blokiramo korisnika ako Redis spava
+        timeout: CONSTANTS.REDIS_TIMEOUT_MS,
         retry: { limit: 1 },
       })
       .json<RedisPipelineResult[]>();
@@ -44,10 +43,6 @@ async function runRedisCommands(commands: RedisCommand[]): Promise<unknown[]> {
   }
 }
 
-/**
- * Provjerava rate limit za zadani IP koristeci Redis.
- * Zadrzava isti limit od maksimalno 20 zahtjeva u minuti po IP-u.
- */
 export async function checkRateLimitRedis(
   ip: string,
   maxRequests = 20
@@ -66,7 +61,7 @@ export async function checkRateLimitRedis(
   try {
     const results = await runRedisCommands([
       ['INCR', key],
-      ['EXPIRE', key, CONSTANTS.REDIS_KEY_EXPIRE_SECONDS], // Ključ ističe za sprječavanje curenja memorije
+      ['EXPIRE', key, CONSTANTS.REDIS_KEY_EXPIRE_SECONDS],
     ]);
 
     const count = Number(results[0]);
@@ -85,15 +80,11 @@ export async function checkRateLimitRedis(
       resetTime,
     };
   } catch (err) {
-    // U slucaju greske na Redisu, vracamo null kako bi pozivatelj pao natrag na in-memory limiter
     console.warn(`[Redis] Rate limit greška, fallback na in-memory: ${(err as Error).message}`);
     return null;
   }
 }
 
-/**
- * Dohvaca vrijednost iz Redis cachea.
- */
 export async function getCacheRedis(key: string): Promise<string | null> {
   if (!isRedisEnabled()) return null;
 
@@ -106,9 +97,6 @@ export async function getCacheRedis(key: string): Promise<string | null> {
   }
 }
 
-/**
- * Sprema vrijednost u Redis cache s trajanjem od 30 minuta (1800 sekundi).
- */
 export async function setCacheRedis(
   key: string,
   value: string,
@@ -122,4 +110,50 @@ export async function setCacheRedis(
   } catch {
     return false;
   }
+}
+
+export async function getRedisValue(key: string): Promise<string | null> {
+  if (!isRedisEnabled()) return null;
+
+  try {
+    const results = await runRedisCommands([['GET', key]]);
+    const result = results[0];
+    return typeof result === 'string' ? result : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setRedisValue(
+  key: string,
+  value: string,
+  ttlSeconds: number
+): Promise<boolean> {
+  if (!isRedisEnabled()) return false;
+
+  try {
+    await runRedisCommands([['SET', key, value, 'EX', ttlSeconds]]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function incrementRedisCounter(key: string, amount = 1): Promise<number | null> {
+  if (!isRedisEnabled()) return null;
+
+  try {
+    const results = await runRedisCommands([
+      ['INCRBY', key, amount],
+      ['EXPIRE', key, CONSTANTS.TOKEN_BUDGET_REDIS_TTL_SECONDS],
+    ]);
+    return Number(results[0]);
+  } catch {
+    return null;
+  }
+}
+
+export async function getRedisCounter(key: string): Promise<number> {
+  const value = await getRedisValue(key);
+  return value ? Number(value) : 0;
 }

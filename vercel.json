@@ -4,6 +4,9 @@
   "functions": {
     "api/chat.ts": {
       "maxDuration": 30
+    },
+    "api/health.ts": {
+      "maxDuration": 10
     }
   },
   "headers": [
@@ -20,6 +23,10 @@
     {
       "source": "/api/chat",
       "destination": "/api/chat.ts"
+    },
+    {
+      "source": "/api/health",
+      "destination": "/api/health.ts"
     },
     {
       "source": "/((?!assets/|hanicar-the-genie.jpeg|manifest.json|robots.txt|sitemap.xml|sw.js).*)$",

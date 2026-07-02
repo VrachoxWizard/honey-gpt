@@ -2,6 +2,12 @@ type LogLevel = 'info' | 'warn' | 'error';
 
 type LogContext = Record<string, string | number | boolean | undefined>;
 
+export type RequestLogger = {
+  info: (message: string, context?: LogContext) => void;
+  warn: (message: string, context?: LogContext) => void;
+  error: (message: string, context?: LogContext) => void;
+};
+
 function writeLog(level: LogLevel, message: string, context: LogContext = {}): void {
   const payload = {
     level,
@@ -22,7 +28,7 @@ function writeLog(level: LogLevel, message: string, context: LogContext = {}): v
   console.log(line);
 }
 
-export function createRequestLogger(requestId: string) {
+export function createRequestLogger(requestId: string): RequestLogger {
   return {
     info(message: string, context: LogContext = {}) {
       writeLog('info', message, { requestId, ...context });

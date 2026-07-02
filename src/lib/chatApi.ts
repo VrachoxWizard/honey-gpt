@@ -8,17 +8,36 @@ export interface SendConversationOptions {
   signal: AbortSignal;
   onToken: (token: string) => void;
   onModel: (model: string) => void;
+  onRequestId?: (requestId: string) => void;
 }
 
 export interface ServerStreamChunk {
   token?: string;
   model?: string;
   error?: string;
+  meta?: {
+    requestId?: string;
+    model?: string;
+    cacheHit?: boolean;
+    promptVersion?: string;
+  };
+  done?: boolean;
+}
+
+const RETRYABLE_STATUS = new Set([502, 503, 504]);
+const RETRY_DELAYS_MS = [500, 1500];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function getChatEndpoints() {
   const configuredEndpoint = import.meta.env.VITE_CHAT_ENDPOINT;
   return configuredEndpoint ? [configuredEndpoint] : ['/api/chat'];
+}
+
+function isRetryableError(error: Error): boolean {
+  return /fetch|network|mrež|timeout|502|503|504/i.test(error.message);
 }
 
 async function makeChatRequest(
@@ -39,7 +58,16 @@ async function makeChatRequest(
   if (!response.ok) {
     if (response.status === 404) throw new Error('Endpoint not found');
     const payload = await response.json().catch(() => ({}));
-    throw new Error(payload.error || 'Server nije prihvatio zahtjev.');
+    const message = payload.error || 'Server nije prihvatio zahtjev.';
+    if (RETRYABLE_STATUS.has(response.status)) {
+      throw new Error(`HTTP ${response.status}: ${message}`);
+    }
+    throw new Error(message);
+  }
+
+  const requestId = response.headers.get('X-Request-Id');
+  if (requestId) {
+    options.onRequestId?.(requestId);
   }
 
   return response;
@@ -67,8 +95,12 @@ async function streamChatResponse(
           streamError = new Error(data.error);
           return;
         }
+        if (data.meta?.requestId) {
+          options.onRequestId?.(data.meta.requestId);
+        }
         if (data.token) options.onToken(data.token);
         if (data.model) options.onModel(data.model);
+        if (data.meta?.model) options.onModel(data.meta.model);
       });
     }
 
@@ -81,31 +113,44 @@ async function streamChatResponse(
   }
 }
 
+async function attemptConversation(
+  endpoint: string,
+  options: SendConversationOptions
+): Promise<void> {
+  const response = await makeChatRequest(endpoint, options);
+  await streamChatResponse(response, options);
+}
+
 export async function sendConversation(options: SendConversationOptions): Promise<void> {
   const endpoints = getChatEndpoints();
   let lastError: Error | null = null;
-  let success = false;
 
   for (const endpoint of endpoints) {
-    try {
-      const response = await makeChatRequest(endpoint, options);
-      await streamChatResponse(response, options);
-      success = true;
-      break;
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          success = true;
-          break;
+    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+      try {
+        await attemptConversation(endpoint, options);
+        return;
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            return;
+          }
+          if (error.message === 'Endpoint not found' && endpoints.length > 1) {
+            break;
+          }
+          lastError = error;
+          if (attempt < RETRY_DELAYS_MS.length && isRetryableError(error)) {
+            await sleep(RETRY_DELAYS_MS[attempt]);
+            continue;
+          }
+        } else {
+          lastError = new Error('Mrežna greška.');
         }
-        if (error.message === 'Endpoint not found' && endpoints.length > 1) {
-          continue;
-        }
+        break;
       }
-      lastError = error instanceof Error ? error : new Error('Mrežna greška.');
     }
   }
 
-  if (!success && lastError) throw lastError;
-  if (!success) throw new Error('Chat endpoint nije dostupan.');
+  if (lastError) throw lastError;
+  throw new Error('Chat endpoint nije dostupan.');
 }

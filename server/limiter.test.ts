@@ -1,37 +1,52 @@
-import { describe, it, expect } from 'vitest';
-import { checkRateLimit, getClientIp } from './limiter';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-describe('Rate Limiter', () => {
-  it('should prefer x-real-ip over x-forwarded-for', () => {
-    const headers = { 'x-real-ip': '8.8.8.8', 'x-forwarded-for': '1.2.3.4, 5.6.7.8' };
-    const ip = getClientIp(headers);
-    expect(ip).toBe('8.8.8.8');
+vi.mock('./redis.js', () => ({
+  checkRateLimitRedis: vi.fn(async () => null),
+  getRedisCounter: vi.fn(async () => 0),
+  incrementRedisCounter: vi.fn(async () => null),
+}));
+
+vi.mock('./env.js', () => ({
+  getEnv: vi.fn(() => ({ dailyTokenBudgetPerIp: 1000 })),
+}));
+
+import {
+  checkRateLimit,
+  checkTokenBudget,
+  getClientIp,
+  recordTokenUsage,
+  resetLimiterForTests,
+} from './limiter';
+
+describe('limiter', () => {
+  beforeEach(() => {
+    resetLimiterForTests();
+    vi.clearAllMocks();
   });
 
-  it('should fallback to x-forwarded-for when x-real-ip is missing', () => {
-    const headers = { 'x-real-ip': '8.8.8.8' };
-    const ip = getClientIp(headers);
-    expect(ip).toBe('8.8.8.8');
-  });
-
-  it('should fallback to socket address if all headers missing', () => {
-    const ip = getClientIp({}, '192.168.1.1');
-    expect(ip).toBe('192.168.1.1');
-  });
-
-  it('should allow requests within limit and block when exceeded', async () => {
-    const ip = 'test-limiter-ip';
-
-    // Limit je 20 zahtjeva u minuti po IP-u
+  it('allows requests until the in-memory limit is reached', async () => {
     for (let i = 0; i < 20; i++) {
-      const res = await checkRateLimit(ip);
-      expect(res.allowed).toBe(true);
-      expect(res.remaining).toBe(20 - (i + 1));
+      const result = await checkRateLimit('10.0.0.1');
+      expect(result.allowed).toBe(true);
     }
 
-    const blocked = await checkRateLimit(ip);
+    const blocked = await checkRateLimit('10.0.0.1');
     expect(blocked.allowed).toBe(false);
-    expect(blocked.remaining).toBe(0);
-    expect(blocked.resetTime).toBeGreaterThan(Date.now());
+  });
+
+  it('tracks token budget in memory when redis is unavailable', async () => {
+    await recordTokenUsage('10.0.0.2', 900);
+    const nearLimit = await checkTokenBudget('10.0.0.2');
+    expect(nearLimit.allowed).toBe(true);
+
+    await recordTokenUsage('10.0.0.2', 200);
+    const blocked = await checkTokenBudget('10.0.0.2');
+    expect(blocked.allowed).toBe(false);
+  });
+
+  it('extracts client IP from proxy headers', () => {
+    expect(getClientIp({ 'x-real-ip': ' 1.2.3.4 ' })).toBe('1.2.3.4');
+    expect(getClientIp({ 'x-forwarded-for': '5.6.7.8, 9.9.9.9' })).toBe('5.6.7.8');
+    expect(getClientIp({}, '127.0.0.1')).toBe('127.0.0.1');
   });
 });

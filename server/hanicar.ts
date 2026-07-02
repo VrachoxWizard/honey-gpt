@@ -1,4 +1,4 @@
-import { httpError } from './api.js';
+import { httpError, type StreamChunk } from './api.js';
 import { fetchCroatianNews } from './news.js';
 import { CONSTANTS } from './constants.js';
 import {
@@ -17,7 +17,14 @@ import {
 } from './openrouter.js';
 import { getModelCandidates } from './models.js';
 import { summarizeConversationIfNeeded } from './summary.js';
-import { buildOpenRouterMessages, detectCodingOrLogic, getLorePhrases } from './prompts.js';
+import {
+  buildOpenRouterMessages,
+  detectCodingOrLogic,
+  getKatekizamSnippet,
+  getLorePhrases,
+  getPromptVersion,
+} from './prompts.js';
+import { isCircuitOpen, recordProviderFailure, recordProviderSuccess } from './circuit-breaker.js';
 import type { ChatMessage, ChatMessagePart, HanicarOptions } from '@shared/types';
 
 interface PreparedRequest {
@@ -28,6 +35,7 @@ interface PreparedRequest {
   newsHeadlines: string[];
   summarizedContext: string;
   lorePhrases: string[];
+  katekizam: { answer: string; satireHint: string } | null;
   shouldCache: boolean;
   cacheTtlMs: number;
   isCoding: boolean;
@@ -92,6 +100,10 @@ async function prepareHanicarRequest(
     );
   }
 
+  if (await isCircuitOpen()) {
+    throw httpError(503, 'OpenRouter je privremeno nedostupan. Molimo pokušajte za minutu.');
+  }
+
   const summarizedContext = await summarizeConversationIfNeeded(messages, apiKey!);
   const cleanMessages = sanitizeMessages(
     messages,
@@ -111,9 +123,10 @@ async function prepareHanicarRequest(
         : '';
 
   const wantsNews = CONSTANTS.NEWS_KEYWORDS.some((word) => userText.toLowerCase().includes(word));
-  const [newsHeadlines, lorePhrases] = await Promise.all([
+  const [newsHeadlines, lorePhrases, katekizam] = await Promise.all([
     wantsNews ? fetchCroatianNews() : Promise.resolve([]),
     getLorePhrases(userText),
+    getKatekizamSnippet(userText),
   ]);
 
   const models = getModelCandidates(options?.model, userText);
@@ -131,6 +144,7 @@ async function prepareHanicarRequest(
     newsHeadlines,
     summarizedContext,
     lorePhrases,
+    katekizam,
     shouldCache,
     cacheTtlMs,
     isCoding,
@@ -139,7 +153,7 @@ async function prepareHanicarRequest(
 
 export async function streamHanicarReply(
   messages: ChatMessage[],
-  onChunk: (chunk: { token?: string; model?: string }) => void,
+  onChunk: (chunk: StreamChunk) => void,
   options?: HanicarOptions
 ): Promise<void> {
   const prepared = await prepareHanicarRequest(messages, options);
@@ -151,16 +165,29 @@ export async function streamHanicarReply(
     newsHeadlines,
     summarizedContext,
     lorePhrases,
+    katekizam,
     shouldCache,
     cacheTtlMs,
     isCoding,
   } = prepared;
+  const logger = options?.context?.logger;
 
   if (shouldCache) {
     const cachedReply = await getCachedReply(cacheKey);
     if (cachedReply) {
-      console.log(JSON.stringify({ level: 'info', message: 'Cache HIT', cacheHit: true }));
-      onChunk({ model: cachedReply.model });
+      options?.context?.onCacheHit?.(true);
+      logger?.info('Cache HIT', {
+        cacheHit: true,
+        requestId: options?.context?.requestId,
+      });
+      onChunk({
+        model: cachedReply.model,
+        meta: {
+          requestId: options?.context?.requestId,
+          cacheHit: true,
+          promptVersion: getPromptVersion(),
+        },
+      });
 
       const text = cachedReply.text;
       const chunkSize = CONSTANTS.CACHE_STREAM_CHUNK_SIZE;
@@ -173,13 +200,17 @@ export async function streamHanicarReply(
     }
   }
 
+  options?.context?.onCacheHit?.(false);
+
   let lastError = '';
   const orMessages = buildOpenRouterMessages(
     cleanMessages,
     options?.toneMode,
     summarizedContext,
     newsHeadlines,
-    lorePhrases
+    lorePhrases,
+    katekizam,
+    options?.riskLevel ?? 'safe'
   );
   const temperature = isCoding ? CONSTANTS.CODING_LLM_TEMPERATURE : CONSTANTS.LLM_TEMPERATURE;
   let streamedToCaller = false;
@@ -197,27 +228,33 @@ export async function streamHanicarReply(
           },
           {
             temperature,
-            onUsage: (usage) => {
-              console.log(
-                JSON.stringify({
-                  level: 'info',
-                  message: 'OpenRouter usage',
-                  model,
-                  promptTokens: usage.prompt_tokens,
-                  completionTokens: usage.completion_tokens,
-                  totalTokens: usage.total_tokens,
-                })
-              );
+            onUsage: async (usage) => {
+              const totalTokens = usage.total_tokens ?? 0;
+              onChunk({
+                meta: {
+                  requestId: options?.context?.requestId,
+                  tokensUsed: totalTokens,
+                  promptVersion: getPromptVersion(),
+                },
+              });
+              if (options?.context?.onUsage && totalTokens > 0) {
+                await options.context.onUsage({ totalTokens });
+              }
             },
           }
         );
 
+        await recordProviderSuccess();
         return {
           text: fullText,
           model,
         };
       } catch (error: unknown) {
         lastError = getErrorMessage(error);
+
+        if (isRetryableOpenRouterError(lastError)) {
+          await recordProviderFailure();
+        }
 
         if (!isRetryableOpenRouterError(lastError)) {
           break;
@@ -238,7 +275,14 @@ export async function streamHanicarReply(
     : await generateReply();
 
   if (!streamedToCaller) {
-    onChunk({ model: reply.model });
+    onChunk({
+      model: reply.model,
+      meta: {
+        requestId: options?.context?.requestId,
+        cacheHit: false,
+        promptVersion: getPromptVersion(),
+      },
+    });
     const chunkSize = CONSTANTS.CACHE_STREAM_CHUNK_SIZE;
     for (let i = 0; i < reply.text.length; i += chunkSize) {
       onChunk({ token: reply.text.slice(i, i + chunkSize) });

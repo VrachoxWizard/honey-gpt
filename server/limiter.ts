@@ -1,15 +1,16 @@
-import { checkRateLimitRedis } from './redis.js';
+import { checkRateLimitRedis, getRedisCounter, incrementRedisCounter } from './redis.js';
+import { getEnv } from './env.js';
 
-const WINDOW_MS = 60 * 1000; // 1 minuta
-const MAX_REQUESTS = 20; // Maksimalno 20 zahtjeva u minuti po IP-u
+const WINDOW_MS = 60 * 1000;
+const MAX_REQUESTS = 20;
 
 type IpRecord = {
   timestamps: number[];
 };
 
 const ipCache = new Map<string, IpRecord>();
+const tokenBudgetMemory = new Map<string, number>();
 
-// Čišćenje starih zapisa svakih 1 minutu radi prevencije curenja memorije
 if (typeof setInterval !== 'undefined') {
   const timer = setInterval(() => {
     const now = Date.now();
@@ -31,14 +32,17 @@ export type RateLimitResult = {
   resetTime: number;
 };
 
+function getDailyTokenKey(ip: string): string {
+  const date = new Date().toISOString().slice(0, 10);
+  return `hanicar:tokens:${ip}:${date}`;
+}
+
 export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
-  // Pokusaj provjeriti rate limit preko Redisa (ako je konfiguriran)
   const redisRes = await checkRateLimitRedis(ip, MAX_REQUESTS);
   if (redisRes !== null) {
     return redisRes;
   }
 
-  // Fallback na in-memory limiter
   const now = Date.now();
   let record = ipCache.get(ip);
 
@@ -47,7 +51,6 @@ export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
     ipCache.set(ip, record);
   }
 
-  // Zadrži samo one vremenske oznake unutar trenutnog prozora
   record.timestamps = record.timestamps.filter((ts) => now - ts < WINDOW_MS);
 
   if (record.timestamps.length >= MAX_REQUESTS) {
@@ -68,6 +71,33 @@ export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
   };
 }
 
+export async function checkTokenBudget(
+  ip: string
+): Promise<{ allowed: boolean; remaining: number }> {
+  const budget = getEnv().dailyTokenBudgetPerIp;
+  if (budget <= 0) {
+    return { allowed: true, remaining: budget };
+  }
+
+  const key = getDailyTokenKey(ip);
+  const used = (await getRedisCounter(key)) || tokenBudgetMemory.get(key) || 0;
+  return {
+    allowed: used < budget,
+    remaining: Math.max(0, budget - used),
+  };
+}
+
+export async function recordTokenUsage(ip: string, tokens: number): Promise<void> {
+  const budget = getEnv().dailyTokenBudgetPerIp;
+  if (budget <= 0 || tokens <= 0) return;
+
+  const key = getDailyTokenKey(ip);
+  const updated = await incrementRedisCounter(key, tokens);
+  if (updated === null) {
+    tokenBudgetMemory.set(key, (tokenBudgetMemory.get(key) || 0) + tokens);
+  }
+}
+
 export function getClientIp(
   headers: Record<string, string | string[] | undefined>,
   socketRemoteAddress?: string
@@ -83,4 +113,9 @@ export function getClientIp(
   }
 
   return socketRemoteAddress || '127.0.0.1';
+}
+
+export function resetLimiterForTests(): void {
+  ipCache.clear();
+  tokenBudgetMemory.clear();
 }

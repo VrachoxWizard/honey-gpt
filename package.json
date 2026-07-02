@@ -12,10 +12,13 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"server/**/*.ts\" \"api/**/*.ts\" \"shared/**/*.ts\"",
     "format:check": "prettier --check \"server/**/*.ts\" \"api/**/*.ts\" \"shared/**/*.ts\" \"src/lib/**/*.ts\" \"src/store/**/*.ts\"",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@sentry/node": "^9.47.1",
+    "@sentry/react": "^9.47.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.42.2",
     "fuse.js": "^7.4.2",
@@ -51,6 +54,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
+    "@playwright/test": "^1.55.0",
     "@vitest/coverage-v8": "^4.1.9",
     "jsdom": "^29.1.1",
     "prettier": "^3.9.4",

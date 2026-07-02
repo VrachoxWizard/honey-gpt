@@ -4,6 +4,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Fuse from 'fuse.js';
 import { CONSTANTS } from './constants.js';
+import { getEnv } from './env.js';
+import type { RiskLevel } from './security.js';
+
+export const DEFAULT_PROMPT_VERSION = 'v2';
+
+export function getPromptVersion(): string {
+  return getEnv().promptVersion || DEFAULT_PROMPT_VERSION;
+}
 
 export function getCroatianDateString(): string {
   const days = ['nedjelja', 'ponedjeljak', 'utorak', 'srijeda', 'četvrtak', 'petak', 'subota'];
@@ -137,6 +145,68 @@ export async function getLorePhrases(text: string): Promise<string[]> {
   }
 }
 
+type KatekizamEntry = {
+  keywords: string[];
+  answer: string;
+  satireHint: string;
+};
+
+let katekizamData: KatekizamEntry[] | null = null;
+let katekizamFuse: Fuse<KatekizamEntry> | null = null;
+
+async function loadKatekizamData(): Promise<KatekizamEntry[]> {
+  if (katekizamData) return katekizamData;
+
+  const candidates = [path.resolve(process.cwd(), 'server', 'katekizam.json')];
+
+  if (typeof import.meta.url === 'string' && import.meta.url.startsWith('file:')) {
+    try {
+      candidates.unshift(fileURLToPath(new URL('./katekizam.json', import.meta.url)));
+    } catch {
+      // Vitest virtual modules can expose non-file URLs.
+    }
+  }
+
+  let lastError: unknown;
+  for (const candidate of candidates) {
+    try {
+      const content = await fs.readFile(candidate, 'utf-8');
+      katekizamData = JSON.parse(content) as KatekizamEntry[];
+      return katekizamData;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError ?? new Error('katekizam.json nije pronađen.');
+}
+
+export async function getKatekizamSnippet(
+  text: string
+): Promise<{ answer: string; satireHint: string } | null> {
+  try {
+    const data = await loadKatekizamData();
+    if (!katekizamFuse) {
+      katekizamFuse = new Fuse(data, {
+        keys: ['keywords'],
+        threshold: 0.35,
+      });
+    }
+
+    const directMatch = data.find((entry) =>
+      entry.keywords.some((keyword) => text.toLowerCase().includes(keyword.toLowerCase()))
+    );
+    if (directMatch) {
+      return directMatch;
+    }
+
+    const result = katekizamFuse.search(text)[0];
+    return result?.item ?? null;
+  } catch {
+    return null;
+  }
+}
+
 const TONE_INSTRUCTIONS: Record<ToneMode, string[]> = {
   humilis: [
     '## MODUS: HUMILIS (Ponizan)',
@@ -166,7 +236,9 @@ export function buildSystemPrompt(
   summarizedContext?: string,
   lorePhrases?: string[],
   detectedSentiment?: 'angry' | 'sad' | 'normal',
-  newsHeadlines?: string[]
+  newsHeadlines?: string[],
+  katekizam?: { answer: string; satireHint: string } | null,
+  riskLevel: RiskLevel = 'safe'
 ): string {
   const dateString = getCroatianDateString();
 
@@ -194,6 +266,15 @@ export function buildSystemPrompt(
   }
 
   baseInstructions.push(...getSeasonalInstructions());
+  baseInstructions.push('', `## PROMPT VERZIJA: ${getPromptVersion()}`);
+
+  if (riskLevel === 'caution') {
+    baseInstructions.push(
+      '',
+      '## OSJETLJIVA TEMA',
+      'Korisnik je u osjetljivom emocionalnom stanju. Budi nježan, topao i praktičan. Satiru drastično smanji; prioritet su sigurnost, utjeha i resursi za pomoć.'
+    );
+  }
 
   // Sentiment korisnika
   if (detectedSentiment === 'angry') {
@@ -244,6 +325,15 @@ export function buildSystemPrompt(
     lorePhrases.forEach((lore) => baseInstructions.push(`- ${lore}`));
   }
 
+  if (katekizam) {
+    baseInstructions.push(
+      '',
+      '## KATEKIZAM (provjereni kontekst):',
+      `- Točan odgovor: ${katekizam.answer}`,
+      `- Satirični pečat (opcionalno): ${katekizam.satireHint}`
+    );
+  }
+
   return baseInstructions.join('\n');
 }
 
@@ -257,7 +347,9 @@ export function buildOpenRouterMessages(
   toneMode?: ToneMode,
   summarizedContext?: string,
   newsHeadlines?: string[],
-  lorePhrases?: string[]
+  lorePhrases?: string[],
+  katekizam?: { answer: string; satireHint: string } | null,
+  riskLevel: RiskLevel = 'safe'
 ): OpenRouterMessage[] {
   const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
   let userText = '';
@@ -280,7 +372,9 @@ export function buildOpenRouterMessages(
     summarizedContext,
     lorePhrases,
     sentiment,
-    newsHeadlines
+    newsHeadlines,
+    katekizam,
+    riskLevel
   );
 
   return [

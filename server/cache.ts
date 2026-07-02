@@ -11,6 +11,17 @@ export const chatCache = new LRUCache<string, HanicarReply>({
 
 const inFlightRequests = new Map<string, Promise<HanicarReply>>();
 
+function normalizeText(text: string): string {
+  return text.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function serializeMessageContent(content: string | ChatMessage['content']): string {
+  if (typeof content === 'string') {
+    return normalizeText(content);
+  }
+  return JSON.stringify(content);
+}
+
 export function generateCacheKey(
   messages: ChatMessage[],
   model: string,
@@ -18,9 +29,7 @@ export function generateCacheKey(
   newsHeadlines?: string[]
 ): string {
   const serializedMessages = messages
-    .map(
-      (m) => `${m.role}:${typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}`
-    )
+    .map((m) => `${m.role}:${serializeMessageContent(m.content)}`)
     .join('|');
   const serializedNews = newsHeadlines ? newsHeadlines.join(',') : '';
   const rawKey = `${model}#${toneMode || 'default'}#${serializedNews}#${serializedMessages}`;
@@ -34,7 +43,7 @@ export function shouldUseResponseCache(messages: ChatMessage[], toneMode?: ToneM
   }
 
   const userMessages = messages.filter((message) => message.role === 'user');
-  return userMessages.length <= 1;
+  return userMessages.length <= CONSTANTS.MAX_MULTI_TURN_USER_MESSAGES;
 }
 
 export function getCacheTtlMs(messages: ChatMessage[]): number {

@@ -1,4 +1,7 @@
 import { httpError } from './api.js';
+import type { RiskLevel } from '@shared/types';
+
+export type { RiskLevel };
 
 const PROMPT_INJECTION_PATTERNS = [
   /ignore\s+(all\s+)?previous\s+instructions/i,
@@ -19,26 +22,38 @@ const BLOCKED_CONTENT_PATTERNS = [
   /\b(dječj[aeiou]\s+porn|child\s+porn)\b/i,
 ];
 
-export function assertSafeUserContent(text: string): void {
+const CAUTION_CONTENT_PATTERNS = [
+  /\b(samouboj\w*|samoubistv\w*|suicid\w*|self[\s-]?harm)\b/i,
+  /\b(mrzi\s+sve|mrzim\s+sve|go\s+to\s+hell)\b/i,
+  /\b(ubij\s+se|kill\s+yourself)\b/i,
+];
+
+export function classifyRiskLevel(text: string): RiskLevel {
   const trimmed = text.trim();
-  if (!trimmed) return;
+  if (!trimmed) return 'safe';
 
   for (const pattern of PROMPT_INJECTION_PATTERNS) {
-    if (pattern.test(trimmed)) {
-      throw httpError(
-        400,
-        'Haničar ne prihvaća pokušaje preusmjeravanja duha. Postavi pitanje iskreno, bez tajnih uputa.'
-      );
-    }
+    if (pattern.test(trimmed)) return 'block';
   }
 
   for (const pattern of BLOCKED_CONTENT_PATTERNS) {
-    if (pattern.test(trimmed)) {
-      throw httpError(
-        400,
-        'Ovaj zahtjev prelazi granice duhovnog poslovnika. Molimo tri Očenaša i pokušaj ponovno.'
-      );
-    }
+    if (pattern.test(trimmed)) return 'block';
+  }
+
+  for (const pattern of CAUTION_CONTENT_PATTERNS) {
+    if (pattern.test(trimmed)) return 'caution';
+  }
+
+  return 'safe';
+}
+
+export function assertSafeUserContent(text: string): void {
+  const risk = classifyRiskLevel(text);
+  if (risk === 'block') {
+    throw httpError(
+      400,
+      'Ovaj zahtjev prelazi granice duhovnog poslovnika. Molimo tri Očenaša i pokušaj ponovno.'
+    );
   }
 }
 
@@ -71,4 +86,8 @@ export function validateOptionalApiSecret(
   if (secret !== configuredSecret) {
     throw httpError(401, 'Neautoriziran pristup API-ju.');
   }
+}
+
+export function isValidImageDataUrl(url: string): boolean {
+  return /^data:image\/(jpeg|jpg|png|webp);base64,[a-zA-Z0-9+/=\s]+$/.test(url);
 }
