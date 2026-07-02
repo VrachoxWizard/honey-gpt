@@ -30,19 +30,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9, y: 10 }}
               layout
-              className="w-full p-4 rounded-xl border border-white/5 bg-zinc-900/90 backdrop-blur-md shadow-2xl flex items-start gap-3 pointer-events-auto"
+              className="w-full p-4 rounded-xl codex-toast backdrop-blur-md flex items-start gap-3 pointer-events-auto"
             >
               <div className="shrink-0 mt-0.5">
-                {toast.type === 'success' && <CheckCircle2 className="text-green-500" size={16} />}
-                {toast.type === 'error' && <AlertCircle className="text-crimson-500" size={16} />}
-                {toast.type === 'info' && <Info className="text-blue-500" size={16} />}
+                {toast.type === 'success' && <CheckCircle2 className="text-gold-bright" size={16} />}
+                {toast.type === 'error' && <AlertCircle className="text-oxblood" size={16} />}
+                {toast.type === 'info' && <Info className="text-gold" size={16} />}
               </div>
-              <div className="flex-1 text-xs font-semibold text-zinc-200 leading-snug">
+              <div className="flex-1 text-xs font-semibold text-ink leading-snug font-ui">
                 {toast.message}
               </div>
               <button
                 onClick={() => removeToast(toast.id)}
-                className="shrink-0 p-1 text-zinc-500 hover:text-white rounded-md hover:bg-white/5 transition-colors cursor-pointer"
+                className="shrink-0 p-1 text-ink-faint hover:text-ink rounded-md hover:bg-vellum/60 transition-colors cursor-pointer"
                 aria-label="Zatvori"
               >
                 <X size={12} />

@@ -359,3 +359,62 @@ html.night .dropcap > p:first-of-type::first-letter {
 .animate-quill {
   animation: quill 1.6s ease-in-out infinite;
 }
+
+/* Gold breathing pulse — used on active UI dots or modal accents */
+@keyframes gold-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08);
+  }
+}
+.animate-gold-pulse {
+  animation: gold-pulse 2.4s ease-in-out infinite;
+}
+
+/* Smooth sliding up entrance for toasts and bottom drawers */
+@keyframes slide-up-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-slide-up-fade {
+  animation: slide-up-fade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Modal / overlay codex theme ──────────────────────────────────────── */
+.codex-modal {
+  background-color: var(--parchment-2);
+  border: 1px solid var(--line-strong);
+  box-shadow:
+    0 25px 60px rgba(40, 20, 8, 0.35),
+    inset 0 1px 0 color-mix(in srgb, var(--gold) 12%, transparent);
+}
+html.night .codex-modal {
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 color-mix(in srgb, var(--gold) 8%, transparent);
+}
+
+/* ── Toast codex theme ────────────────────────────────────────────────── */
+.codex-toast {
+  background-color: var(--parchment-3);
+  border: 1px solid var(--line-strong);
+  box-shadow:
+    0 8px 30px rgba(40, 20, 8, 0.25),
+    inset 0 1px 0 color-mix(in srgb, var(--gold) 10%, transparent);
+}
+html.night .codex-toast {
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 color-mix(in srgb, var(--gold) 6%, transparent);
+}

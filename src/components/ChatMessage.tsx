@@ -160,7 +160,7 @@ export const ChatMessage = React.memo(function ChatMessage({
         </div>
       ) : (
         <div className="flex justify-start">
-          <div className="max-w-[90%] rounded-2xl rounded-tl-sm bg-parchment-2 border border-gold/30 px-5 py-3.5 shadow-[0_2px_10px_rgba(60,20,0,0.15)] prose prose-sm md:prose-base prose-headings:font-ui prose-headings:font-bold prose-headings:tracking-wider prose-headings:text-ink prose-p:font-display prose-p:text-ink prose-a:text-oxblood prose-a:underline hover:prose-a:text-oxblood-deep prose-strong:font-bold prose-strong:text-ink prose-code:text-oxblood prose-pre:bg-transparent prose-pre:p-0 prose-pre:m-0">
+          <div className="max-w-[90%] rounded-2xl rounded-tl-sm bg-parchment-2 border border-gold/30 px-5 py-3.5 shadow-[0_2px_10px_rgba(60,20,0,0.15)] dropcap prose prose-sm md:prose-base prose-headings:font-ui prose-headings:font-bold prose-headings:tracking-wider prose-headings:text-ink prose-p:font-display prose-p:text-ink prose-a:text-oxblood prose-a:underline hover:prose-a:text-oxblood-deep prose-strong:font-bold prose-strong:text-ink prose-code:text-oxblood prose-pre:bg-transparent prose-pre:p-0 prose-pre:m-0">
             <MessageContent content={message.content} />
           </div>
         </div>

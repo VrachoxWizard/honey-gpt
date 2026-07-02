@@ -41,16 +41,16 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.15 }}
-            className="relative w-full max-w-md rounded-2xl bg-zinc-900 border border-white/5 shadow-2xl p-6 overflow-hidden z-10"
+            className="relative w-full max-w-md rounded-2xl codex-modal p-6 overflow-hidden z-10"
           >
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-line">
               <div className="flex items-center gap-2.5">
                 <Keyboard className="text-oxblood" size={20} />
                 <h3 className="font-incipit text-xl tracking-wide text-ink-strong">Kratice na tipkovnici</h3>
               </div>
               <button
                 onClick={onClose}
-                className="p-1 text-zinc-500 hover:text-white rounded-md hover:bg-white/5 transition-colors cursor-pointer"
+                className="p-1 text-ink-faint hover:text-ink rounded-md hover:bg-vellum/60 transition-colors cursor-pointer"
                 aria-label="Zatvori modal"
               >
                 <X size={16} />
@@ -65,7 +65,7 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
                     {shortcut.keys.map((key, keyIdx) => (
                       <kbd
                         key={keyIdx}
-                        className="px-2 py-1 rounded bg-zinc-800 border border-white/5 text-zinc-300 font-mono text-xs font-bold shadow"
+                        className="px-2 py-1 rounded bg-parchment-3 border border-line text-ink-soft font-mono text-xs font-bold shadow-sm"
                       >
                         {key}
                       </kbd>
@@ -75,7 +75,7 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
               ))}
             </div>
 
-            <div className="mt-8 text-center text-[10px] text-zinc-500 font-medium">
+            <div className="mt-8 text-center text-[10px] text-ink-faint font-medium font-ui">
               Zabavite se brzim kretanjem kroz aplikaciju uz Božje blagoslove.
             </div>
           </motion.div>

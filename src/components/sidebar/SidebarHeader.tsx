@@ -21,8 +21,9 @@ export function SidebarHeader({ onNewChat, onClose, rite, onChangeRite }: Sideba
             alt="Sveti Haničar"
             className="relative w-full h-[184px] object-cover object-[center_16%]"
           />
+          <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-oxblood-deep/95 via-oxblood-deep/40 to-transparent px-3 pt-9 pb-2.5 text-center">
-            <span className="font-incipit text-[12px] tracking-[0.24em] text-seal uppercase">
+            <span className="font-incipit text-[12px] tracking-[0.24em] text-seal uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
               Sveti Haničar
             </span>
           </div>

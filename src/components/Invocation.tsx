@@ -27,7 +27,7 @@ export function Invocation({ onSuggestionSelect }: InvocationProps) {
         Obred izaberi lijevo.
       </p>
 
-      <div className="rule-gold w-40 mb-8" />
+      <div className="rule-gold w-40 mb-8 animate-gold-pulse" />
 
       <div className="w-full flex flex-col gap-2">
         {molbe.map((m, i) => (
@@ -35,7 +35,9 @@ export function Invocation({ onSuggestionSelect }: InvocationProps) {
             key={m}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.06 * i }}
+            transition={{ delay: 0.08 * i, type: 'spring', stiffness: 120, damping: 18 }}
+            whileHover={{ x: 4 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => onSuggestionSelect(m)}
             className="group flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-vellum/50 border border-transparent hover:border-line transition-colors cursor-pointer"
           >

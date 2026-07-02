@@ -129,7 +129,8 @@ export function ChatComposer({
   };
 
   return (
-    <div className="px-4 md:px-10 pt-6 pb-3 bg-gradient-to-t from-parchment via-parchment to-transparent">
+    <div className="relative px-4 md:px-10 pt-4 pb-3 bg-gradient-to-t from-parchment via-parchment/95 to-transparent">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
       <div className="max-w-[720px] mx-auto relative">
         <AnimatePresence>
           {isSending && (
