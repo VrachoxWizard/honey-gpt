@@ -10,7 +10,7 @@ Haničar GPT je statički React SPA + jedna Vercel serverless funkcija (`/api/ch
 2. [`api/chat.ts`](../api/chat.ts) provjerava env, rate limit, opcionalni API secret i veličinu payloada.
 3. [`server/hanicar.ts`](../server/hanicar.ts) priprema kontekst:
    - sažimanje dugačkih razgovora
-   - lore iz [`server/lore.json`](../server/lore.json)
+   - lore iz [`shared/content/lore.json`](../shared/content/lore.json)
    - RSS vijesti (keyword-gated)
    - model routing
    - cache lookup

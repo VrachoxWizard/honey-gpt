@@ -10,6 +10,12 @@ import { MessageList } from './components/MessageList';
 import { TypingIndicator } from './components/TypingIndicator';
 import { ChatComposer } from './components/ChatComposer';
 import { exportChatToMarkdown } from './utils/exportChat';
+import {
+  clearShareFromLocation,
+  readSharedChatFromLocation,
+  type SharedChatPayload,
+} from './lib/shareChat';
+import { useChatStore } from './store/chatStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './components/Toast';
 import { useToast } from './hooks/useToast';
@@ -35,8 +41,14 @@ function AppContent() {
     renameSession,
     clearAllSessions,
     abortGeneration,
+    shareSession,
+    summaryWarning,
   } = useChat();
 
+  const [sharedView, setSharedView] = useState<SharedChatPayload | null>(() =>
+    readSharedChatFromLocation()
+  );
+  const displayMessages = sharedView?.messages ?? messages;
   const [draft, setDraft] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -59,25 +71,30 @@ function AppContent() {
     localStorage.setItem('hanicar_codex_theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    if (!summaryWarning) return;
+    showToast(summaryWarning, 'info');
+    useChatStore.setState({ summaryWarning: '' });
+  }, [summaryWarning, showToast]);
+
   const lastAssistantMessageId = useMemo(() => {
-    return [...messages].reverse().find((m) => m.role === 'assistant' && m.id !== 'welcome')?.id;
-  }, [messages]);
+    return [...displayMessages].reverse().find((m) => m.role === 'assistant' && m.id !== 'welcome')
+      ?.id;
+  }, [displayMessages]);
 
   const showTypingIndicator = useMemo(() => {
-    if (!isSending) return false;
+    if (sharedView || !isSending) return false;
     const lastMsg = messages[messages.length - 1];
     return !lastMsg || lastMsg.role !== 'assistant' || !lastMsg.content;
-  }, [messages, isSending]);
+  }, [messages, isSending, sharedView]);
 
   useEffect(() => {
-    // Instant (not smooth) so streaming tokens don't fight the user's scroll,
-    // and only when they're already pinned to the bottom.
     if (isNearBottomRef.current) {
       scrollRef.current?.scrollIntoView({ block: 'end' });
     }
-  }, [messages, isSending, showTypingIndicator]);
+  }, [displayMessages, isSending, showTypingIndicator]);
 
-  const isWelcomeView = messages.length <= 1;
+  const isWelcomeView = !sharedView && displayMessages.length <= 1;
 
   const handleSuggestionSelect = (prompt: string) => {
     sendMessage(prompt);
@@ -85,9 +102,30 @@ function AppContent() {
   };
 
   const handleExport = () => {
-    exportChatToMarkdown(messages);
+    exportChatToMarkdown(displayMessages);
     setSidebarOpen(false);
     showToast('Zapis prepisan u datoteku!', 'success');
+  };
+
+  const handleShare = async () => {
+    const url = shareSession(activeSessionId);
+    if (!url) {
+      showToast('Nema aktivnog razgovora za dijeljenje.', 'error');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast('Link za dijeljenje kopiran u međuspremnik!', 'success');
+    } catch {
+      window.prompt('Kopiraj link za dijeljenje:', url);
+    }
+    setSidebarOpen(false);
+  };
+
+  const handleExitSharedView = () => {
+    setSharedView(null);
+    clearShareFromLocation();
   };
 
   useKeyboardShortcuts({
@@ -127,6 +165,7 @@ function AppContent() {
         onToggleTheme={() => setTheme((t) => (t === 'day' ? 'night' : 'day'))}
         onNewChat={newChat}
         onExportChat={handleExport}
+        onShareChat={handleShare}
         sessions={sessions}
         activeSessionId={activeSessionId}
         onSwitchSession={switchSession}
@@ -161,6 +200,18 @@ function AppContent() {
 
         {/* Reading area */}
         <main className="flex-1 flex flex-col min-h-0 relative">
+          {sharedView && (
+            <div className="shrink-0 px-4 py-2 bg-seal/20 border-b border-line text-center text-sm text-ink-soft">
+              Samo za čitanje: dijeljeni razgovor «{sharedView.title}».
+              <button
+                type="button"
+                onClick={handleExitSharedView}
+                className="ml-2 underline cursor-pointer hover:text-ink"
+              >
+                Zatvori
+              </button>
+            </div>
+          )}
           <div
             ref={containerRef}
             onScroll={handleScroll}
@@ -173,10 +224,11 @@ function AppContent() {
               <Invocation onSuggestionSelect={handleSuggestionSelect} />
             ) : (
               <MessageList
-                messages={messages}
+                messages={displayMessages}
                 lastAssistantMessageId={lastAssistantMessageId}
-                onRegenerate={regenerateLastResponse}
-                onEdit={editAndResend}
+                onRegenerate={sharedView ? () => {} : regenerateLastResponse}
+                onEdit={sharedView ? () => {} : editAndResend}
+                scrollContainerRef={containerRef}
               />
             )}
 
@@ -199,14 +251,16 @@ function AppContent() {
             )}
           </AnimatePresence>
 
-          <ChatComposer
-            draft={draft}
-            setDraft={setDraft}
-            isSending={isSending}
-            error={error}
-            onSubmit={sendMessage}
-            onAbort={abortGeneration}
-          />
+          {!sharedView && (
+            <ChatComposer
+              draft={draft}
+              setDraft={setDraft}
+              isSending={isSending}
+              error={error}
+              onSubmit={sendMessage}
+              onAbort={abortGeneration}
+            />
+          )}
         </main>
       </div>
 

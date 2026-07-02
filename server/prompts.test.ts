@@ -23,6 +23,10 @@ describe('Prompts / Sentiment & Coding Detection', () => {
       expect(detectSentiment('Kako si danas?')).toBe('normal');
       expect(detectSentiment('Dobar dan, trebam pomoć.')).toBe('normal');
     });
+
+    it('does not treat caution phrases as angry sentiment', () => {
+      expect(detectSentiment('ubij se, ne mogu više')).toBe('normal');
+    });
   });
 
   describe('detectCodingOrLogic', () => {

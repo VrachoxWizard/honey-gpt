@@ -27,5 +27,5 @@
       "@styles/*": ["./src/styles/*"]
     }
   },
-  "include": ["src", "api", "server", "shared", "vite.config.ts"]
+  "include": ["src", "api", "server", "shared", "dev", "vite.config.ts"]
 }

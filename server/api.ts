@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { streamHanicarReply } from './hanicar.js';
+import { resolveRiskLevel } from './moderation.js';
 import { validateRequestedModel } from './models.js';
 import {
   assertSafeUserContent,
@@ -8,6 +9,7 @@ import {
   isValidImageDataUrl,
 } from './security.js';
 import { CONSTANTS } from './constants.js';
+import { getEnv } from './env.js';
 import type { ChatMessage, HanicarStreamContext } from '@shared/types';
 import type { RequestLogger } from './logger.js';
 
@@ -26,6 +28,7 @@ export type StreamChunk = {
     cacheHit?: boolean;
     promptVersion?: string;
     tokensUsed?: number;
+    summaryFailed?: boolean;
   };
   done?: boolean;
 };
@@ -110,7 +113,15 @@ export function validateAndParsePayload(payload: unknown) {
     ...result.data,
     model: validatedModel,
     riskLevel: classifyRiskLevel(latestUserText),
+    latestUserText,
   };
+}
+
+export async function resolvePayloadRiskLevel(
+  latestUserText: string
+): Promise<ReturnType<typeof classifyRiskLevel>> {
+  const apiKey = getEnv().openRouterApiKey;
+  return resolveRiskLevel(latestUserText, apiKey);
 }
 
 export async function handleChatPayloadStream(
@@ -118,10 +129,12 @@ export async function handleChatPayloadStream(
   onChunk: (chunk: StreamChunk) => void,
   context?: ChatStreamContext
 ) {
-  const { messages, model, toneMode, riskLevel } = validateAndParsePayload(payload);
-  return streamHanicarReply(messages as ChatMessage[], onChunk, {
-    model,
-    toneMode,
+  const parsed = validateAndParsePayload(payload);
+  const riskLevel = await resolvePayloadRiskLevel(parsed.latestUserText);
+
+  return streamHanicarReply(parsed.messages as ChatMessage[], onChunk, {
+    model: parsed.model,
+    toneMode: parsed.toneMode,
     riskLevel,
     context,
   });
@@ -158,7 +171,7 @@ function sanitizeServerMessage(message: string) {
   }
 
   if (/api[_ -]?key|OPENROUTER_API_KEY|token|secret/i.test(message)) {
-    return 'Problem s API kljucem ili postavakama deploya.';
+    return 'Problem s API kljucem ili postavkama deploya.';
   }
 
   return message || 'Server nije uspio dobiti odgovor.';

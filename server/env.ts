@@ -16,6 +16,10 @@ const envSchema = z.object({
   DAILY_TOKEN_BUDGET_PER_IP: z.coerce.number().int().nonnegative().default(50_000),
   PROMPT_VERSION: z.string().optional(),
   MODERATION_MODEL: z.string().optional(),
+  REQUIRE_REDIS: z
+    .enum(['true', 'false', '1', '0'])
+    .optional()
+    .transform((value) => value === 'true' || value === '1'),
 });
 
 export type AppEnv = {
@@ -33,6 +37,7 @@ export type AppEnv = {
   dailyTokenBudgetPerIp: number;
   promptVersion: string | undefined;
   moderationModel: string | undefined;
+  requireRedis: boolean;
   isProduction: boolean;
 };
 
@@ -70,6 +75,7 @@ export function getEnv(): AppEnv {
     dailyTokenBudgetPerIp: data.DAILY_TOKEN_BUDGET_PER_IP,
     promptVersion: data.PROMPT_VERSION?.trim(),
     moderationModel: data.MODERATION_MODEL?.trim(),
+    requireRedis: data.REQUIRE_REDIS ?? false,
     isProduction: process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production',
   };
 
@@ -103,7 +109,23 @@ export function warnIfProductionWithoutRedis(): void {
   }
 
   redisWarningLogged = true;
-  console.warn(
-    '[Hanicar] UPSTASH Redis nije konfiguriran u produkciji. Rate limit i cache rade samo in-memory po instanci.'
-  );
+  const message =
+    '[Hanicar] UPSTASH Redis nije konfiguriran u produkciji. Rate limit i cache rade samo in-memory po instanci.';
+
+  if (env.requireRedis) {
+    console.error(message);
+    return;
+  }
+
+  console.warn(message);
+}
+
+export function assertRedisIfRequired(): void {
+  const env = getEnv();
+  if (env.isProduction && env.requireRedis && !isRedisConfigured()) {
+    throw httpError(
+      503,
+      'Redis nije konfiguriran. Postavi UPSTASH_REDIS_REST_URL i UPSTASH_REDIS_REST_TOKEN.'
+    );
+  }
 }

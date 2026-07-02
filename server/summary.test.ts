@@ -22,7 +22,8 @@ describe('summary', () => {
       [{ role: 'user', content: 'Pozdrav' }],
       'sk-or-v1-test-key-1234567890'
     );
-    expect(summary).toBe('');
+    expect(summary.text).toBe('');
+    expect(summary.failed).toBe(false);
   });
 
   it('summarizes long conversations with enough content', async () => {
@@ -32,6 +33,7 @@ describe('summary', () => {
     }));
 
     const summary = await summarizeConversationIfNeeded(messages, 'sk-or-v1-test-key-1234567890');
-    expect(summary).toContain('Wi-Fi');
+    expect(summary.text).toContain('Wi-Fi');
+    expect(summary.failed).toBe(false);
   });
 });

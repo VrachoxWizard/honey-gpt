@@ -16,12 +16,14 @@ export interface ChatSlice {
   clearChat: () => void;
   exportSession: (id: string) => string | null;
   importSession: (json: string) => string | null;
+  shareSession: (id: string) => string | null;
 }
 
 export interface MessageSlice {
   isSending: boolean;
   error: string;
   lastRequestId: string;
+  summaryWarning: string;
   abortGeneration: () => void;
   sendMessage: (content: string, image?: string) => Promise<void>;
   regenerateLastResponse: () => Promise<void>;

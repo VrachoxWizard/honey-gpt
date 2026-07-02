@@ -1,11 +1,11 @@
 import { handleChatPayloadStream, toClientError, type StreamChunk } from './api.js';
 import { checkRateLimit, checkTokenBudget, getClientIp, recordTokenUsage } from './limiter.js';
-import { checkEnv, getEnv, warnIfProductionWithoutRedis } from './env.js';
+import { checkEnv, getEnv, warnIfProductionWithoutRedis, assertRedisIfRequired } from './env.js';
 import { createRequestId, createRequestLogger } from './logger.js';
 import { validateOptionalApiSecret } from './security.js';
 import { captureException, initMonitoring } from './monitoring.js';
 import { isCircuitOpen } from './circuit-breaker.js';
-import { incrementMetric } from './metrics.js';
+import { incrementMetric, recordRequestMetrics } from './metrics.js';
 import { CONSTANTS } from './constants.js';
 import { getPromptVersion } from './prompts.js';
 import { httpError } from './api.js';
@@ -68,6 +68,20 @@ export async function handleChatRequest(
 ): Promise<ChatHandlerResponse> {
   await ensureMonitoring();
   warnIfProductionWithoutRedis();
+
+  try {
+    assertRedisIfRequired();
+  } catch (error) {
+    const clientError = toClientError(error);
+    return {
+      statusCode: clientError.statusCode,
+      headers: {
+        'Access-Control-Allow-Origin': getEnv().corsOrigin,
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: JSON.stringify({ error: clientError.message }),
+    };
+  }
 
   const requestId = createRequestId();
   const logger = createRequestLogger(requestId);
@@ -214,13 +228,11 @@ export async function handleChatRequest(
       promptVersion: getPromptVersion(),
     });
 
-    await incrementMetric('requests');
-    if (cacheHit) {
-      await incrementMetric('cacheHits');
-    }
-    if (tokensUsed > 0) {
-      await incrementMetric('tokens', tokensUsed);
-    }
+    await recordRequestMetrics({
+      cacheHit,
+      tokens: tokensUsed > 0 ? tokensUsed : undefined,
+      statusCode,
+    });
 
     return { statusCode, headers: streamHeaders, streamed: true };
   } catch (error) {

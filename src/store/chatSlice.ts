@@ -1,5 +1,6 @@
 import { StateCreator } from 'zustand';
 import type { Message, ChatSession, ExportedSession } from '@shared/types';
+import { buildShareUrl } from '@lib/shareChat';
 import type { ChatState, ChatSlice } from './types';
 
 export const welcomeMessage: Message = {
@@ -164,5 +165,17 @@ export const createChatSlice: StateCreator<
     } catch {
       return null;
     }
+  },
+
+  shareSession: (id) => {
+    const session = get().sessions.find((entry) => entry.id === id);
+    if (!session) return null;
+
+    return buildShareUrl({
+      version: 1,
+      title: session.title,
+      messages: session.messages,
+      exportedAt: Date.now(),
+    });
   },
 });

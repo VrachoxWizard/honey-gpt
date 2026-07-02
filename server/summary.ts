@@ -2,6 +2,7 @@ import { CONSTANTS } from './constants.js';
 import { resolveDefaultModel } from './models.js';
 import { callOpenRouterSync } from './openrouter.js';
 import type { ChatMessage } from '@shared/types';
+import { createRequestLogger } from './logger.js';
 
 function getMessageText(message: ChatMessage): string {
   if (typeof message.content === 'string') {
@@ -16,18 +17,29 @@ function getTotalMessageChars(messages: ChatMessage[]): number {
   return messages.reduce((total, message) => total + getMessageText(message).length, 0);
 }
 
+export type SummaryResult = {
+  text: string;
+  failed: boolean;
+};
+
 export async function summarizeConversationIfNeeded(
   messages: ChatMessage[],
   apiKey: string
-): Promise<string> {
-  if (messages.length < CONSTANTS.SUMMARIZATION_THRESHOLD) return '';
+): Promise<SummaryResult> {
+  if (messages.length < CONSTANTS.SUMMARIZATION_THRESHOLD) {
+    return { text: '', failed: false };
+  }
 
   const earlyMessages = messages
     .slice(0, -CONSTANTS.SUMMARIZED_CONTEXT_MESSAGES)
     .filter((message) => message.role === 'user' || message.role === 'assistant');
 
-  if (earlyMessages.length === 0) return '';
-  if (getTotalMessageChars(earlyMessages) < CONSTANTS.SUMMARIZATION_MIN_TOTAL_CHARS) return '';
+  if (earlyMessages.length === 0) return { text: '', failed: false };
+  if (getTotalMessageChars(earlyMessages) < CONSTANTS.SUMMARIZATION_MIN_TOTAL_CHARS) {
+    return { text: '', failed: false };
+  }
+
+  const logger = createRequestLogger('summary');
 
   try {
     const payload = await callOpenRouterSync(
@@ -52,11 +64,15 @@ export async function summarizeConversationIfNeeded(
 
     const text = payload?.choices?.[0]?.message?.content?.trim();
     if (text) {
-      return text;
+      return { text, failed: false };
     }
-  } catch (error) {
-    console.error('Neuspjelo sazimanja povijesti:', error);
-  }
 
-  return '';
+    logger.warn('Sažimanje razgovora nije vratilo tekst');
+    return { text: '', failed: true };
+  } catch (error) {
+    logger.error('Neuspjelo sažimanje povijesti', {
+      error: error instanceof Error ? error.message : 'unknown',
+    });
+    return { text: '', failed: true };
+  }
 }

@@ -19,6 +19,11 @@ describe('models', () => {
     expect(models[0]).toBe('qwen/qwen-2.5-coder-32b-instruct');
   });
 
+  it('routes image messages to vision-capable models', () => {
+    const models = getModelCandidates(undefined, 'Što vidiš na slici?', true);
+    expect(models[0]).toBe('google/gemini-2.5-flash');
+  });
+
   it('rejects unknown requested models', () => {
     expect(validateRequestedModel('totally/unknown-model')).toBeUndefined();
     expect(validateRequestedModel('google/gemini-2.5-flash')).toBe('google/gemini-2.5-flash');

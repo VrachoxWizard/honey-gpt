@@ -1,7 +1,7 @@
 import ky from 'ky';
 import { CONSTANTS } from './constants.js';
 import { getEnv } from './env.js';
-import { parseSSEChunks, type OpenRouterStreamChunk } from './sse-parser.js';
+import { parseSSEChunks, type OpenRouterStreamChunk } from '../shared/sse-parser.js';
 
 export interface OpenRouterResponse {
   id: string;

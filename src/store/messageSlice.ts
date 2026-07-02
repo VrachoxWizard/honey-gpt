@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
 import type { Message } from '@shared/types';
 import { sendConversation } from '@lib/chatApi';
+import { formatChatError } from '@lib/errors';
 import type { ChatState, MessageSlice } from './types';
 import { DEFAULT_SESSION_TITLE, welcomeMessage } from './chatSlice';
 
@@ -53,7 +54,11 @@ export const createMessageSlice: StateCreator<
     abortController = newController;
 
     updateActiveSessionMessages(() => nextMessages);
-    set({ error: '', isSending: true, lastRequestId: '' }, false, 'executeSendStart');
+    set(
+      { error: '', isSending: true, lastRequestId: '', summaryWarning: '' },
+      false,
+      'executeSendStart'
+    );
 
     const assistantMessageId = crypto.randomUUID();
     updateActiveSessionMessages((msgs) => [
@@ -97,6 +102,13 @@ export const createMessageSlice: StateCreator<
         onRequestId: (requestId) => {
           set({ lastRequestId: requestId }, false, 'setLastRequestId');
         },
+        onSummaryFailed: () => {
+          set(
+            { summaryWarning: 'Dugačak razgovor nije u potpunosti sažet, ali odgovor stiže.' },
+            false,
+            'summaryFailed'
+          );
+        },
       });
     } catch (requestError: unknown) {
       if (requestError instanceof Error && requestError.name === 'AbortError') {
@@ -104,10 +116,12 @@ export const createMessageSlice: StateCreator<
       } else {
         set(
           {
-            error:
+            error: formatChatError(
               requestError instanceof Error
                 ? requestError.message
                 : 'Nešto se zapetljalo. Haničar trese lampu, ali ništa.',
+              get().lastRequestId || undefined
+            ),
           },
           false,
           'executeSendError'
@@ -128,6 +142,7 @@ export const createMessageSlice: StateCreator<
     isSending: false,
     error: '',
     lastRequestId: '',
+    summaryWarning: '',
 
     abortGeneration,
 

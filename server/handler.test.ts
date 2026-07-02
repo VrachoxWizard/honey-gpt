@@ -32,8 +32,12 @@ vi.mock('./env.js', () => ({
   getEnv: vi.fn(() => ({
     corsOrigin: 'https://example.com',
     apiSecret: undefined,
+    requireRedis: false,
+    isProduction: false,
   })),
   warnIfProductionWithoutRedis: vi.fn(),
+  assertRedisIfRequired: vi.fn(),
+  isRedisConfigured: vi.fn(() => false),
 }));
 
 vi.mock('./monitoring.js', () => ({
@@ -47,6 +51,7 @@ vi.mock('./circuit-breaker.js', () => ({
 
 vi.mock('./metrics.js', () => ({
   incrementMetric: vi.fn(async () => {}),
+  recordRequestMetrics: vi.fn(async () => {}),
 }));
 
 vi.mock('./prompts.js', () => ({

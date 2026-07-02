@@ -13,6 +13,7 @@ describe('chatApi retry', () => {
       .mockResolvedValueOnce({
         ok: false,
         status: 502,
+        headers: new Headers(),
         json: async () => ({ error: 'Pad servera' }),
       })
       .mockResolvedValueOnce({

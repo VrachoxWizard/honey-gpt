@@ -5,7 +5,12 @@ import { fileURLToPath } from 'node:url';
 import Fuse from 'fuse.js';
 import { CONSTANTS } from './constants.js';
 import { getEnv } from './env.js';
-import type { RiskLevel } from './security.js';
+import { classifyRiskLevel, type RiskLevel } from './security.js';
+import {
+  parseKatekizamFile,
+  parseLoreFile,
+  type KatekizamEntry,
+} from '../shared/content/schemas.js';
 
 export const DEFAULT_PROMPT_VERSION = 'v2';
 
@@ -42,6 +47,9 @@ export function getCroatianDateString(): string {
 }
 
 export function detectSentiment(text: string): 'angry' | 'sad' | 'normal' {
+  const risk = classifyRiskLevel(text);
+  if (risk === 'caution' || risk === 'block') return 'normal';
+
   const clean = text.toLowerCase();
 
   if (CONSTANTS.ANGRY_KEYWORDS.some((w) => clean.includes(w))) return 'angry';
@@ -79,7 +87,7 @@ export function getSeasonalInstructions(): string[] {
   if (month === 11 && day === 1) {
     return [
       '## SEZONSKI KONTEKST: SVI SVETI',
-      'Danas je Dan svih svetih. Ton može biti blago conmemorativan, ali i dalje satiričan.',
+      'Danas je Dan svih svetih. Ton može biti blago komemorativan, ali i dalje satiričan.',
     ];
   }
 
@@ -107,16 +115,16 @@ export async function getLorePhrases(text: string): Promise<string[]> {
       let lorePath = '';
       try {
         if (typeof import.meta.url === 'string' && import.meta.url.startsWith('file:')) {
-          lorePath = fileURLToPath(new URL('./lore.json', import.meta.url));
+          lorePath = fileURLToPath(new URL('../shared/content/lore.json', import.meta.url));
         } else {
-          lorePath = path.resolve(process.cwd(), 'server', 'lore.json');
+          lorePath = path.resolve(process.cwd(), 'shared', 'content', 'lore.json');
         }
       } catch {
-        lorePath = path.resolve(process.cwd(), 'server', 'lore.json');
+        lorePath = path.resolve(process.cwd(), 'shared', 'content', 'lore.json');
       }
 
       const content = await fs.readFile(lorePath, 'utf-8');
-      loreData = JSON.parse(content);
+      loreData = parseLoreFile(JSON.parse(content));
     }
 
     if (!fuseInstance && loreData) {
@@ -145,23 +153,21 @@ export async function getLorePhrases(text: string): Promise<string[]> {
   }
 }
 
-type KatekizamEntry = {
-  keywords: string[];
-  answer: string;
-  satireHint: string;
-};
+type KatekizamEntryLocal = KatekizamEntry;
 
-let katekizamData: KatekizamEntry[] | null = null;
-let katekizamFuse: Fuse<KatekizamEntry> | null = null;
+let katekizamData: KatekizamEntryLocal[] | null = null;
+let katekizamFuse: Fuse<KatekizamEntryLocal> | null = null;
 
-async function loadKatekizamData(): Promise<KatekizamEntry[]> {
+async function loadKatekizamData(): Promise<KatekizamEntryLocal[]> {
   if (katekizamData) return katekizamData;
 
-  const candidates = [path.resolve(process.cwd(), 'server', 'katekizam.json')];
+  const candidates = [path.resolve(process.cwd(), 'shared', 'content', 'katekizam.json')];
 
   if (typeof import.meta.url === 'string' && import.meta.url.startsWith('file:')) {
     try {
-      candidates.unshift(fileURLToPath(new URL('./katekizam.json', import.meta.url)));
+      candidates.unshift(
+        fileURLToPath(new URL('../shared/content/katekizam.json', import.meta.url))
+      );
     } catch {
       // Vitest virtual modules can expose non-file URLs.
     }
@@ -171,7 +177,7 @@ async function loadKatekizamData(): Promise<KatekizamEntry[]> {
   for (const candidate of candidates) {
     try {
       const content = await fs.readFile(candidate, 'utf-8');
-      katekizamData = JSON.parse(content) as KatekizamEntry[];
+      katekizamData = parseKatekizamFile(JSON.parse(content));
       return katekizamData;
     } catch (error) {
       lastError = error;

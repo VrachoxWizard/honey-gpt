@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, MouseEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Trash2, X } from 'lucide-react';
+import { Download, Link2, Trash2, X } from 'lucide-react';
 import type { ChatSession } from '@shared/types';
 import type { ToneMode } from '../lib/codex';
 import { SidebarHeader } from './sidebar/SidebarHeader';
@@ -16,6 +16,7 @@ interface SidebarProps {
   onToggleTheme: () => void;
   onNewChat: () => void;
   onExportChat: () => void;
+  onShareChat: () => void;
   sessions: ChatSession[];
   activeSessionId?: string;
   onSwitchSession: (id: string) => void;
@@ -72,6 +73,7 @@ function SidebarBody({
   onChangeRite,
   onNewChat,
   onExportChat,
+  onShareChat,
   sessions,
   activeSessionId,
   onSwitchSession,
@@ -129,6 +131,14 @@ function SidebarBody({
         <div className="flex items-center justify-between px-2 mb-2 shrink-0">
           <span className="rubric text-[9px]">Zapisi</span>
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={onShareChat}
+              title="Podijeli razgovor putem linka"
+              aria-label="Podijeli razgovor"
+              className="p-1 text-ink-faint hover:text-ink transition-colors cursor-pointer"
+            >
+              <Link2 size={13} />
+            </button>
             <button
               onClick={onExportChat}
               title="Prepiši trenutni razgovor u datoteku"

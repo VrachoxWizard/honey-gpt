@@ -15,7 +15,7 @@ import {
   isQuotaLikeError,
   streamOpenRouter,
 } from './openrouter.js';
-import { getModelCandidates } from './models.js';
+import { getModelCandidates, messageHasVisionContent } from './models.js';
 import { summarizeConversationIfNeeded } from './summary.js';
 import {
   buildOpenRouterMessages,
@@ -34,6 +34,7 @@ interface PreparedRequest {
   cacheKey: string;
   newsHeadlines: string[];
   summarizedContext: string;
+  summaryFailed: boolean;
   lorePhrases: string[];
   katekizam: { answer: string; satireHint: string } | null;
   shouldCache: boolean;
@@ -104,7 +105,9 @@ async function prepareHanicarRequest(
     throw httpError(503, 'OpenRouter je privremeno nedostupan. Molimo pokušajte za minutu.');
   }
 
-  const summarizedContext = await summarizeConversationIfNeeded(messages, apiKey!);
+  const summaryResult = await summarizeConversationIfNeeded(messages, apiKey!);
+  const summarizedContext = summaryResult.text;
+  const summaryFailed = summaryResult.failed;
   const cleanMessages = sanitizeMessages(
     messages,
     summarizedContext ? CONSTANTS.SUMMARIZED_CONTEXT_MESSAGES : CONSTANTS.MAX_MESSAGES
@@ -129,7 +132,8 @@ async function prepareHanicarRequest(
     getKatekizamSnippet(userText),
   ]);
 
-  const models = getModelCandidates(options?.model, userText);
+  const hasVisionContent = messageHasVisionContent(cleanMessages);
+  const models = getModelCandidates(options?.model, userText, hasVisionContent);
   const primaryModel = models[0];
   const cacheKey = generateCacheKey(cleanMessages, primaryModel, options?.toneMode, newsHeadlines);
   const shouldCache = shouldUseResponseCache(cleanMessages, options?.toneMode);
@@ -143,6 +147,7 @@ async function prepareHanicarRequest(
     cacheKey,
     newsHeadlines,
     summarizedContext,
+    summaryFailed,
     lorePhrases,
     katekizam,
     shouldCache,
@@ -164,6 +169,7 @@ export async function streamHanicarReply(
     cacheKey,
     newsHeadlines,
     summarizedContext,
+    summaryFailed,
     lorePhrases,
     katekizam,
     shouldCache,
@@ -171,6 +177,16 @@ export async function streamHanicarReply(
     isCoding,
   } = prepared;
   const logger = options?.context?.logger;
+
+  if (summaryFailed) {
+    onChunk({
+      meta: {
+        requestId: options?.context?.requestId,
+        summaryFailed: true,
+        promptVersion: getPromptVersion(),
+      },
+    });
+  }
 
   if (shouldCache) {
     const cachedReply = await getCachedReply(cacheKey);

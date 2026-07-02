@@ -1,5 +1,6 @@
 import type { ToneMode } from './codex';
-import { parseSSEChunks } from '../../server/sse-parser';
+import { parseSSEChunks } from '@shared/sse-parser';
+import { formatChatError, mapHttpStatusToMessage } from './errors';
 
 export interface SendConversationOptions {
   messages: Array<{ role: string; content: string | object[] }>;
@@ -9,6 +10,7 @@ export interface SendConversationOptions {
   onToken: (token: string) => void;
   onModel: (model: string) => void;
   onRequestId?: (requestId: string) => void;
+  onSummaryFailed?: () => void;
 }
 
 export interface ServerStreamChunk {
@@ -20,6 +22,7 @@ export interface ServerStreamChunk {
     model?: string;
     cacheHit?: boolean;
     promptVersion?: string;
+    summaryFailed?: boolean;
   };
   done?: boolean;
 }
@@ -58,14 +61,21 @@ async function makeChatRequest(
   if (!response.ok) {
     if (response.status === 404) throw new Error('Endpoint not found');
     const payload = await response.json().catch(() => ({}));
-    const message = payload.error || 'Server nije prihvatio zahtjev.';
+    const requestId = response.headers?.get?.('X-Request-Id') || undefined;
+    const message = formatChatError(
+      mapHttpStatusToMessage(response.status, payload.error),
+      requestId
+    );
+    if (requestId) {
+      options.onRequestId?.(requestId);
+    }
     if (RETRYABLE_STATUS.has(response.status)) {
       throw new Error(`HTTP ${response.status}: ${message}`);
     }
     throw new Error(message);
   }
 
-  const requestId = response.headers.get('X-Request-Id');
+  const requestId = response.headers?.get?.('X-Request-Id');
   if (requestId) {
     options.onRequestId?.(requestId);
   }
@@ -77,7 +87,7 @@ async function streamChatResponse(
   response: Response,
   options: SendConversationOptions
 ): Promise<void> {
-  const contentType = response.headers.get('Content-Type') || '';
+  const contentType = response.headers?.get?.('Content-Type') || '';
 
   if (contentType.includes('text/event-stream')) {
     const reader = response.body?.getReader();
@@ -92,11 +102,14 @@ async function streamChatResponse(
       buffer += decoder.decode(value, { stream: true });
       buffer = parseSSEChunks<ServerStreamChunk>(buffer, (data) => {
         if (data.error) {
-          streamError = new Error(data.error);
+          streamError = new Error(formatChatError(data.error, data.meta?.requestId));
           return;
         }
         if (data.meta?.requestId) {
           options.onRequestId?.(data.meta.requestId);
+        }
+        if (data.meta?.summaryFailed) {
+          options.onSummaryFailed?.();
         }
         if (data.token) options.onToken(data.token);
         if (data.model) options.onModel(data.model);
