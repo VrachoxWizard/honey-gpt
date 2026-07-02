@@ -15,11 +15,7 @@ export function SendButton({ isDisabled, isSending }: SendButtonProps) {
       aria-label="Zapečati i pošalji"
       className="wax-seal shrink-0 w-10 h-10 flex items-center justify-center rounded-full mb-0.5 cursor-pointer disabled:cursor-not-allowed"
     >
-      {isSending ? (
-        <Loader2 size={18} className="animate-spin" />
-      ) : (
-        <Feather size={16} />
-      )}
+      {isSending ? <Loader2 size={18} className="animate-spin" /> : <Feather size={16} />}
     </motion.button>
   );
 }

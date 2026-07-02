@@ -1,5 +1,5 @@
 import type { ToneMode } from '@lib/codex';
-import type { ExportedSession } from '@shared/types';
+import type { ChatSession } from '@shared/types';
 
 export interface ChatSlice {
   sessions: import('@shared/types').ChatSession[];

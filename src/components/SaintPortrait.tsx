@@ -7,7 +7,11 @@ interface SaintPortraitProps {
   halo?: boolean;
 }
 
-export const SaintPortrait = memo(function SaintPortrait({ size = 48, className, halo }: SaintPortraitProps) {
+export const SaintPortrait = memo(function SaintPortrait({
+  size = 48,
+  className,
+  halo,
+}: SaintPortraitProps) {
   return (
     <div
       style={{ width: size, height: size }}

@@ -33,7 +33,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               className="w-full p-4 rounded-xl codex-toast backdrop-blur-md flex items-start gap-3 pointer-events-auto"
             >
               <div className="shrink-0 mt-0.5">
-                {toast.type === 'success' && <CheckCircle2 className="text-gold-bright" size={16} />}
+                {toast.type === 'success' && (
+                  <CheckCircle2 className="text-gold-bright" size={16} />
+                )}
                 {toast.type === 'error' && <AlertCircle className="text-oxblood" size={16} />}
                 {toast.type === 'info' && <Info className="text-gold" size={16} />}
               </div>

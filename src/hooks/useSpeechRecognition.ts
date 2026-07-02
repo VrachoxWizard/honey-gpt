@@ -2,7 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function useSpeechRecognition() {
   const [isListening, setIsListening] = useState(false);
-  const [supported, setSupported] = useState(false);
+  const [supported] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+  });
   const [transcript, setTranscript] = useState('');
   const recognitionRef = useRef<any>(null);
 
@@ -11,7 +14,6 @@ export function useSpeechRecognition() {
       const SpeechRecognition =
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
-        setSupported(true);
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = false;

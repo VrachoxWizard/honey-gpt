@@ -8,16 +8,16 @@ interface MessageContentProps {
 }
 
 export const MessageContent = memo(function MessageContent({ content }: MessageContentProps) {
-  const markdownComponents = useMemo(() => ({
-    code: CodeBlock as any,
-  }), []);
+  const markdownComponents = useMemo(
+    () => ({
+      code: CodeBlock as any,
+    }),
+    []
+  );
 
   return (
     <div className="font-display text-[16px] leading-relaxed text-ink whitespace-pre-wrap">
-      <ReactMarkdown 
-        remarkPlugins={[remarkGfm]} 
-        components={markdownComponents}
-      >
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
         {content}
       </ReactMarkdown>
     </div>

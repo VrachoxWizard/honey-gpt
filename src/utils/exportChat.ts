@@ -48,7 +48,9 @@ export async function exportChatToPNG(element: HTMLElement): Promise<boolean> {
             title === 'Ispravi molbu' ||
             title === 'Zaustavi čitanje' ||
             title === 'Zatraži novi odgovor' ||
-            node.tagName === 'BUTTON' && node.classList.contains('cursor-pointer') && (node.innerText === 'Odustani' || node.innerText === 'Zapečati i pošalji')
+            (node.tagName === 'BUTTON' &&
+              node.classList.contains('cursor-pointer') &&
+              (node.innerText === 'Odustani' || node.innerText === 'Zapečati i pošalji'))
           ) {
             return false;
           }
@@ -71,4 +73,3 @@ export async function exportChatToPNG(element: HTMLElement): Promise<boolean> {
     return false;
   }
 }
-

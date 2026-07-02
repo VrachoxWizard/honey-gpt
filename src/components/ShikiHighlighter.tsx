@@ -51,9 +51,9 @@ export function ShikiHighlighter({ code, language }: ShikiHighlighterProps) {
   }
 
   return (
-    <div 
-      dangerouslySetInnerHTML={{ __html: html }} 
-      className="shiki-container text-sm overflow-x-auto [&>pre]:!bg-[#09090b] [&>pre]:!p-4 [&>pre]:!m-0 [&>pre]:scrollbar-thin" 
+    <div
+      dangerouslySetInnerHTML={{ __html: html }}
+      className="shiki-container text-sm overflow-x-auto [&>pre]:!bg-[#09090b] [&>pre]:!p-4 [&>pre]:!m-0 [&>pre]:scrollbar-thin"
     />
   );
 }

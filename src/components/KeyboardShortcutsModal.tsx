@@ -46,7 +46,9 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-line">
               <div className="flex items-center gap-2.5">
                 <Keyboard className="text-oxblood" size={20} />
-                <h3 className="font-incipit text-xl tracking-wide text-ink-strong">Kratice na tipkovnici</h3>
+                <h3 className="font-incipit text-xl tracking-wide text-ink-strong">
+                  Kratice na tipkovnici
+                </h3>
               </div>
               <button
                 onClick={onClose}

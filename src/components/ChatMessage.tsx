@@ -11,7 +11,7 @@ import { useTextToSpeech } from '../hooks/useTextToSpeech';
 function CopyButton({ text }: { text: string }) {
   const { copied, copy } = useClipboard();
   const { showToast } = useToast();
-  
+
   const handleCopy = async () => {
     const success = await copy(text);
     if (success) {
@@ -20,7 +20,7 @@ function CopyButton({ text }: { text: string }) {
       showToast('Prepisivanje nije uspjelo.', 'error');
     }
   };
-  
+
   return (
     <button
       onClick={handleCopy}
@@ -35,12 +35,12 @@ function CopyButton({ text }: { text: string }) {
 
 function SpeechButton({ text }: { text: string }) {
   const { speak, stop, isSpeaking, supported } = useTextToSpeech();
-  
+
   if (!supported) return null;
-  
+
   return (
     <button
-      onClick={() => isSpeaking ? stop() : speak(text)}
+      onClick={() => (isSpeaking ? stop() : speak(text))}
       className="p-1 text-ink-faint hover:text-ink rounded-md hover:bg-vellum/60 transition-colors select-none cursor-pointer"
       title={isSpeaking ? 'Zaustavi čitanje' : 'Pročitaj naglas'}
       aria-label={isSpeaking ? 'Zaustavi čitanje' : 'Pročitaj naglas'}
@@ -79,10 +79,7 @@ export const ChatMessage = React.memo(function ChatMessage({
   return (
     <div className="group w-full max-w-[720px] mx-auto animate-ink-in">
       <div
-        className={cn(
-          'flex items-center gap-2.5 mb-2',
-          isUser ? 'flex-row-reverse' : 'flex-row'
-        )}
+        className={cn('flex items-center gap-2.5 mb-2', isUser ? 'flex-row-reverse' : 'flex-row')}
       >
         {isUser ? (
           <span className="rubric text-[9px]">Molba</span>

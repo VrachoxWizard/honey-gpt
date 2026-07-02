@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, Menu, Feather } from 'lucide-react';
 
@@ -6,10 +6,16 @@ import { useChat } from './hooks/useChat';
 import { Sidebar } from './components/Sidebar';
 import { SaintPortrait } from './components/SaintPortrait';
 import { Invocation } from './components/Invocation';
-import { MessageList } from './components/MessageList';
 import { TypingIndicator } from './components/TypingIndicator';
 import { ChatComposer } from './components/ChatComposer';
 import { exportChatToMarkdown, exportChatToPNG } from './utils/exportChat';
+
+const MessageList = lazy(() =>
+  import('./components/MessageList').then((m) => ({ default: m.MessageList }))
+);
+const KeyboardShortcutsModal = lazy(() =>
+  import('./components/KeyboardShortcutsModal').then((m) => ({ default: m.KeyboardShortcutsModal }))
+);
 import {
   clearShareFromLocation,
   readSharedChatFromLocation,
@@ -19,7 +25,6 @@ import { useChatStore } from './store/chatStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './components/Toast';
 import { useToast } from './hooks/useToast';
-import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { cn } from './utils/cn';
 
@@ -241,13 +246,21 @@ function AppContent() {
             {isWelcomeView ? (
               <Invocation onSuggestionSelect={handleSuggestionSelect} />
             ) : (
-              <MessageList
-                messages={displayMessages}
-                lastAssistantMessageId={lastAssistantMessageId}
-                onRegenerate={sharedView ? () => {} : regenerateLastResponse}
-                onEdit={sharedView ? () => {} : editAndResend}
-                scrollContainerRef={containerRef}
-              />
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center text-ink-soft font-incipit">
+                    Otvaram zapise...
+                  </div>
+                }
+              >
+                <MessageList
+                  messages={displayMessages}
+                  lastAssistantMessageId={lastAssistantMessageId}
+                  onRegenerate={sharedView ? () => {} : regenerateLastResponse}
+                  onEdit={sharedView ? () => {} : editAndResend}
+                  scrollContainerRef={containerRef}
+                />
+              </Suspense>
             )}
 
             {showTypingIndicator && <TypingIndicator />}
@@ -282,7 +295,9 @@ function AppContent() {
         </main>
       </div>
 
-      <KeyboardShortcutsModal isOpen={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      <Suspense fallback={null}>
+        <KeyboardShortcutsModal isOpen={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      </Suspense>
     </div>
   );
 }

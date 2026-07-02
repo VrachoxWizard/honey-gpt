@@ -38,7 +38,10 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center p-6 text-center" style={{ backgroundColor: 'var(--parchment)' }}>
+        <div
+          className="min-h-[100dvh] w-full flex flex-col items-center justify-center p-6 text-center"
+          style={{ backgroundColor: 'var(--parchment)' }}
+        >
           <div className="parchment-grain fixed inset-0 pointer-events-none z-[5]" />
           <div className="max-w-[480px] p-8 rounded-2xl codex-modal flex flex-col items-center relative z-10">
             <div className="w-16 h-16 rounded-full bg-oxblood/15 border border-oxblood/30 flex items-center justify-center text-oxblood mb-6">
@@ -48,9 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <h1 className="text-xl font-incipit text-ink-strong tracking-wide mb-2">
               Haničar se privremeno srušio
             </h1>
-            <p className="rubric text-[9px] mb-4">
-              Greška u sustavu
-            </p>
+            <p className="rubric text-[9px] mb-4">Greška u sustavu</p>
 
             <p className="text-sm text-ink-soft leading-relaxed mb-6 font-display">
               Došlo je do neočekivanog pada aplikacije. Haničar moli krunicu za oprost grijeha u

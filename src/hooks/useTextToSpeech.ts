@@ -12,13 +12,9 @@ function cleanMarkdown(text: string): string {
 
 export function useTextToSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [supported, setSupported] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      setSupported(true);
-    }
-  }, []);
+  const [supported] = useState(() => {
+    return typeof window !== 'undefined' && 'speechSynthesis' in window;
+  });
 
   const stop = useCallback(() => {
     if (!supported) return;
@@ -26,38 +22,41 @@ export function useTextToSpeech() {
     setIsSpeaking(false);
   }, [supported]);
 
-  const speak = useCallback((text: string) => {
-    if (!supported) return;
+  const speak = useCallback(
+    (text: string) => {
+      if (!supported) return;
 
-    // Stop any active speech first
-    window.speechSynthesis.cancel();
+      // Stop any active speech first
+      window.speechSynthesis.cancel();
 
-    const cleanedText = cleanMarkdown(text);
-    if (!cleanedText) return;
+      const cleanedText = cleanMarkdown(text);
+      if (!cleanedText) return;
 
-    const utterance = new SpeechSynthesisUtterance(cleanedText);
-    utterance.lang = 'hr-HR';
+      const utterance = new SpeechSynthesisUtterance(cleanedText);
+      utterance.lang = 'hr-HR';
 
-    // Find Croatian voice if available
-    const voices = window.speechSynthesis.getVoices();
-    const hrVoice = voices.find((v) => v.lang.startsWith('hr'));
-    if (hrVoice) {
-      utterance.voice = hrVoice;
-    }
-
-    utterance.onend = () => {
-      setIsSpeaking(false);
-    };
-
-    utterance.onerror = (event) => {
-      if (event.error !== 'interrupted') {
-        setIsSpeaking(false);
+      // Find Croatian voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const hrVoice = voices.find((v) => v.lang.startsWith('hr'));
+      if (hrVoice) {
+        utterance.voice = hrVoice;
       }
-    };
 
-    setIsSpeaking(true);
-    window.speechSynthesis.speak(utterance);
-  }, [supported]);
+      utterance.onend = () => {
+        setIsSpeaking(false);
+      };
+
+      utterance.onerror = (event) => {
+        if (event.error !== 'interrupted') {
+          setIsSpeaking(false);
+        }
+      };
+
+      setIsSpeaking(true);
+      window.speechSynthesis.speak(utterance);
+    },
+    [supported]
+  );
 
   // Handle page unload or unmount to stop speech
   useEffect(() => {

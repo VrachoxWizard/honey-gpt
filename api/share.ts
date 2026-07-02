@@ -47,7 +47,9 @@ export default async function handler(request: VercelRequest, response: VercelRe
   }
 
   // Construct absolute URL for the OG image
-  const host = (request.headers['x-forwarded-host'] || request.headers.host || 'honey-gpt.vercel.app') as string;
+  const host = (request.headers['x-forwarded-host'] ||
+    request.headers.host ||
+    'honey-gpt.vercel.app') as string;
   const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
   const ogImageUrl = `${protocol}://${host}/api/og?share=${encodeURIComponent(share)}`;
 

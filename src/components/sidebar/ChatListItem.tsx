@@ -27,7 +27,7 @@ export const ChatListItem = memo(function ChatListItem({
   onEditChange,
   onEditSave,
   onEditCancel,
-  onDelete
+  onDelete,
 }: ChatListItemProps) {
   const onKey = (e: KeyboardEvent, id: string) => {
     if (e.key === 'Enter') onEditSave(id);

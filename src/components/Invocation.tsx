@@ -23,8 +23,8 @@ export function Invocation({ onSuggestionSelect }: InvocationProps) {
         Mir s tobom, sine
       </h1>
       <p className="font-display italic text-lg text-ink-soft leading-relaxed mb-10 max-w-md">
-        Reci što te muči, a ja ću ti odgovoriti — uz Božju pomoć i malo satire.
-        Obred izaberi lijevo.
+        Reci što te muči, a ja ću ti odgovoriti — uz Božju pomoć i malo satire. Obred izaberi
+        lijevo.
       </p>
 
       <div className="rule-gold w-40 mb-8 animate-gold-pulse" />

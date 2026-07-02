@@ -49,7 +49,8 @@ function wrapText(text: string, maxCharsPerLine: number, maxLines: number): stri
 export default async function handler(request: VercelRequest, response: VercelResponse) {
   const share = request.query.share;
   let userText = 'Što me čeka danas u župi?';
-  let assistantText = 'Mir tebi sinu/kćeri... Tvoja pitanja su velika, a crnilo sveto. Moli krunicu i ne pitaj previše.';
+  let assistantText =
+    'Mir tebi sinu/kćeri... Tvoja pitanja su velika, a crnilo sveto. Moli krunicu i ne pitaj previše.';
 
   if (share && typeof share === 'string') {
     try {
@@ -76,11 +77,16 @@ export default async function handler(request: VercelRequest, response: VercelRe
   const assistantLines = wrapText(assistantText, 62, 4);
 
   const userSvgLines = userLines
-    .map((line, idx) => `<text x="0" y="${35 + idx * 36}" class="text-user">${escapeXml(line)}</text>`)
+    .map(
+      (line, idx) => `<text x="0" y="${35 + idx * 36}" class="text-user">${escapeXml(line)}</text>`
+    )
     .join('\n');
 
   const assistantSvgLines = assistantLines
-    .map((line, idx) => `<text x="0" y="${40 + idx * 42}" class="text-assistant">${escapeXml(line)}</text>`)
+    .map(
+      (line, idx) =>
+        `<text x="0" y="${40 + idx * 42}" class="text-assistant">${escapeXml(line)}</text>`
+    )
     .join('\n');
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">

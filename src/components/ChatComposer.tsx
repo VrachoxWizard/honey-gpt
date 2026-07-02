@@ -1,4 +1,13 @@
-import { ChangeEvent, DragEvent, FormEvent, KeyboardEvent, useRef, useState, useCallback, useEffect } from 'react';
+import {
+  ChangeEvent,
+  DragEvent,
+  FormEvent,
+  KeyboardEvent,
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+} from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Square, Paperclip, X, AlertTriangle, Mic, MicOff } from 'lucide-react';
 import { cn } from '../utils/cn';
@@ -75,7 +84,13 @@ export function ChatComposer({
   const [isDragging, setIsDragging] = useState(false);
   const { showToast } = useToast();
 
-  const { startListening, stopListening, isListening, supported: speechSupported, transcript } = useSpeechRecognition();
+  const {
+    startListening,
+    stopListening,
+    isListening,
+    supported: speechSupported,
+    transcript,
+  } = useSpeechRecognition();
 
   const draftRef = useRef(draft);
   useEffect(() => {
@@ -106,34 +121,40 @@ export function ChatComposer({
     e.target.value = '';
   };
 
-  const handleSubmit = useCallback((e?: FormEvent<HTMLFormElement>) => {
-    e?.preventDefault();
-    if (isSending) return;
-    if (!draft.trim() && !attachedImage) return;
-    onSubmit(draft.trim(), attachedImage || undefined);
-    setDraft('');
-    setAttachedImage(null);
-  }, [isSending, draft, attachedImage, onSubmit, setDraft]);
+  const handleSubmit = useCallback(
+    (e?: FormEvent<HTMLFormElement>) => {
+      e?.preventDefault();
+      if (isSending) return;
+      if (!draft.trim() && !attachedImage) return;
+      onSubmit(draft.trim(), attachedImage || undefined);
+      setDraft('');
+      setAttachedImage(null);
+    },
+    [isSending, draft, attachedImage, onSubmit, setDraft]
+  );
 
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  }, [handleSubmit]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSubmit();
+      }
+    },
+    [handleSubmit]
+  );
 
   const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isSending) setIsDragging(true);
   };
-  
+
   const handleDragLeave = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   };
-  
+
   const handleDrop = async (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -234,7 +255,9 @@ export function ChatComposer({
                 aria-label={isListening ? 'Zaustavi snimanje' : 'Govori'}
                 className={cn(
                   'shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-vellum disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 cursor-pointer',
-                  isListening ? 'text-oxblood animate-pulse bg-oxblood/10' : 'text-ink-soft hover:text-ink'
+                  isListening
+                    ? 'text-oxblood animate-pulse bg-oxblood/10'
+                    : 'text-ink-soft hover:text-ink'
                 )}
               >
                 {isListening ? <MicOff size={17} /> : <Mic size={17} />}

@@ -98,30 +98,39 @@ function SidebarBody({
     setEditTitle(title);
   }, []);
 
-  const handleEditSave = useCallback((id: string) => {
-    if (editTitle.trim()) onRenameSession(id, editTitle.trim());
-    setEditingId(null);
-  }, [editTitle, onRenameSession]);
+  const handleEditSave = useCallback(
+    (id: string) => {
+      if (editTitle.trim()) onRenameSession(id, editTitle.trim());
+      setEditingId(null);
+    },
+    [editTitle, onRenameSession]
+  );
 
   const handleEditCancel = useCallback(() => {
     setEditingId(null);
   }, []);
 
-  const handleClearAll = useCallback((e: MouseEvent) => {
-    e.stopPropagation();
-    if (window.confirm('Spaliti sve zapise? Ovo se ne može poništiti.')) {
-      onClearAllSessions();
-    }
-  }, [onClearAllSessions]);
+  const handleClearAll = useCallback(
+    (e: MouseEvent) => {
+      e.stopPropagation();
+      if (window.confirm('Spaliti sve zapise? Ovo se ne može poništiti.')) {
+        onClearAllSessions();
+      }
+    },
+    [onClearAllSessions]
+  );
 
-  const handleSelect = useCallback((id: string) => {
-    onSwitchSession(id);
-    onClose();
-  }, [onSwitchSession, onClose]);
+  const handleSelect = useCallback(
+    (id: string) => {
+      onSwitchSession(id);
+      onClose();
+    },
+    [onSwitchSession, onClose]
+  );
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <SidebarHeader 
+      <SidebarHeader
         onNewChat={onNewChat}
         onClose={onClose}
         rite={rite}
@@ -170,11 +179,9 @@ function SidebarBody({
           </div>
         </div>
 
-        {sessions.length > 3 && (
-          <ChatSearch filter={filter} onFilterChange={setFilter} />
-        )}
+        {sessions.length > 3 && <ChatSearch filter={filter} onFilterChange={setFilter} />}
 
-        <ChatList 
+        <ChatList
           sessions={sessions}
           filteredSessions={filteredSessions}
           activeSessionId={activeSessionId}

@@ -74,22 +74,22 @@ export function Dropdown<T extends string | number>({
                 onClick={() => handleSelect(option.id)}
                 className={cn(
                   'w-full text-left px-3 py-2.5 rounded-lg transition-all duration-200 flex items-center gap-3 cursor-pointer select-none group',
-                  value === option.id
-                    ? 'bg-ink/5 shadow-inner'
-                    : 'hover:bg-ink/5'
+                  value === option.id ? 'bg-ink/5 shadow-inner' : 'hover:bg-ink/5'
                 )}
               >
                 {option.icon && (
                   <div
                     className={cn(
                       'shrink-0',
-                      value === option.id ? 'text-gold-bright' : 'text-ink-faint group-hover:text-ink-soft'
+                      value === option.id
+                        ? 'text-gold-bright'
+                        : 'text-ink-faint group-hover:text-ink-soft'
                     )}
                   >
                     {option.icon}
                   </div>
                 )}
-                
+
                 <div className="flex-1 min-w-0">
                   <div
                     className={cn(

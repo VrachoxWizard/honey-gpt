@@ -18,7 +18,8 @@ export function useKeyboardShortcuts({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Prevencija okidanja prečaca dok korisnik piše u tekstualno polje
-      const isInput = e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement;
+      const isInput =
+        e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement;
 
       // Provjera platforme (Mac koristi Cmd/Meta, ostali Ctrl)
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;

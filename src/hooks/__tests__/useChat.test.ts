@@ -19,13 +19,20 @@ describe('useChat', () => {
       },
     });
     global.fetch = vi.fn();
-    
+
     // We need to re-import it so the session ID is fresh? Just call it
     const defaultSession = {
       id: 'test-session-1',
       title: 'Novi razgovor',
       createdAt: Date.now(),
-      messages: [{ id: 'welcome', role: 'assistant', content: welcomeMessage.content, timestamp: Date.now() }],
+      messages: [
+        {
+          id: 'welcome',
+          role: 'assistant',
+          content: welcomeMessage.content,
+          timestamp: Date.now(),
+        },
+      ],
     };
 
     useChatStore.setState({
@@ -34,7 +41,7 @@ describe('useChat', () => {
       activeModel: 'google/gemini-2.5-flash',
       toneMode: 'sanctus',
       isSending: false,
-      error: ''
+      error: '',
     });
   });
 
