@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { encodeSharedChat, decodeSharedChat, buildShareUrl, clearShareFromLocation } from './shareChat';
 
 describe('shareChat', () => {
