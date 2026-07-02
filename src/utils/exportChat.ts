@@ -1,4 +1,5 @@
 import type { Message } from '@shared/types';
+import { stripThinking } from './textUtils';
 
 export function exportChatToMarkdown(messages: Message[]) {
   let content = '# Razgovor s Haničar GPT-om\n\n';
@@ -6,7 +7,7 @@ export function exportChatToMarkdown(messages: Message[]) {
 
   for (const message of messages) {
     if (message.role === 'assistant') {
-      content += `**Haničar GPT:**\n\n${message.content}\n\n---\n\n`;
+      content += `**Haničar GPT:**\n\n${stripThinking(message.content)}\n\n---\n\n`;
     } else {
       content += `**Ti:**\n\n${message.content}\n\n---\n\n`;
     }

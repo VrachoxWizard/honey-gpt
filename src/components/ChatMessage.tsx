@@ -7,6 +7,7 @@ import { SaintPortrait } from './SaintPortrait';
 import type { Message } from '@shared/types';
 import { MessageContent } from './chat/MessageContent';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
+import { stripThinking } from '../utils/textUtils';
 
 function CopyButton({ text }: { text: string }) {
   const { copied, copy } = useClipboard();
@@ -102,8 +103,10 @@ export const ChatMessage = React.memo(function ChatMessage({
               'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100'
             )}
           >
-            {!isWelcome && <CopyButton text={message.content} />}
-            {!isUser && <SpeechButton text={message.content} />}
+            {!isWelcome && (
+              <CopyButton text={isUser ? message.content : stripThinking(message.content)} />
+            )}
+            {!isUser && <SpeechButton text={stripThinking(message.content)} />}
             {isUser && (
               <button
                 onClick={() => {

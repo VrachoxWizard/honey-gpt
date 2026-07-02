@@ -9,6 +9,7 @@ import { Invocation } from './components/Invocation';
 import { TypingIndicator } from './components/TypingIndicator';
 import { ChatComposer } from './components/ChatComposer';
 import { exportChatToMarkdown, exportChatToPNG } from './utils/exportChat';
+import { stripThinking } from './utils/textUtils';
 
 const MessageList = lazy(() =>
   import('./components/MessageList').then((m) => ({ default: m.MessageList }))
@@ -130,7 +131,7 @@ function AppContent() {
     if (previousIsSending.current && !isSending && autoSpeak && !sharedView) {
       const lastMsg = displayMessages[displayMessages.length - 1];
       if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content) {
-        speak(lastMsg.content);
+        speak(stripThinking(lastMsg.content));
       }
     }
     previousIsSending.current = isSending;

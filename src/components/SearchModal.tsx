@@ -4,6 +4,7 @@ import { Search, X, MessageSquare, Calendar } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { useChatStore } from '../store/chatStore';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { stripThinking } from '../utils/textUtils';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -153,8 +154,9 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
                     const messageMatch = matches?.find((m) => m.key === 'messages.content');
                     let snippet = '';
                     if (messageMatch && messageMatch.value) {
-                      snippet = messageMatch.value.substring(0, 100);
-                      if (messageMatch.value.length > 100) snippet += '...';
+                      const cleanContent = stripThinking(messageMatch.value);
+                      snippet = cleanContent.substring(0, 100);
+                      if (cleanContent.length > 100) snippet += '...';
                     }
 
                     return (
