@@ -135,10 +135,7 @@ export async function handleChatPayloadStream(
   const riskLevel = await resolvePayloadRiskLevel(parsed.latestUserText);
 
   if (riskLevel === 'block') {
-    throw httpError(
-      400,
-      'Poruka nije dopuštena. Haničar ne može odgovoriti na ovakav sadržaj.'
-    );
+    throw httpError(400, 'Poruka nije dopuštena. Haničar ne može odgovoriti na ovakav sadržaj.');
   }
 
   return streamHanicarReply(parsed.messages as ChatMessage[], onChunk, {

@@ -18,9 +18,7 @@ describe('useKeyboardShortcuts', () => {
   it('triggers search shortcut on Ctrl+K', () => {
     renderHook(() => useKeyboardShortcuts(handlers));
 
-    window.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })
-    );
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }));
 
     expect(handlers.onSearch).toHaveBeenCalledTimes(1);
   });

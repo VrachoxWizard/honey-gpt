@@ -47,9 +47,7 @@ describe('SearchModal', () => {
     const onSelectSession = vi.fn();
     const onClose = vi.fn();
 
-    render(
-      <SearchModal isOpen onClose={onClose} onSelectSession={onSelectSession} />
-    );
+    render(<SearchModal isOpen onClose={onClose} onSelectSession={onSelectSession} />);
 
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'porez' },

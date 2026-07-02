@@ -16,9 +16,7 @@ describe('logger', () => {
     const first = createRequestId();
     const second = createRequestId();
     expect(first).not.toBe(second);
-    expect(first).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    );
+    expect(first).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
   });
 
   it('writes structured JSON logs with requestId', () => {

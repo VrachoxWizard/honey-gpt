@@ -11,8 +11,10 @@ export const selectActiveSessionId = (state: ChatState): string => state.activeS
 export const selectActiveSession = (state: ChatState): ChatSession | undefined =>
   state.sessions.find((s) => s.id === state.activeSessionId);
 
+const DEFAULT_MESSAGES: Message[] = [welcomeMessage];
+
 export const selectMessages = (state: ChatState): Message[] =>
-  selectActiveSession(state)?.messages ?? [welcomeMessage];
+  selectActiveSession(state)?.messages ?? DEFAULT_MESSAGES;
 
 export const selectIsSending = (state: ChatState): boolean => state.isSending;
 export const selectError = (state: ChatState): string => state.error;

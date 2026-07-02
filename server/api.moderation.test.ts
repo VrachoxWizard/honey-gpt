@@ -24,10 +24,7 @@ describe('handleChatPayloadStream moderation', () => {
     vi.mocked(resolveRiskLevel).mockResolvedValue('block');
 
     await expect(
-      handleChatPayloadStream(
-        { messages: [{ role: 'user', content: 'test' }] },
-        vi.fn()
-      )
+      handleChatPayloadStream({ messages: [{ role: 'user', content: 'test' }] }, vi.fn())
     ).rejects.toThrow('Poruka nije dopuštena');
 
     expect(streamHanicarReply).not.toHaveBeenCalled();
@@ -37,10 +34,7 @@ describe('handleChatPayloadStream moderation', () => {
     vi.mocked(resolveRiskLevel).mockResolvedValue('safe');
     const onChunk = vi.fn();
 
-    await handleChatPayloadStream(
-      { messages: [{ role: 'user', content: 'test' }] },
-      onChunk
-    );
+    await handleChatPayloadStream({ messages: [{ role: 'user', content: 'test' }] }, onChunk);
 
     expect(streamHanicarReply).toHaveBeenCalled();
     expect(onChunk).toHaveBeenCalledWith({ token: 'ok' });

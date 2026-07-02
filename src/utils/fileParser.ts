@@ -44,7 +44,12 @@ async function parsePdf(file: File): Promise<string> {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     const strings = content.items.map((item: unknown) => {
-      if (item && typeof item === 'object' && 'str' in item && typeof (item as { str: unknown }).str === 'string') {
+      if (
+        item &&
+        typeof item === 'object' &&
+        'str' in item &&
+        typeof (item as { str: unknown }).str === 'string'
+      ) {
         return (item as { str: string }).str;
       }
       return '';

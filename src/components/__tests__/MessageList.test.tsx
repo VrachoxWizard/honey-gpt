@@ -34,9 +34,7 @@ describe('MessageList', () => {
 
   it('renders all messages when below virtualization threshold', () => {
     const messages = createMessages(5);
-    render(
-      <MessageList messages={messages} onRegenerate={vi.fn()} onEdit={vi.fn()} />
-    );
+    render(<MessageList messages={messages} onRegenerate={vi.fn()} onEdit={vi.fn()} />);
 
     expect(screen.getByTestId('message-msg-0')).toBeInTheDocument();
     expect(screen.getByTestId('message-msg-4')).toBeInTheDocument();
