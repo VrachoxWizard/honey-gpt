@@ -45,7 +45,8 @@ async function runRedisCommands(commands: RedisCommand[]): Promise<unknown[]> {
 
 export async function checkRateLimitRedis(
   ip: string,
-  maxRequests = 20
+  maxRequests = 20,
+  bucket = 'hanicar:ratelimit'
 ): Promise<{
   allowed: boolean;
   remaining: number;
@@ -55,7 +56,7 @@ export async function checkRateLimitRedis(
 
   const now = Date.now();
   const currentMinute = Math.floor(now / 60000);
-  const key = `hanicar:ratelimit:${ip}:${currentMinute}`;
+  const key = `${bucket}:${ip}:${currentMinute}`;
   const resetTime = (currentMinute + 1) * 60000;
 
   try {

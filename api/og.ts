@@ -1,8 +1,12 @@
 import { getEnv } from '../server/env.js';
+import { CONSTANTS } from '../server/constants.js';
+import { checkShareEndpointRateLimit, getClientIp } from '../server/limiter.js';
 
 type VercelRequest = {
   method?: string;
   query: Record<string, string | string[] | undefined>;
+  headers: Record<string, string | string[] | undefined>;
+  socket?: { remoteAddress?: string };
 };
 
 type VercelResponse = {
@@ -47,7 +51,20 @@ function wrapText(text: string, maxCharsPerLine: number, maxLines: number): stri
 }
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
+  const clientIp = getClientIp(request.headers, request.socket?.remoteAddress);
+  const rateLimit = await checkShareEndpointRateLimit(clientIp);
+  if (!rateLimit.allowed) {
+    response.setHeader('Retry-After', String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)));
+    response.status(429).send('Previše zahtjeva. Pokušaj ponovno za minutu.');
+    return;
+  }
+
   const share = request.query.share;
+  if (share && typeof share === 'string' && share.length > CONSTANTS.MAX_SHARE_PARAM_LENGTH) {
+    response.status(400).send('Share parametar je predugačak.');
+    return;
+  }
+
   let userText = 'Što me čeka danas u župi?';
   let assistantText =
     'Mir tebi sinu/kćeri... Tvoja pitanja su velika, a crnilo sveto. Moli krunicu i ne pitaj previše.';

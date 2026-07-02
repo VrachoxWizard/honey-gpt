@@ -1,4 +1,4 @@
-import { Feather, Search } from 'lucide-react';
+import { Feather, Search, Moon, Sun } from 'lucide-react';
 import { PersonaSeals } from '../PersonaSeals';
 import type { ToneMode } from '@lib/codex';
 
@@ -8,6 +8,8 @@ interface SidebarHeaderProps {
   onClose: () => void;
   rite: ToneMode;
   onChangeRite: (t: ToneMode) => void;
+  theme: 'day' | 'night';
+  onToggleTheme: () => void;
 }
 
 export function SidebarHeader({
@@ -16,6 +18,8 @@ export function SidebarHeader({
   onClose,
   rite,
   onChangeRite,
+  theme,
+  onToggleTheme,
 }: SidebarHeaderProps) {
   return (
     <div className="shrink-0 flex flex-col">
@@ -64,6 +68,14 @@ export function SidebarHeader({
           className="flex-none flex items-center justify-center w-[42px] py-2.5 rounded-xl bg-parchment-2 text-ink hover:text-oxblood border border-line transition-all cursor-pointer shadow-[0_3px_10px_rgba(60,12,8,0.1)] focus-visible:ring-2 focus-visible:ring-gold"
         >
           <Search size={15} />
+        </button>
+        <button
+          onClick={onToggleTheme}
+          aria-label={theme === 'day' ? 'Uključi noćnu temu' : 'Uključi dnevnu temu'}
+          title={theme === 'day' ? 'Noćna tema' : 'Dnevna tema'}
+          className="flex-none flex items-center justify-center w-[42px] py-2.5 rounded-xl bg-parchment-2 text-ink hover:text-oxblood border border-line transition-all cursor-pointer shadow-[0_3px_10px_rgba(60,12,8,0.1)] focus-visible:ring-2 focus-visible:ring-gold"
+        >
+          {theme === 'day' ? <Moon size={15} /> : <Sun size={15} />}
         </button>
       </div>
     </div>

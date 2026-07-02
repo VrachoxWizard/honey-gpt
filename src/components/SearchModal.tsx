@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MessageSquare, Calendar } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { useChatStore } from '../store/chatStore';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -13,8 +14,9 @@ interface SearchModalProps {
 export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalProps) {
   const sessions = useChatStore((s) => s.sessions);
   const [query, setQuery] = useState('');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(isOpen, dialogRef);
 
-  // Setup Fuse for searching sessions and messages
   const fuse = useMemo(() => {
     return new Fuse(sessions, {
       keys: ['title', 'messages.content'],
@@ -31,14 +33,12 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
   }, [query, fuse]);
 
   useEffect(() => {
-    // Resetiramo query samo ako je modal otvoren (pomoću timeouta kako bi izbjegli synchronous state update)
     if (isOpen) {
       const t = setTimeout(() => setQuery(''), 0);
       return () => clearTimeout(t);
     }
   }, [isOpen]);
 
-  // Handle ESC key inside the modal
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,12 +60,18 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
             onClick={onClose}
           />
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="search-modal-title"
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             className="fixed top-[10%] left-1/2 -translate-x-1/2 w-[90%] md:w-full max-w-xl bg-parchment-2 rounded-2xl shadow-2xl z-[101] overflow-hidden border border-gold/30 flex flex-col max-h-[80vh]"
           >
-            {/* Search Input Area */}
+            <h2 id="search-modal-title" className="sr-only">
+              Pretraži arhivu razgovora
+            </h2>
             <div className="relative p-4 border-b border-line/60 bg-parchment flex items-center">
               <Search size={20} className="text-ink-soft absolute left-6" />
               <input
@@ -74,17 +80,18 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
                 placeholder="Pretraži arhivu (naslove i poruke)..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                aria-label="Pretraži arhivu razgovora"
                 className="w-full bg-transparent pl-10 pr-10 py-2 outline-none font-ui text-ink text-lg placeholder-ink-faint"
               />
               <button
                 onClick={onClose}
+                aria-label="Zatvori pretragu"
                 className="absolute right-6 p-1 text-ink-soft hover:text-oxblood transition-colors cursor-pointer rounded-full hover:bg-black/5"
               >
                 <X size={20} />
               </button>
             </div>
 
-            {/* Results Area */}
             <div className="overflow-y-auto scrollbar-thin p-2 min-h-[100px]">
               {query.trim() && results.length === 0 ? (
                 <div className="text-center py-10 text-ink-soft italic text-sm">
@@ -97,7 +104,6 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
               ) : (
                 <ul className="flex flex-col gap-1">
                   {results.map(({ item, matches }) => {
-                    // Try to find the first message match snippet
                     const messageMatch = matches?.find((m) => m.key === 'messages.content');
                     let snippet = '';
                     if (messageMatch && messageMatch.value) {

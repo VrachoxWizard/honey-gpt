@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface SpeechRecognitionEvent {
   results: { transcript: string }[][];
-  error: unknown;
+  error: string;
 }
 
 interface ISpeechRecognition {
@@ -22,7 +22,25 @@ interface WindowWithSpeech extends Window {
   webkitSpeechRecognition?: new () => ISpeechRecognition;
 }
 
-export function useSpeechRecognition() {
+const SPEECH_ERROR_MESSAGES: Record<string, string> = {
+  'not-allowed': 'Pristup mikrofonu nije dopušten. Provjeri postavke preglednika.',
+  'no-speech': 'Nismo čuli ništa. Pokušaj ponovno.',
+  'audio-capture': 'Mikrofon nije dostupan.',
+  network: 'Mrežna greška pri prepoznavanju govora.',
+  aborted: 'Prepoznavanje govora je prekinuto.',
+};
+
+interface UseSpeechRecognitionOptions {
+  onError?: (message: string) => void;
+}
+
+export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) {
+  const onErrorRef = useRef(options.onError);
+
+  useEffect(() => {
+    onErrorRef.current = options.onError;
+  }, [options.onError]);
+
   const [isListening, setIsListening] = useState(false);
   const [supported] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -54,6 +72,10 @@ export function useSpeechRecognition() {
 
         recognition.onerror = (event: SpeechRecognitionEvent) => {
           console.error('Speech recognition error', event.error);
+          const message =
+            SPEECH_ERROR_MESSAGES[event.error] ??
+            'Prepoznavanje govora nije uspjelo. Pokušaj ponovno.';
+          onErrorRef.current?.(message);
           setIsListening(false);
         };
 
@@ -72,6 +94,7 @@ export function useSpeechRecognition() {
       recognitionRef.current.start();
     } catch (e) {
       console.error('Failed to start speech recognition', e);
+      onErrorRef.current?.('Nije moguće pokrenuti prepoznavanje govora.');
     }
   }, [supported]);
 

@@ -15,6 +15,15 @@ describe('Backend payload validation', () => {
     expect(data.messages[0].role).toBe('user');
   });
 
+  it('should accept concilium tone mode', () => {
+    const payload = {
+      messages: [{ role: 'user', content: 'Pozdrav' }],
+      toneMode: 'concilium',
+    };
+    const data = validateAndParsePayload(payload);
+    expect(data.toneMode).toBe('concilium');
+  });
+
   it('should fail validation on invalid toneMode values', () => {
     const payload = {
       messages: [],

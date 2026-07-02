@@ -78,7 +78,9 @@ const ChatPayloadSchema = z.object({
     )
     .max(50, 'Maksimalno 50 poruka je dopušteno po zahtjevu.'),
   model: z.string().trim().optional(),
-  toneMode: z.enum(['humilis', 'clericus', 'sanctus', 'politicus', 'dalmaticus']).optional(),
+  toneMode: z
+    .enum(['humilis', 'clericus', 'sanctus', 'politicus', 'dalmaticus', 'concilium'])
+    .optional(),
 });
 
 export function assertPayloadSize(payload: unknown): void {
@@ -131,6 +133,13 @@ export async function handleChatPayloadStream(
 ) {
   const parsed = validateAndParsePayload(payload);
   const riskLevel = await resolvePayloadRiskLevel(parsed.latestUserText);
+
+  if (riskLevel === 'block') {
+    throw httpError(
+      400,
+      'Poruka nije dopuštena. Haničar ne može odgovoriti na ovakav sadržaj.'
+    );
+  }
 
   return streamHanicarReply(parsed.messages as ChatMessage[], onChunk, {
     model: parsed.model,

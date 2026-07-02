@@ -30,4 +30,9 @@ describe('env', () => {
     resetEnvCache();
     expect(isRedisConfigured()).toBe(true);
   });
+
+  it('rejects invalid URL env values', () => {
+    process.env.CORS_ORIGIN = 'not-a-url';
+    expect(() => getEnv()).toThrow();
+  });
 });

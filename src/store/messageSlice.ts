@@ -15,22 +15,27 @@ export const createMessageSlice: StateCreator<
 > = (set, get) => {
   const updateActiveSessionMessages = (updater: (curr: Message[]) => Message[]) => {
     const { sessions, activeSessionId } = get();
-    const updatedSessions = sessions.map((s) => {
-      if (s.id === activeSessionId) {
-        const nextMsgs = updater(s.messages);
-        let nextTitle = s.title;
+    const activeIndex = sessions.findIndex((s) => s.id === activeSessionId);
+    if (activeIndex === -1) return;
 
-        if (s.title === DEFAULT_SESSION_TITLE) {
-          const firstUserMsg = nextMsgs.find((m) => m.role === 'user');
-          if (firstUserMsg) {
-            nextTitle =
-              firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '');
-          }
-        }
-        return { ...s, messages: nextMsgs, title: nextTitle };
+    const activeSession = sessions[activeIndex];
+    const nextMsgs = updater(activeSession.messages);
+    let nextTitle = activeSession.title;
+
+    if (activeSession.title === DEFAULT_SESSION_TITLE) {
+      const firstUserMsg = nextMsgs.find((m) => m.role === 'user');
+      if (firstUserMsg) {
+        nextTitle =
+          firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '');
       }
-      return s;
-    });
+    }
+
+    const updatedSessions = [...sessions];
+    updatedSessions[activeIndex] = {
+      ...activeSession,
+      messages: nextMsgs,
+      title: nextTitle,
+    };
 
     set({ sessions: updatedSessions }, false, 'updateMessages');
   };

@@ -1,9 +1,12 @@
 import { getEnv } from '../server/env.js';
+import { CONSTANTS } from '../server/constants.js';
+import { checkShareEndpointRateLimit, getClientIp } from '../server/limiter.js';
 
 type VercelRequest = {
   method?: string;
   query: Record<string, string | string[] | undefined>;
   headers: Record<string, string | string[] | undefined>;
+  socket?: { remoteAddress?: string };
 };
 
 type VercelResponse = {
@@ -13,9 +16,30 @@ type VercelResponse = {
   end(): void;
 };
 
+const MAX_SHARE_PARAM_LENGTH = CONSTANTS.MAX_SHARE_PARAM_LENGTH;
+
+export function buildShareRedirectScript(share: string): string {
+  const safeShare = JSON.stringify(share).replace(/</g, '\\u003c');
+  return `window.location.href = "/?share=" + encodeURIComponent(${safeShare});`;
+}
+
 export default async function handler(request: VercelRequest, response: VercelResponse) {
+  const clientIp = getClientIp(request.headers, request.socket?.remoteAddress);
+  const rateLimit = await checkShareEndpointRateLimit(clientIp);
+  if (!rateLimit.allowed) {
+    response.setHeader('Retry-After', String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)));
+    response.status(429).send('Previše zahtjeva. Pokušaj ponovno za minutu.');
+    return;
+  }
+
   const share = request.query.share;
   if (!share || typeof share !== 'string') {
+    response.setHeader('Location', '/');
+    response.status(307).end();
+    return;
+  }
+
+  if (share.length > MAX_SHARE_PARAM_LENGTH) {
     response.setHeader('Location', '/');
     response.status(307).end();
     return;
@@ -74,10 +98,10 @@ export default async function handler(request: VercelRequest, response: VercelRe
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <meta name="twitter:image" content="${ogImageUrl}">
     <script>
-      window.location.href = "/?share=" + encodeURIComponent("${share}");
+      ${buildShareRedirectScript(share)}
     </script>
     <noscript>
-      <meta http-equiv="refresh" content="0;url=/?share=${share}">
+      <meta http-equiv="refresh" content="0;url=/?share=${encodeURIComponent(share)}">
     </noscript>
   </head>
   <body style="font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #ece0c4; color: #362b1c; margin: 0;">

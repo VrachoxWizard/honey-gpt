@@ -1,5 +1,6 @@
 import { checkRateLimitRedis, getRedisCounter, incrementRedisCounter } from './redis.js';
 import { getEnv } from './env.js';
+import { CONSTANTS } from './constants.js';
 
 const WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS = 20;
@@ -37,23 +38,29 @@ function getDailyTokenKey(ip: string): string {
   return `hanicar:tokens:${ip}:${date}`;
 }
 
-export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
-  const redisRes = await checkRateLimitRedis(ip, MAX_REQUESTS);
+export async function checkRateLimit(
+  ip: string,
+  options: { maxRequests?: number; bucket?: string } = {}
+): Promise<RateLimitResult> {
+  const maxRequests = options.maxRequests ?? MAX_REQUESTS;
+  const bucket = options.bucket ?? 'hanicar:ratelimit';
+  const redisRes = await checkRateLimitRedis(ip, maxRequests, bucket);
   if (redisRes !== null) {
     return redisRes;
   }
 
+  const cacheKey = `${bucket}:${ip}`;
   const now = Date.now();
-  let record = ipCache.get(ip);
+  let record = ipCache.get(cacheKey);
 
   if (!record) {
     record = { timestamps: [] };
-    ipCache.set(ip, record);
+    ipCache.set(cacheKey, record);
   }
 
   record.timestamps = record.timestamps.filter((ts) => now - ts < WINDOW_MS);
 
-  if (record.timestamps.length >= MAX_REQUESTS) {
+  if (record.timestamps.length >= maxRequests) {
     const oldestTs = record.timestamps[0];
     const resetTime = oldestTs + WINDOW_MS;
     return {
@@ -66,9 +73,16 @@ export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
   record.timestamps.push(now);
   return {
     allowed: true,
-    remaining: MAX_REQUESTS - record.timestamps.length,
+    remaining: maxRequests - record.timestamps.length,
     resetTime: now + WINDOW_MS,
   };
+}
+
+export async function checkShareEndpointRateLimit(ip: string): Promise<RateLimitResult> {
+  return checkRateLimit(ip, {
+    maxRequests: CONSTANTS.SHARE_OG_RATE_LIMIT_PER_MIN,
+    bucket: 'hanicar:share-ratelimit',
+  });
 }
 
 export async function checkTokenBudget(

@@ -132,6 +132,7 @@ export const ChatMessage = React.memo(function ChatMessage({
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
+            aria-label="Uredi molbu"
             className="w-full min-h-[90px] bg-vellum text-ink p-3 rounded-xl border border-gold/40 focus:outline-none focus:border-gold text-[15px] font-display resize-y"
             autoFocus
           />

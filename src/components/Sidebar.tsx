@@ -1,8 +1,9 @@
-import { useState, useMemo, useCallback, MouseEvent } from 'react';
+import { useState, useMemo, useCallback, MouseEvent, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Image, Link2, Trash2, X } from 'lucide-react';
 import type { ChatSession } from '@shared/types';
 import type { ToneMode } from '../lib/codex';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { SidebarHeader } from './sidebar/SidebarHeader';
 import { ChatSearch } from './sidebar/ChatSearch';
 import { ChatList } from './sidebar/ChatList';
@@ -28,6 +29,9 @@ interface SidebarProps {
 }
 
 export function Sidebar(props: SidebarProps) {
+  const mobileSidebarRef = useRef<HTMLElement>(null);
+  useFocusTrap(props.isOpen, mobileSidebarRef);
+
   return (
     <>
       {/* Desktop: persistent codex spine */}
@@ -47,6 +51,10 @@ export function Sidebar(props: SidebarProps) {
               className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
             />
             <motion.aside
+              ref={mobileSidebarRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Bočna traka razgovora"
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
@@ -73,6 +81,8 @@ function SidebarBody({
   onClose,
   rite,
   onChangeRite,
+  theme,
+  onToggleTheme,
   onNewChat,
   onSearch,
   onExportChat,
@@ -138,6 +148,8 @@ function SidebarBody({
         onClose={onClose}
         rite={rite}
         onChangeRite={onChangeRite}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
       />
 
       {/* History */}

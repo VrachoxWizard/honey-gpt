@@ -1,5 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { RefreshCcw, ShieldAlert } from 'lucide-react';
+import { del } from 'idb-keyval';
 import { Sentry } from '@lib/monitoring';
 
 interface Props {
@@ -29,9 +30,13 @@ export class ErrorBoundary extends Component<Props, State> {
     });
   }
 
-  private handleReset = () => {
-    localStorage.removeItem('hanicar_gpt_sessions_v2');
-    localStorage.removeItem('hanicar_gpt_active_session_id_v2');
+  private handleReset = async () => {
+    try {
+      await del('hanicar-chat-storage');
+    } catch (error) {
+      console.error('Neuspjelo brisanje IndexedDB pohrane:', error);
+    }
+    localStorage.removeItem('hanicar_gpt_theme');
     window.location.reload();
   };
 

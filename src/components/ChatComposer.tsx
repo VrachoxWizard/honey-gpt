@@ -110,7 +110,9 @@ export function ChatComposer({
     isListening,
     supported: speechSupported,
     transcript,
-  } = useSpeechRecognition();
+  } = useSpeechRecognition({
+    onError: (message) => showToast(message, 'error'),
+  });
 
   const draftRef = useRef(draft);
   useEffect(() => {
@@ -221,6 +223,8 @@ export function ChatComposer({
       } finally {
         setIsParsingDocument(false);
       }
+    } else {
+      showToast('Nepodržan format datoteke.', 'error');
     }
   };
 
@@ -238,6 +242,7 @@ export function ChatComposer({
             >
               <button
                 onClick={onAbort}
+                aria-label="Prekini generiranje odgovora"
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-parchment-2 border border-line shadow-md font-ui text-xs font-semibold text-ink-soft hover:text-ink transition-all cursor-pointer"
               >
                 <Square fill="currentColor" size={9} className="text-oxblood" />
@@ -248,7 +253,10 @@ export function ChatComposer({
         </AnimatePresence>
 
         {error && (
-          <div className="mb-3 p-3 rounded-xl bg-oxblood/10 border border-oxblood/25 text-oxblood text-sm flex items-start gap-2.5 font-display">
+          <div
+            role="alert"
+            className="mb-3 p-3 rounded-xl bg-oxblood/10 border border-oxblood/25 text-oxblood text-sm flex items-start gap-2.5 font-display"
+          >
             <AlertTriangle size={16} className="mt-0.5 shrink-0" />
             <span className="leading-snug">{error}</span>
           </div>
