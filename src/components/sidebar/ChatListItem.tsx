@@ -82,8 +82,8 @@ export const ChatListItem = memo(function ChatListItem({
       className={cn(
         'group relative flex items-center justify-between p-2 mb-1 rounded-xl border',
         isActive
-          ? 'bg-gold/15 border-gold/30 shadow-[inset_0_1px_4px_rgba(255,215,0,0.1)]'
-          : 'bg-transparent border-transparent hover:bg-vellum/50'
+          ? 'bg-gold/10 border-gold/30 border-l-2 border-l-gold shadow-[inset_0_1px_4px_rgba(217,164,65,0.08)]'
+          : 'bg-transparent border-transparent border-l-2 border-l-transparent hover:bg-parchment-3/50 hover:border-l-gold/30'
       )}
     >
       <button

@@ -25,7 +25,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="p-1 text-ink-faint hover:text-ink rounded-md hover:bg-vellum/60 transition-colors select-none cursor-pointer"
+      className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center text-ink-faint hover:text-gold-bright rounded-md hover:bg-parchment-3/60 transition-colors select-none cursor-pointer"
       title="Prepiši"
       aria-label="Prepiši tekst"
     >
@@ -42,7 +42,7 @@ function SpeechButton({ text }: { text: string }) {
   return (
     <button
       onClick={() => (isSpeaking ? stop() : speak(text))}
-      className="p-1 text-ink-faint hover:text-ink rounded-md hover:bg-vellum/60 transition-colors select-none cursor-pointer"
+      className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center text-ink-faint hover:text-gold-bright rounded-md hover:bg-parchment-3/60 transition-colors select-none cursor-pointer"
       title={isSpeaking ? 'Zaustavi čitanje' : 'Pročitaj naglas'}
       aria-label={isSpeaking ? 'Zaustavi čitanje' : 'Pročitaj naglas'}
     >
@@ -81,26 +81,26 @@ export const ChatMessage = React.memo(function ChatMessage({
     <article
       role="listitem"
       aria-label={isUser ? 'Korisnička poruka' : 'Odgovor Haničara'}
-      className="group w-full max-w-[720px] mx-auto animate-ink-in"
+      className="group w-full max-w-[720px] mx-auto animate-ink-in animate-edge-glow"
     >
       <div
-        className={cn('flex items-center gap-2.5 mb-2', isUser ? 'flex-row-reverse' : 'flex-row')}
+        className={cn('flex items-center gap-2.5 mb-2.5', isUser ? 'flex-row-reverse' : 'flex-row')}
       >
         {isUser ? (
-          <span className="rubric text-[9px]">Molba</span>
+          <span className="rubric text-[10px]">Molba</span>
         ) : (
-          <span className="rubric text-[9px] flex items-center gap-2">
+          <span className="rubric text-[10px] flex items-center gap-2">
             <SaintPortrait size={24} />
             Haničar
           </span>
         )}
-        {time && <span className="font-display italic text-[11px] text-ink-faint">{time}</span>}
+        {time && <span className="font-display italic text-[12px] text-ink-faint">{time}</span>}
 
         {!isEditing && (
           <div
             className={cn(
-              'flex items-center gap-0.5 transition-opacity duration-150',
-              'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100'
+              'action-pill flex items-center gap-0.5 transition-opacity duration-150',
+              'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100'
             )}
           >
             {!isWelcome && (
@@ -113,7 +113,7 @@ export const ChatMessage = React.memo(function ChatMessage({
                   setIsEditing(true);
                   setEditContent(message.content);
                 }}
-                className="p-1 text-ink-faint hover:text-ink rounded-md hover:bg-vellum/60 transition-colors cursor-pointer"
+                className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center text-ink-faint hover:text-gold-bright rounded-md hover:bg-parchment-3/60 transition-colors cursor-pointer"
                 title="Ispravi molbu"
                 aria-label="Ispravi molbu"
               >
@@ -123,7 +123,7 @@ export const ChatMessage = React.memo(function ChatMessage({
             {!isUser && isLastAssistant && onRegenerate && (
               <button
                 onClick={onRegenerate}
-                className="p-1 text-ink-faint hover:text-ink rounded-md hover:bg-vellum/60 transition-colors cursor-pointer"
+                className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center text-ink-faint hover:text-gold-bright rounded-md hover:bg-parchment-3/60 transition-colors cursor-pointer"
                 title="Zatraži novi odgovor"
                 aria-label="Zatraži novi odgovor"
               >
@@ -167,7 +167,7 @@ export const ChatMessage = React.memo(function ChatMessage({
         </div>
       ) : isUser ? (
         <div className="flex justify-end">
-          <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-vellum/60 border border-line px-5 py-3.5 shadow-sm">
+          <div className="bubble-user max-w-[88%] rounded-2xl rounded-tr-sm px-5 py-3.5">
             {message.image && (
               <div className="mb-3 rounded-lg overflow-hidden border border-line max-w-[260px]">
                 <img
@@ -177,14 +177,14 @@ export const ChatMessage = React.memo(function ChatMessage({
                 />
               </div>
             )}
-            <div className="font-display text-[16px] leading-relaxed text-ink whitespace-pre-wrap">
+            <div className="font-display text-[16px] leading-[1.7] text-ink whitespace-pre-wrap">
               {message.content}
             </div>
           </div>
         </div>
       ) : (
         <div className="flex justify-start">
-          <div className="max-w-[90%] rounded-2xl rounded-tl-sm bg-parchment-2 border border-gold/30 px-5 py-3.5 shadow-[0_2px_10px_rgba(60,20,0,0.15)] dropcap prose prose-sm md:prose-base prose-headings:font-ui prose-headings:font-bold prose-headings:tracking-wider prose-headings:text-ink prose-p:font-display prose-p:text-ink prose-a:text-oxblood prose-a:underline hover:prose-a:text-oxblood-deep prose-strong:font-bold prose-strong:text-ink prose-code:text-oxblood prose-pre:bg-transparent prose-pre:p-0 prose-pre:m-0">
+          <div className="bubble-assistant folio-leaf max-w-[92%] rounded-2xl rounded-tl-sm px-5 py-3.5 dropcap prose prose-sm md:prose-base prose-codex prose-headings:font-ui prose-headings:font-bold prose-headings:tracking-wider prose-headings:text-ink prose-p:font-display prose-p:text-ink prose-p:leading-[1.7] prose-a:text-gold-bright prose-a:underline hover:prose-a:text-gold prose-strong:font-bold prose-strong:text-ink prose-code:text-gold-bright prose-pre:bg-transparent prose-pre:p-0 prose-pre:m-0">
             <MessageContent content={message.content} />
           </div>
         </div>

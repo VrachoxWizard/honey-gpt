@@ -41,7 +41,7 @@ export function ConfirmDialog({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[120] codex-backdrop"
             onClick={onCancel}
             aria-hidden
           />
@@ -54,7 +54,7 @@ export function ConfirmDialog({
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
-            className="fixed left-1/2 top-1/2 z-[121] w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-parchment-2 p-5 shadow-[0_20px_60px_rgba(40,20,8,0.35)]"
+            className="fixed left-1/2 top-1/2 z-[121] w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl codex-modal p-5"
           >
             <h2 id="confirm-dialog-title" className="font-incipit text-lg text-ink-strong mb-2">
               {title}
@@ -73,7 +73,7 @@ export function ConfirmDialog({
               <button
                 type="button"
                 onClick={onConfirm}
-                className="px-4 py-2 rounded-lg bg-oxblood text-parchment hover:bg-oxblood/90 transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-lg btn-ember transition-colors cursor-pointer"
               >
                 {confirmLabel}
               </button>

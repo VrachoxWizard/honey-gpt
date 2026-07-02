@@ -34,8 +34,8 @@ export const CodeBlock = memo(function CodeBlock({
 
   if (!inline && match) {
     return (
-      <div className="rounded-lg overflow-hidden my-4 border border-line not-prose">
-        <div className="bg-parchment-3 px-4 py-2 text-xs font-ui font-semibold text-ink-soft uppercase tracking-widest border-b border-line flex justify-between items-center select-none">
+      <div className="rounded-lg overflow-hidden my-4 border border-gold/25 not-prose shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
+        <div className="bg-parchment-3 px-4 py-2 text-xs font-ui font-semibold text-ink-soft uppercase tracking-widest border-b border-gold/20 flex justify-between items-center select-none">
           <span>{match[1]}</span>
           <CopyBlockButton text={codeString} />
         </div>
@@ -47,7 +47,7 @@ export const CodeBlock = memo(function CodeBlock({
   return (
     <code
       {...props}
-      className={`${className || ''} bg-parchment-3/70 text-oxblood px-1.5 py-0.5 rounded text-[0.9em] font-mono`}
+      className={`${className || ''} bg-parchment-3/80 text-gold-bright px-1.5 py-0.5 rounded text-[0.9em] font-mono border border-gold/15`}
     >
       {children}
     </code>

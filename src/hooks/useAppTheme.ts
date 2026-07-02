@@ -6,13 +6,13 @@ export const THEME_STORAGE_KEY = 'hanicar_codex_theme';
 
 export function useAppTheme() {
   const [theme, setTheme] = useState<AppTheme>(() => {
-    if (typeof localStorage === 'undefined') return 'day';
+    if (typeof localStorage === 'undefined') return 'night';
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    return stored === 'night' ? 'night' : 'day';
+    return stored === 'day' ? 'day' : 'night';
   });
 
   useEffect(() => {
-    document.documentElement.classList.toggle('night', theme === 'night');
+    document.documentElement.classList.toggle('day', theme === 'day');
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 

@@ -187,8 +187,8 @@ export function ChatComposer({
   };
 
   return (
-    <div className="relative px-4 md:px-10 pt-4 pb-3 bg-gradient-to-t from-parchment via-parchment/95 to-transparent">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
+    <div className="relative px-4 md:px-10 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-parchment via-parchment/95 to-transparent">
+      <div className="shimmer-divider absolute inset-x-0 top-0" />
       <div className="max-w-[720px] mx-auto relative">
         <AnimatePresence>
           {isSending && (
@@ -201,7 +201,7 @@ export function ChatComposer({
               <button
                 onClick={onAbort}
                 aria-label="Prekini generiranje odgovora"
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-parchment-2 border border-line shadow-md font-ui text-xs font-semibold text-ink-soft hover:text-ink transition-all cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-parchment-2/90 border border-gold/30 shadow-md font-ui text-xs font-semibold text-ink-soft hover:text-ink transition-all cursor-pointer backdrop-blur-sm"
               >
                 <Square fill="currentColor" size={9} className="text-oxblood" />
                 Spusti pero
@@ -213,7 +213,7 @@ export function ChatComposer({
         {error && (
           <div
             role="alert"
-            className="mb-3 p-3 rounded-xl bg-oxblood/10 border border-oxblood/25 text-oxblood text-sm flex items-start gap-2.5 font-display"
+            className="mb-3 p-3 rounded-xl bg-parchment-2 border border-oxblood/30 border-l-4 border-l-oxblood text-oxblood text-sm flex items-start gap-2.5 font-display"
           >
             <AlertTriangle size={16} className="mt-0.5 shrink-0" />
             <span className="leading-snug">{error}</span>
@@ -226,7 +226,7 @@ export function ChatComposer({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            'relative flex flex-col bg-vellum rounded-2xl border border-line shadow-[0_4px_18px_rgba(60,30,10,0.10)] p-1.5 focus-within:border-gold/55 transition-colors',
+            'composer-tray relative flex flex-col rounded-2xl p-1.5 transition-colors',
             isDragging && 'border-gold/70 ring-2 ring-gold/25'
           )}
         >
@@ -289,7 +289,7 @@ export function ChatComposer({
               onClick={() => fileInputRef.current?.click()}
               disabled={isSending || isParsingDocument || !isOnline}
               aria-label="Priloži datoteku"
-              className="relative shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-ink-soft hover:text-ink hover:bg-vellum disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 cursor-pointer"
+              className="relative shrink-0 w-10 h-10 flex items-center justify-center rounded-lg text-ink-soft hover:text-gold-bright hover:bg-parchment-3/60 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 cursor-pointer"
             >
               {isParsingDocument ? (
                 <Loader2 size={17} className="animate-spin text-gold" />
@@ -305,10 +305,10 @@ export function ChatComposer({
                 disabled={isSending || !isOnline}
                 aria-label={isListening ? 'Zaustavi snimanje' : 'Govori'}
                 className={cn(
-                  'shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-vellum disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 cursor-pointer',
+                  'shrink-0 w-10 h-10 flex items-center justify-center rounded-lg hover:bg-parchment-3/60 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 cursor-pointer',
                   isListening
                     ? 'text-oxblood animate-pulse bg-oxblood/10'
-                    : 'text-ink-soft hover:text-ink'
+                    : 'text-ink-soft hover:text-gold-bright'
                 )}
               >
                 {isListening ? <MicOff size={17} /> : <Mic size={17} />}
@@ -320,8 +320,8 @@ export function ChatComposer({
               onClick={() => setAutoSpeak(!autoSpeak)}
               aria-label={autoSpeak ? 'Isključi čitanje naglas' : 'Uključi čitanje naglas'}
               className={cn(
-                'shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-vellum transition-colors mb-0.5 cursor-pointer',
-                autoSpeak ? 'text-gold' : 'text-ink-soft hover:text-ink'
+                'shrink-0 w-10 h-10 flex items-center justify-center rounded-lg hover:bg-parchment-3/60 transition-colors mb-0.5 cursor-pointer',
+                autoSpeak ? 'text-gold-bright' : 'text-ink-soft hover:text-gold-bright'
               )}
             >
               {autoSpeak ? <Volume2 size={17} /> : <VolumeX size={17} />}

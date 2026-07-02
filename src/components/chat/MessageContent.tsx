@@ -20,7 +20,7 @@ export const MessageContent = memo(function MessageContent({ content }: MessageC
   const cleanedContent = useMemo(() => stripThinking(content), [content]);
 
   return (
-    <div className="font-display text-[16px] leading-relaxed text-ink whitespace-pre-wrap">
+    <div className="font-display text-[16px] leading-[1.7] text-ink whitespace-pre-wrap">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
         {cleanedContent}
       </ReactMarkdown>

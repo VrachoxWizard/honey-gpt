@@ -147,7 +147,7 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-oxblood-deep/60 backdrop-blur-sm z-[100]"
+            className="fixed inset-0 codex-backdrop z-[100]"
             onClick={onClose}
           />
           <motion.div
@@ -158,12 +158,12 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            className="fixed top-[10%] left-1/2 -translate-x-1/2 w-[90%] md:w-full max-w-xl bg-parchment-2 rounded-2xl shadow-2xl z-[101] overflow-hidden border border-gold/30 flex flex-col max-h-[80vh]"
+            className="fixed top-[10%] left-1/2 -translate-x-1/2 w-[90%] md:w-full max-w-xl codex-modal rounded-2xl z-[101] overflow-hidden flex flex-col max-h-[80vh]"
           >
             <h2 id="search-modal-title" className="sr-only">
               Pretraži arhivu razgovora
             </h2>
-            <div className="relative p-4 border-b border-line/60 bg-parchment flex items-center">
+            <div className="relative p-4 border-b border-gold/20 bg-parchment flex items-center">
               <Search size={20} className="text-ink-soft absolute left-6" />
               <input
                 type="text"

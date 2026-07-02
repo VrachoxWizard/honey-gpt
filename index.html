@@ -19,7 +19,16 @@
       name="description"
       content="Haničar GPT je satirični AI chatbot na hrvatskom jeziku, pogonjen OpenRouter API-jem. Prvi moralni i humoristični AI asistent pod Božjim okriljem."
     />
-    <meta name="theme-color" content="#e9dcbf" />
+    <meta name="theme-color" content="#0f0a05" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#e5d8bc" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f0a05" />
+    <script>
+      (function () {
+        if (localStorage.getItem('hanicar_codex_theme') === 'day') {
+          document.documentElement.classList.add('day');
+        }
+      })();
+    </script>
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />

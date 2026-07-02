@@ -38,8 +38,8 @@ export default defineConfig(({ mode }) => {
           description:
             'Haničar — satirični hrvatski AI ispovjednik. Povijest razgovora ostaje dostupna i offline.',
           lang: 'hr',
-          theme_color: '#e9dcbf',
-          background_color: '#e9dcbf',
+          theme_color: '#0f0a05',
+          background_color: '#0f0a05',
           display: 'standalone',
           orientation: 'portrait',
           icons: [

@@ -54,7 +54,7 @@ export function ExportMenu({ actions, className }: ExportMenuProps) {
         aria-expanded={isOpen}
         aria-label="Izvezi ili podijeli razgovor"
         title="Izvezi / podijeli razgovor"
-        className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-ink-faint hover:text-ink hover:bg-vellum/60 transition-colors cursor-pointer font-ui text-[10px] uppercase tracking-wider"
+        className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-ink-soft hover:text-gold-bright hover:bg-parchment-3/60 transition-colors cursor-pointer font-ui text-[10px] uppercase tracking-wider"
       >
         <FolderOutput size={13} />
         Izvezi

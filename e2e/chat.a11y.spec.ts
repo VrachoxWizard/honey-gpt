@@ -4,7 +4,7 @@ import AxeBuilder from '@axe-core/playwright';
 test('welcome page passes basic accessibility scan', async ({ page }) => {
   await page.goto('/');
   const results = await new AxeBuilder({ page })
-    .disableRules(['color-contrast', 'page-has-heading-one'])
+    .disableRules(['page-has-heading-one'])
     .analyze();
   expect(results.violations).toEqual([]);
 });
@@ -15,7 +15,7 @@ test('welcome page renders correctly with prefers-reduced-motion enabled', async
   await expect(page.getByRole('heading', { name: /Mir s tobom, sine/i })).toBeVisible();
 
   const results = await new AxeBuilder({ page })
-    .disableRules(['color-contrast', 'page-has-heading-one'])
+    .disableRules(['page-has-heading-one'])
     .analyze();
   expect(results.violations).toEqual([]);
 });
@@ -40,7 +40,7 @@ test('chat view after mocked response passes basic accessibility scan', async ({
   await expect(page.getByText('Mir s tobom.')).toBeVisible();
 
   const results = await new AxeBuilder({ page })
-    .disableRules(['color-contrast', 'page-has-heading-one'])
+    .disableRules(['page-has-heading-one'])
     .analyze();
   expect(results.violations).toEqual([]);
 });

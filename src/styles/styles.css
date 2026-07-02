@@ -2,41 +2,41 @@
 
 /*
   ────────────────────────────────────────────────────────────────────────
-  HANIČAR CODEX — an illuminated-manuscript design system.
+  HANIČAR CODEX — Zlatna Ponoć design system.
   Two rites of light:
-    • DAY   (default)  → parchment & ink, gold leaf, oxblood rubrics
-    • NIGHT (.night)   → candlelit leather codex, glowing gold
+    • NIGHT (default)  → candlelit chapel, honey gold, deep warm black
+    • DAY   (.day)     → parchment & ink, gold leaf, oxblood rubrics
   Legacy Tailwind `zinc-*` / `crimson-*` tokens are remapped onto these
   variables so older components inherit the aesthetic for free.
   ────────────────────────────────────────────────────────────────────────
 */
 
 :root {
-  /* Surfaces (parchment) */
-  --parchment: #ece0c4;
-  --parchment-2: #e3d4b2;
-  --parchment-3: #d8c69f;
-  --vellum: #f5eed9;
+  /* Surfaces — deep warm black, like a chapel at night */
+  --parchment: #0f0a05;
+  --parchment-2: #191108;
+  --parchment-3: #241a0e;
+  --vellum: #1d1409;
 
-  /* Ink */
-  --ink: #362b1c;
-  --ink-strong: #211910;
-  --ink-soft: #6d5d45;
-  --ink-faint: #93816411;
-  --ink-faint-solid: #8a7860;
+  /* Ink — warm candlelit cream */
+  --ink: #ecdfc0;
+  --ink-strong: #f8f0da;
+  --ink-soft: #b39d75;
+  --ink-faint: #ffffff10;
+  --ink-faint-solid: #9a8868;
 
-  /* Gilt & blood */
-  --gold: #977c2f;
-  --gold-bright: #b58f30;
-  --oxblood: #7c1c14;
-  --oxblood-deep: #56110b;
-  --rubric: #9d2c1b;
+  /* Honey & gold — the light of the scene */
+  --gold: #d9a441;
+  --gold-bright: #f0c063;
+  --oxblood: #a63a26;
+  --oxblood-deep: #6b2215;
+  --rubric: #e08050;
 
-  /* Lines */
-  --line: rgba(54, 43, 28, 0.16);
-  --line-strong: rgba(54, 43, 28, 0.3);
-  --glass: rgba(245, 238, 217, 0.72);
-  --scroll-thumb: rgba(151, 124, 47, 0.45);
+  /* Lines & glass */
+  --line: rgba(231, 216, 184, 0.12);
+  --line-strong: rgba(231, 216, 184, 0.24);
+  --glass: rgba(15, 10, 5, 0.82);
+  --scroll-thumb: rgba(217, 164, 65, 0.35);
 
   /* Type */
   --font-body-stack: 'EB Garamond', Georgia, 'Times New Roman', serif;
@@ -45,32 +45,31 @@
   --font-ui-stack: 'Outfit', system-ui, -apple-system, sans-serif;
 }
 
-html.night {
-  --parchment: #171009;
-  --parchment-2: #201810;
-  --parchment-3: #2b2116;
-  --vellum: #241b11;
+html.day {
+  --parchment: #e5d8bc;
+  --parchment-2: #ddd0b0;
+  --parchment-3: #d0c09a;
+  --vellum: #f0e8d0;
 
-  --ink: #e8d9b6;
-  --ink-strong: #f6ecd2;
-  --ink-soft: #ab9670;
-  --ink-faint: #ffffff10;
-  --ink-faint-solid: #7d6b4c;
+  --ink: #2a2115;
+  --ink-strong: #1a140c;
+  --ink-soft: #5c4d38;
+  --ink-faint: #93816411;
+  --ink-faint-solid: #7a6a52;
 
-  --gold: #caa63f;
-  --gold-bright: #e6c65e;
-  --oxblood: #c0492f;
-  --oxblood-deep: #7c1c14;
-  --rubric: #de6c46;
+  --gold: #8a7028;
+  --gold-bright: #a68830;
+  --oxblood: #7c1c14;
+  --oxblood-deep: #56110b;
+  --rubric: #9d2c1b;
 
-  --line: rgba(231, 216, 184, 0.12);
-  --line-strong: rgba(231, 216, 184, 0.24);
-  --glass: rgba(32, 24, 16, 0.72);
-  --scroll-thumb: rgba(202, 166, 63, 0.4);
+  --line: rgba(42, 33, 21, 0.18);
+  --line-strong: rgba(42, 33, 21, 0.32);
+  --glass: rgba(240, 232, 208, 0.78);
+  --scroll-thumb: rgba(138, 112, 40, 0.45);
 }
 
 @theme {
-  /* New semantic aliases → use these in new components */
   --color-parchment: var(--parchment);
   --color-parchment-2: var(--parchment-2);
   --color-parchment-3: var(--parchment-3);
@@ -85,10 +84,8 @@ html.night {
   --color-oxblood-deep: var(--oxblood-deep);
   --color-rubric: var(--rubric);
   --color-line: var(--line);
-  /* Fixed warm cream for text on oxblood/wax surfaces — never flips with theme */
   --color-seal: #f4e7c8;
 
-  /* Legacy remap so untouched components inherit the world */
   --color-zinc-950: var(--parchment);
   --color-zinc-900: var(--parchment-2);
   --color-zinc-800: var(--parchment-3);
@@ -120,43 +117,79 @@ html.night {
     @apply h-full antialiased text-ink;
     margin: 0;
     font-family: var(--font-body-stack);
-    font-size: 17px;
+    font-size: 17.5px;
     background-color: var(--parchment);
     background-image:
       radial-gradient(
-        120% 90% at 50% -20%,
-        color-mix(in srgb, var(--gold) 10%, transparent),
-        transparent 60%
+        120% 80% at 50% -15%,
+        color-mix(in srgb, var(--gold) 14%, transparent),
+        transparent 55%
       ),
-      radial-gradient(140% 120% at 50% 120%, rgba(0, 0, 0, 0.14), transparent 60%);
+      radial-gradient(ellipse 100% 80% at 50% 100%, rgba(0, 0, 0, 0.55), transparent 70%),
+      radial-gradient(ellipse 80% 60% at 0% 50%, rgba(0, 0, 0, 0.35), transparent 60%),
+      radial-gradient(ellipse 80% 60% at 100% 50%, rgba(0, 0, 0, 0.35), transparent 60%);
     background-attachment: fixed;
     transition:
       background-color 0.5s ease,
       color 0.5s ease;
   }
 
+  html.day,
+  html.day body {
+    background-image:
+      radial-gradient(
+        120% 90% at 50% -20%,
+        color-mix(in srgb, var(--gold) 10%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(140% 120% at 50% 120%, rgba(0, 0, 0, 0.12), transparent 60%);
+  }
+
+  @media (max-width: 768px) {
+    html,
+    body {
+      font-size: 16.5px;
+    }
+  }
+
   ::selection {
-    background: color-mix(in srgb, var(--gold) 38%, transparent);
+    background: color-mix(in srgb, var(--gold) 35%, transparent);
     color: var(--ink-strong);
   }
 
-  /* Consistent focus ring for keyboard users across ALL interactive elements */
   :where(button, a, input, textarea, select, summary, [role='button'], [tabindex]):focus-visible {
     outline: 2px solid var(--gold-bright) !important;
     outline-offset: 2px !important;
   }
 }
 
-/* ── Parchment fibre grain (applied via overlay div) ───────────────────── */
+/* ── Parchment fibre grain ─────────────────────────────────────────────── */
 .parchment-grain {
   background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   background-repeat: repeat;
+  mix-blend-mode: overlay;
+  opacity: 0.04;
+}
+html.day .parchment-grain {
   mix-blend-mode: multiply;
   opacity: 0.06;
 }
-html.night .parchment-grain {
-  mix-blend-mode: overlay;
-  opacity: 0.05;
+
+/* ── Candle glow focal utility ─────────────────────────────────────────── */
+.candle-glow {
+  position: relative;
+}
+.candle-glow::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(
+    circle at 50% 40%,
+    color-mix(in srgb, var(--gold) 12%, transparent),
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* ── Typographic ornaments ─────────────────────────────────────────────── */
@@ -170,16 +203,25 @@ html.night .parchment-grain {
   font-family: var(--font-ui-stack);
 }
 
-/* Small-caps red-ink label used for marginalia / section headings */
 .rubric {
   font-family: var(--font-ui-stack);
   text-transform: uppercase;
   letter-spacing: 0.28em;
   font-weight: 600;
+  font-size: 10px;
   color: var(--rubric);
 }
 
-/* Illuminated drop capital on the first paragraph of a scribed answer */
+.text-glow-gold {
+  text-shadow:
+    0 0 20px color-mix(in srgb, var(--gold) 40%, transparent),
+    0 0 40px color-mix(in srgb, var(--gold) 15%, transparent);
+}
+html.day .text-glow-gold {
+  text-shadow: none;
+}
+
+/* Illuminated drop capital */
 .dropcap > p:first-of-type::first-letter {
   font-family: var(--font-incipit-stack);
   font-weight: 700;
@@ -187,14 +229,14 @@ html.night .parchment-grain {
   line-height: 0.72;
   float: left;
   margin: 0.06em 0.1em 0 0;
+  color: var(--gold-bright);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--gold) 50%, transparent);
+}
+html.day .dropcap > p:first-of-type::first-letter {
   color: var(--oxblood);
   text-shadow: 0 1px 0 color-mix(in srgb, var(--gold) 40%, transparent);
 }
-html.night .dropcap > p:first-of-type::first-letter {
-  text-shadow: 0 0 14px color-mix(in srgb, var(--gold) 45%, transparent);
-}
 
-/* Gilt divider with a central lozenge (use <div class="rule-gold" />) */
 .rule-gold {
   position: relative;
   height: 1px;
@@ -213,52 +255,251 @@ html.night .dropcap > p:first-of-type::first-letter {
   box-shadow: 0 0 0 3px var(--parchment);
 }
 
-/* Wax-seal button (send / affirm) */
+/* Shimmer hairline divider */
+.shimmer-divider {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold) 70%, transparent);
+  opacity: 0.35;
+  overflow: hidden;
+}
+.shimmer-divider::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--gold-bright) 60%, transparent),
+    transparent
+  );
+  animation: shimmer 4s ease-in-out infinite;
+}
+
+/* Wax-seal button */
 .wax-seal {
   background: radial-gradient(
     circle at 34% 28%,
-    #a8402c,
+    #c04a35,
     var(--oxblood) 46%,
     var(--oxblood-deep) 100%
   );
   color: #f2e2bf;
   box-shadow:
-    inset 0 2px 3px rgba(255, 255, 255, 0.28),
-    inset 0 -3px 7px rgba(0, 0, 0, 0.45),
-    0 5px 12px rgba(60, 12, 8, 0.35);
+    inset 0 2px 4px rgba(255, 255, 255, 0.25),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px color-mix(in srgb, var(--gold) 20%, transparent),
+    0 5px 16px rgba(0, 0, 0, 0.45);
   transition:
     transform 0.12s ease,
-    filter 0.2s ease;
+    filter 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .wax-seal:hover:not(:disabled) {
-  filter: brightness(1.08);
+  filter: brightness(1.1);
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.3),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.5),
+    0 0 0 2px color-mix(in srgb, var(--gold) 45%, transparent),
+    0 6px 20px rgba(0, 0, 0, 0.5);
 }
 .wax-seal:active:not(:disabled) {
-  transform: scale(0.94);
+  transform: scale(0.92);
+  filter: brightness(1.15);
 }
 .wax-seal:disabled {
   background: radial-gradient(circle at 34% 28%, var(--parchment-3), var(--parchment-2));
   color: var(--ink-faint-solid);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
-/* The reading page — a leaf of the codex with a rubricated margin rule */
+/* Wax seal persona (inactive) */
+.wax-seal-persona {
+  background: radial-gradient(
+    circle at 34% 28%,
+    var(--parchment-3),
+    var(--parchment-2) 60%,
+    var(--parchment) 100%
+  );
+  color: var(--ink-soft);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.08),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--line);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+.wax-seal-persona-active {
+  background: radial-gradient(
+    circle at 34% 28%,
+    #c04a35,
+    var(--oxblood) 46%,
+    var(--oxblood-deep) 100%
+  );
+  color: var(--color-seal);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.25),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.45),
+    0 0 0 2px color-mix(in srgb, var(--gold) 50%, transparent),
+    0 0 16px color-mix(in srgb, var(--gold) 25%, transparent);
+}
+
+/* Manuscript assistant bubble with gold left rule */
 .folio-leaf {
   position: relative;
+  border-left: 2px solid var(--gold);
+  padding-left: 1rem;
 }
-.folio-leaf::before {
-  content: '';
-  position: absolute;
-  left: -1.5rem;
-  top: 0.35em;
-  bottom: 0.35em;
-  width: 2px;
+html.day .folio-leaf {
+  border-left-color: color-mix(in srgb, var(--gold) 70%, transparent);
+}
+
+/* Honey-glass user bubble */
+.bubble-user {
   background: linear-gradient(
-    180deg,
-    transparent,
-    color-mix(in srgb, var(--rubric) 55%, transparent),
-    transparent
+    135deg,
+    color-mix(in srgb, var(--vellum) 90%, var(--gold) 8%),
+    var(--vellum)
   );
+  border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 color-mix(in srgb, var(--gold) 8%, transparent);
+}
+
+/* Manuscript assistant bubble */
+.bubble-assistant {
+  background: var(--parchment-2);
+  border: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 color-mix(in srgb, var(--gold) 6%, transparent);
+}
+
+/* Dark-glass composer tray */
+.composer-tray {
+  background: color-mix(in srgb, var(--vellum) 95%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 20%, transparent);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 color-mix(in srgb, var(--gold) 10%, transparent);
+  backdrop-filter: blur(12px);
+}
+.composer-tray:focus-within {
+  border-color: color-mix(in srgb, var(--gold) 50%, transparent);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--gold) 12%, transparent);
+}
+
+/* Votive suggestion card */
+.votive-card {
+  background: var(--parchment-2);
+  border: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+.votive-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.3),
+    0 0 12px color-mix(in srgb, var(--gold) 12%, transparent);
+}
+
+/* Message arrival gold edge glow */
+@keyframes edge-glow {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--gold) 40%, transparent);
+  }
+  40% {
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--gold) 25%, transparent);
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+.animate-edge-glow .bubble-assistant,
+.animate-edge-glow .bubble-user {
+  animation: edge-glow 1.2s ease-out forwards;
+}
+
+/* Ember dots for typing indicator */
+@keyframes ember-pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.ember-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  animation: ember-pulse 1.4s ease-in-out infinite;
+}
+.ember-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.ember-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Text shimmer for typing status */
+@keyframes text-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+.shimmer-gold-text {
+  background: linear-gradient(
+    90deg,
+    var(--ink-soft) 0%,
+    var(--gold-bright) 50%,
+    var(--ink-soft) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shimmer 3s linear infinite;
+}
+
+/* Chapel-spine sidebar */
+.chapel-spine {
+  background: var(--parchment);
+  border-right: 1px solid color-mix(in srgb, var(--gold) 20%, transparent);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Dark-glass mobile header */
+.mobile-header-glass {
+  background: color-mix(in srgb, var(--parchment) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid color-mix(in srgb, var(--gold) 20%, transparent);
+}
+
+/* Action pill for message hover row */
+.action-pill {
+  background: color-mix(in srgb, var(--parchment-3) 80%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 9999px;
+  padding: 2px 4px;
 }
 
 /* ── Scrollbars ────────────────────────────────────────────────────────── */
@@ -281,22 +522,25 @@ html.night .dropcap > p:first-of-type::first-letter {
   scrollbar-color: var(--scroll-thumb) transparent;
 }
 
-/* ── Prose (markdown answers) tuned for the codex ──────────────────────── */
+/* ── Prose (markdown answers) ──────────────────────────────────────────── */
 .prose-codex {
   --tw-prose-body: var(--ink);
   --tw-prose-headings: var(--ink-strong);
-  --tw-prose-links: var(--oxblood);
+  --tw-prose-links: var(--gold-bright);
   --tw-prose-bold: var(--ink-strong);
   --tw-prose-quotes: var(--ink-soft);
   --tw-prose-quote-borders: var(--gold);
   --tw-prose-bullets: var(--gold);
   --tw-prose-hr: var(--line);
   --tw-prose-pre-bg: var(--parchment-3);
-  --tw-prose-code: var(--oxblood);
+  --tw-prose-code: var(--gold-bright);
 }
 
 /* ── Animations ────────────────────────────────────────────────────────── */
 @keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
   100% {
     transform: translateX(100%);
   }
@@ -329,7 +573,6 @@ html.night .dropcap > p:first-of-type::first-letter {
 .animate-fade-in {
   animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-/* legacy alias */
 .animate-message-enter {
   animation: ink-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -363,7 +606,6 @@ html.night .dropcap > p:first-of-type::first-letter {
   animation: quill 1.6s ease-in-out infinite;
 }
 
-/* Gold breathing pulse — used on active UI dots or modal accents */
 @keyframes gold-pulse {
   0%,
   100% {
@@ -379,7 +621,6 @@ html.night .dropcap > p:first-of-type::first-letter {
   animation: gold-pulse 2.4s ease-in-out infinite;
 }
 
-/* Smooth sliding up entrance for toasts and bottom drawers */
 @keyframes slide-up-fade {
   from {
     opacity: 0;
@@ -404,32 +645,59 @@ html.night .dropcap > p:first-of-type::first-letter {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  .shimmer-gold-text {
+    -webkit-text-fill-color: var(--ink-soft);
+    background: none;
+  }
 }
 
 /* ── Modal / overlay codex theme ──────────────────────────────────────── */
 .codex-modal {
-  background-color: var(--parchment-2);
-  border: 1px solid var(--line-strong);
+  background-color: color-mix(in srgb, var(--parchment-2) 95%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 color-mix(in srgb, var(--gold) 10%, transparent);
+}
+html.day .codex-modal {
   box-shadow:
     0 25px 60px rgba(40, 20, 8, 0.35),
     inset 0 1px 0 color-mix(in srgb, var(--gold) 12%, transparent);
 }
-html.night .codex-modal {
-  box-shadow:
-    0 25px 60px rgba(0, 0, 0, 0.65),
-    inset 0 1px 0 color-mix(in srgb, var(--gold) 8%, transparent);
+
+.codex-backdrop {
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+}
+html.day .codex-backdrop {
+  background: rgba(20, 15, 8, 0.45);
 }
 
 /* ── Toast codex theme ────────────────────────────────────────────────── */
 .codex-toast {
-  background-color: var(--parchment-3);
-  border: 1px solid var(--line-strong);
+  background-color: color-mix(in srgb, var(--parchment-3) 95%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 color-mix(in srgb, var(--gold) 8%, transparent);
+}
+html.day .codex-toast {
   box-shadow:
     0 8px 30px rgba(40, 20, 8, 0.25),
     inset 0 1px 0 color-mix(in srgb, var(--gold) 10%, transparent);
 }
-html.night .codex-toast {
+
+/* Destructive ember button */
+.btn-ember {
+  background: var(--oxblood);
+  color: var(--color-seal);
   box-shadow:
-    0 8px 30px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 color-mix(in srgb, var(--gold) 6%, transparent);
+    0 0 12px color-mix(in srgb, var(--oxblood) 40%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: filter 0.15s ease;
+}
+.btn-ember:hover {
+  filter: brightness(1.12);
 }

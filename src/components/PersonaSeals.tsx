@@ -10,10 +10,6 @@ interface PersonaSealsProps {
   className?: string;
 }
 
-/**
- * The three rites of Haničar rendered as wax seals — the signature control.
- * `full` shows names + latin beneath each seal; `bare` is seals only.
- */
 export const PersonaSeals = memo(function PersonaSeals({
   active,
   onChange,
@@ -43,15 +39,10 @@ export const PersonaSeals = memo(function PersonaSeals({
               className={cn(
                 'relative flex items-center justify-center rounded-full font-incipit select-none transition-all duration-300',
                 variant === 'full' ? 'w-12 h-12 text-xl' : 'w-9 h-9 text-base',
-                isActive
-                  ? 'wax-seal'
-                  : 'text-ink-soft border border-line bg-vellum/40 hover:border-gold/60 hover:text-ink'
+                isActive ? 'wax-seal-persona-active' : 'wax-seal-persona'
               )}
             >
               {rite.seal}
-              {isActive && (
-                <span className="absolute -inset-1 rounded-full border border-gold/50 animate-candle pointer-events-none" />
-              )}
             </motion.span>
 
             {variant === 'full' && (
@@ -59,7 +50,7 @@ export const PersonaSeals = memo(function PersonaSeals({
                 <span
                   className={cn(
                     'font-ui text-[10px] uppercase tracking-[0.2em] transition-colors',
-                    isActive ? 'text-oxblood' : 'text-ink-soft group-hover:text-ink'
+                    isActive ? 'text-gold-bright' : 'text-ink-soft group-hover:text-ink'
                   )}
                 >
                   {rite.name}

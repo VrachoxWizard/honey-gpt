@@ -43,7 +43,7 @@ export function Sidebar(props: SidebarProps) {
       {/* Desktop: persistent codex spine */}
       <aside
         aria-label="Povijest razgovora"
-        className="hidden md:flex flex-col w-[272px] shrink-0 bg-parchment-2/60 border-r border-line relative z-30"
+        className="hidden md:flex flex-col w-[272px] shrink-0 chapel-spine relative z-30"
       >
         <SidebarBody {...props} />
       </aside>
@@ -57,7 +57,7 @@ export function Sidebar(props: SidebarProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={props.onClose}
-              className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+              className="md:hidden fixed inset-0 z-40 codex-backdrop"
             />
             <motion.aside
               ref={mobileSidebarRef}
@@ -68,7 +68,7 @@ export function Sidebar(props: SidebarProps) {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 320, damping: 34 }}
-              className="md:hidden fixed top-0 bottom-0 left-0 z-50 w-[86vw] max-w-[300px] bg-parchment-2 border-r border-gold/25 shadow-[8px_0_40px_rgba(40,20,8,0.3)] flex flex-col"
+              className="md:hidden fixed top-0 bottom-0 left-0 z-50 w-[86vw] max-w-[300px] chapel-spine shadow-[8px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
             >
               <button
                 onClick={props.onClose}
@@ -244,7 +244,7 @@ function SidebarBody({
       {/* History */}
       <div className="flex-1 min-h-0 flex flex-col px-2">
         <div className="flex items-center justify-between px-2 mb-2 shrink-0">
-          <span className="rubric text-[9px]">Zapisi</span>
+          <span className="rubric">Zapisi</span>
           <ExportMenu actions={exportActions} />
           <input
             ref={importInputRef}

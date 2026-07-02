@@ -283,7 +283,7 @@ function AppContent() {
       {/* Right column */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         {/* Mobile bar — keeps the saint present + opens the codex */}
-        <div className="md:hidden flex items-center justify-between h-14 px-3 bg-parchment-2/80 backdrop-blur-md border-b border-line shrink-0">
+        <div className="md:hidden flex items-center justify-between h-14 px-3 mobile-header-glass shrink-0">
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label="Otvori bočnu traku"
@@ -302,7 +302,7 @@ function AppContent() {
               aria-label={`Aktivni obred: ${riteOf(toneMode).name}. Model: ${modelDisplayName(
                 activeModel
               )}. Otvori postavke.`}
-              className="flex items-center gap-1.5 max-w-[132px] px-2 py-1 rounded-full border border-line bg-vellum/50 text-ink-soft hover:text-ink hover:border-gold/50 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 max-w-[132px] px-2.5 py-1 rounded-full border border-gold/25 bg-parchment-3/60 text-ink-soft hover:text-gold-bright hover:border-gold/45 transition-colors cursor-pointer"
             >
               <span className="font-incipit text-[11px] text-oxblood shrink-0" aria-hidden="true">
                 {riteOf(toneMode).seal}
@@ -314,7 +314,7 @@ function AppContent() {
             <button
               onClick={newChat}
               aria-label="Novi zapis"
-              className="p-2 text-ink-soft hover:text-ink cursor-pointer"
+              className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-ink-soft hover:text-gold-bright cursor-pointer"
             >
               <Feather size={19} />
             </button>
@@ -353,7 +353,7 @@ function AppContent() {
             onScroll={handleScroll}
             className={cn(
               'flex-1 min-h-0 overflow-y-auto px-4 md:px-10 pt-6 pb-4 relative scrollbar-thin flex flex-col',
-              isWelcomeView ? 'justify-center' : 'justify-start gap-10'
+              isWelcomeView ? 'justify-center' : 'justify-start gap-8 md:gap-10'
             )}
           >
             {isWelcomeView ? (
@@ -389,7 +389,7 @@ function AppContent() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={scrollToBottom}
-                className="wax-seal absolute bottom-[104px] left-1/2 -translate-x-1/2 z-20 w-9 h-9 flex items-center justify-center rounded-full cursor-pointer"
+                className="wax-seal absolute bottom-[max(104px,calc(104px+env(safe-area-inset-bottom)))] left-1/2 -translate-x-1/2 z-20 w-10 h-10 flex items-center justify-center rounded-full cursor-pointer ring-2 ring-gold/30"
                 aria-label="Na dno stranice"
               >
                 <ChevronDown size={17} />
