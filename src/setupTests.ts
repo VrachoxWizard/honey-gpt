@@ -20,3 +20,24 @@ const localStorageMock = (function () {
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 });
+
+import { vi } from 'vitest';
+
+vi.mock('idb-keyval', () => {
+  let store: Record<string, any> = {};
+  return {
+    get: vi.fn((key) => Promise.resolve(store[key])),
+    set: vi.fn((key, val) => {
+      store[key] = val;
+      return Promise.resolve();
+    }),
+    del: vi.fn((key) => {
+      delete store[key];
+      return Promise.resolve();
+    }),
+    clear: vi.fn(() => {
+      store = {};
+      return Promise.resolve();
+    }),
+  };
+});
