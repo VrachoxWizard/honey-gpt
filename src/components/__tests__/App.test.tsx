@@ -43,6 +43,10 @@ vi.mock('../hooks/useChat', () => ({
     clearAllSessions: vi.fn(),
     abortGeneration: vi.fn(),
     shareSession: vi.fn(),
+    exportSession: vi.fn(),
+    importSession: vi.fn(),
+    setActiveModel: vi.fn(),
+    activeModel: 'google/gemini-2.5-flash',
     summaryWarning: '',
   }),
 }));

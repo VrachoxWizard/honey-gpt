@@ -101,6 +101,56 @@ export async function checkTokenBudget(
   };
 }
 
+export async function reserveTokenBudget(ip: string, estimatedTokens: number): Promise<boolean> {
+  const budget = getEnv().dailyTokenBudgetPerIp;
+  if (budget <= 0 || estimatedTokens <= 0) return true;
+
+  const key = getDailyTokenKey(ip);
+  const updated = await incrementRedisCounter(key, estimatedTokens);
+  if (updated === null) {
+    const current = tokenBudgetMemory.get(key) || 0;
+    if (current + estimatedTokens > budget) return false;
+    tokenBudgetMemory.set(key, current + estimatedTokens);
+    return true;
+  }
+
+  if (updated > budget) {
+    await incrementRedisCounter(key, -estimatedTokens);
+    return false;
+  }
+
+  return true;
+}
+
+export async function refundTokenReservation(ip: string, amount: number): Promise<void> {
+  if (amount <= 0) return;
+
+  const key = getDailyTokenKey(ip);
+  const updated = await incrementRedisCounter(key, -amount);
+  if (updated === null) {
+    tokenBudgetMemory.set(key, Math.max(0, (tokenBudgetMemory.get(key) || 0) - amount));
+  }
+}
+
+export async function settleTokenReservation(
+  ip: string,
+  reserved: number,
+  actual: number
+): Promise<void> {
+  const budget = getEnv().dailyTokenBudgetPerIp;
+  if (budget <= 0) return;
+
+  if (actual > reserved) {
+    await recordTokenUsage(ip, actual - reserved);
+    return;
+  }
+
+  const refund = reserved - actual;
+  if (refund > 0) {
+    await refundTokenReservation(ip, refund);
+  }
+}
+
 export async function recordTokenUsage(ip: string, tokens: number): Promise<void> {
   const budget = getEnv().dailyTokenBudgetPerIp;
   if (budget <= 0 || tokens <= 0) return;

@@ -27,7 +27,7 @@ describe('ChatListItem', () => {
         onEditChange={vi.fn()}
         onEditSave={onEditSave}
         onEditCancel={vi.fn()}
-        onDelete={vi.fn()}
+        onDeleteRequest={vi.fn()}
       />
     );
 

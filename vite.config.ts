@@ -29,11 +29,15 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+        workbox: {
+          maximumFileSizeToCacheInBytes: 12 * 1024 * 1024, // 12 MB
+        },
         manifest: {
           name: 'Haničar GPT',
           short_name: 'Haničar',
           description: 'Hrvatski satirični AI chatbot',
-          theme_color: '#ffffff',
+          theme_color: '#e9dcbf',
+          background_color: '#e9dcbf',
           icons: [
             {
               src: 'hanicar-the-genie.jpeg',
@@ -72,6 +76,15 @@ export default defineConfig(({ mode }) => {
                 id.includes('micromark')
               ) {
                 return 'vendor-markdown';
+              }
+              if (id.includes('shiki')) {
+                return 'vendor-shiki';
+              }
+              if (id.includes('fuse.js')) {
+                return 'vendor-fuse';
+              }
+              if (id.includes('pdfjs-dist')) {
+                return 'vendor-pdf';
               }
             }
           },

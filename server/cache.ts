@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { LRUCache } from 'lru-cache';
 import { getCacheRedis, setCacheRedis } from './redis.js';
 import { CONSTANTS } from './constants.js';
-import type { ChatMessage, HanicarReply, ToneMode } from '@shared/types';
+import type { ChatMessage, HanicarReply, RiskLevel, ToneMode } from '@shared/types';
 
 export const chatCache = new LRUCache<string, HanicarReply>({
   max: CONSTANTS.LRU_MAX_ENTRIES,
@@ -26,13 +26,16 @@ export function generateCacheKey(
   messages: ChatMessage[],
   model: string,
   toneMode?: ToneMode,
-  newsHeadlines?: string[]
+  newsHeadlines?: string[],
+  promptVersion?: string,
+  riskLevel: RiskLevel = 'safe'
 ): string {
   const serializedMessages = messages
     .map((m) => `${m.role}:${serializeMessageContent(m.content)}`)
     .join('|');
   const serializedNews = newsHeadlines ? newsHeadlines.join(',') : '';
-  const rawKey = `${model}#${toneMode || 'default'}#${serializedNews}#${serializedMessages}`;
+  const version = promptVersion || 'default';
+  const rawKey = `${model}#${toneMode || 'default'}#${riskLevel}#${version}#${serializedNews}#${serializedMessages}`;
 
   return createHash('sha256').update(rawKey).digest('hex');
 }

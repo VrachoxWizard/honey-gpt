@@ -27,7 +27,7 @@ describe('ChatList', () => {
         onEditChange={vi.fn()}
         onEditSave={vi.fn()}
         onEditCancel={vi.fn()}
-        onDelete={vi.fn()}
+        onDeleteRequest={vi.fn()}
       />
     );
 
@@ -50,7 +50,7 @@ describe('ChatList', () => {
         onEditChange={vi.fn()}
         onEditSave={vi.fn()}
         onEditCancel={vi.fn()}
-        onDelete={vi.fn()}
+        onDeleteRequest={vi.fn()}
       />
     );
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 export type AppTheme = 'day' | 'night';
 
-const THEME_STORAGE_KEY = 'hanicar_codex_theme';
+export const THEME_STORAGE_KEY = 'hanicar_codex_theme';
 
 export function useAppTheme() {
   const [theme, setTheme] = useState<AppTheme>(() => {

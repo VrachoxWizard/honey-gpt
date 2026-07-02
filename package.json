@@ -16,7 +16,17 @@
     "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage",
     "check:bundle": "node scripts/check-bundle-size.mjs",
     "check:env-example": "node scripts/check-env-example.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,json,md}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@sentry/node": "^9.47.1",
@@ -41,6 +51,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.55.0",
     "@tailwindcss/vite": "^4.3.2",
@@ -60,7 +71,9 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
+    "husky": "^9.1.7",
     "jsdom": "^29.1.1",
+    "lint-staged": "^17.0.8",
     "prettier": "^3.9.4",
     "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3",

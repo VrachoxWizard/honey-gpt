@@ -32,7 +32,68 @@
 
 ## CI
 
-GitHub Actions pokreće `typecheck`, `lint`, `prettier --check`, `test` i `test:coverage` na push/PR. E2E koristi `npm run dev` s mockanim `/api/chat`.
+GitHub Actions pokreće na push/PR:
+
+- `npm run verify` (typecheck, lint, prettier, test:coverage)
+- `npm audit --audit-level=high`
+- `npm run check:env-example`
+- `npm run build` + `npm run check:bundle`
+- Playwright E2E (dev server + preview build)
+- CodeQL analiza (`.github/workflows/codeql.yml`)
+
+Pri padu E2E testova, CI uploada Playwright report i trace artefakte.
+
+## Post-deploy smoke test
+
+Nakon svakog deploya na Vercel:
+
+1. **Health check**
+   ```bash
+   curl -s https://your-domain/api/health
+   ```
+   Očekivano: `"ok": true`, `"openrouterKeyConfigured": true`, `"redis": true` (u produkciji).
+
+2. **Frontend**
+   - Otvori produkcijski URL u browseru.
+   - Provjeri da se welcome ekran učita bez JS grešaka u konzoli.
+
+3. **Chat smoke**
+   - Pošalji kratku testnu poruku (npr. "Bok Haničare").
+   - Provjeri da stigne streaming odgovor (ne 429/503).
+
+4. **Redis / limiti** (ako je `REQUIRE_REDIS=true`)
+   - Dva brza zahtjeva ne bi smjela vratiti 503 zbog Redis-a.
+   - Rate limit 429 tek nakon 20+ zahtjeva u minuti s istog IP-a.
+
+## Vercel preview deploys
+
+Svaki PR dobiva preview URL na Vercelu. Koristi ga za:
+
+- vizualnu provjeru UI promjena prije mergea
+- ručni smoke test (koraci iznad) na preview domeni
+
+Lokalno preview (bez serverless API-ja):
+
+```bash
+npm run build
+npm run preview
+```
+
+Za puni API tok koristi `npm run dev`.
+
+## Rollback
+
+1. U Vercel dashboardu otvori **Deployments**.
+2. Pronađi zadnji stabilan deploy i klikni **Promote to Production**.
+3. Ponovi post-deploy smoke test.
+
+## Sentry (opcionalno)
+
+1. Kreiraj Sentry projekt (Node + React).
+2. Postavi env varijable:
+   - Backend: `SENTRY_DSN`
+   - Frontend: `VITE_SENTRY_DSN`
+3. Nakon deploya, pokreni testnu grešku ili provjeri da Sentry prima evente iz produkcije.
 
 ## Troubleshooting
 

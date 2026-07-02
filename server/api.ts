@@ -2,12 +2,7 @@ import { z } from 'zod';
 import { streamHanicarReply } from './hanicar.js';
 import { resolveRiskLevel } from './moderation.js';
 import { validateRequestedModel } from './models.js';
-import {
-  assertSafeConversation,
-  extractAllUserTexts,
-  extractLatestUserText,
-  isValidImageDataUrl,
-} from './security.js';
+import { assertSafeConversation, extractLatestUserText, isValidImageDataUrl } from './security.js';
 import { CONSTANTS } from './constants.js';
 import { getEnv } from './env.js';
 import type { ChatMessage, HanicarStreamContext } from '@shared/types';
@@ -126,16 +121,9 @@ export async function resolvePayloadRiskLevel(
   messages: Array<{ role: string; content: string | Array<{ type: string; text?: string }> }>
 ): Promise<'safe' | 'caution' | 'block'> {
   const apiKey = getEnv().openRouterApiKey;
-  const userTexts = extractAllUserTexts(messages);
-
-  let highest: 'safe' | 'caution' | 'block' = 'safe';
-  for (const text of userTexts) {
-    const risk = await resolveRiskLevel(text, apiKey);
-    if (risk === 'block') return 'block';
-    if (risk === 'caution') highest = 'caution';
-  }
-
-  return highest;
+  const latestText = extractLatestUserText(messages);
+  if (!latestText.trim()) return 'safe';
+  return resolveRiskLevel(latestText, apiKey);
 }
 
 export async function handleChatPayloadStream(

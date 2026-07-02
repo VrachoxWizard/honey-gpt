@@ -10,21 +10,27 @@ const MAX_MESSAGE_HEIGHT = 600;
 const BASE_MESSAGE_HEIGHT = 60;
 const CHARS_PER_LINE = 80;
 const LINE_HEIGHT = 22;
+const CODE_BLOCK_LINE_BONUS = 18;
 const OVERSCAN = 4;
 
 function estimateMessageHeight(message: Message): number {
   const content = typeof message.content === 'string' ? message.content : '';
-  const lines = Math.ceil(content.length / CHARS_PER_LINE);
+  const codeBlocks = (content.match(/```/g) || []).length / 2;
+  const lines = Math.ceil(content.length / CHARS_PER_LINE) + codeBlocks * CODE_BLOCK_LINE_BONUS;
   return Math.max(
     MIN_MESSAGE_HEIGHT,
     Math.min(MAX_MESSAGE_HEIGHT, BASE_MESSAGE_HEIGHT + lines * LINE_HEIGHT)
   );
 }
 
-function getMessageOffsets(messages: Message[]): number[] {
+function getMessageHeight(message: Message, measuredHeights: Record<string, number>): number {
+  return measuredHeights[message.id] ?? estimateMessageHeight(message);
+}
+
+function getMessageOffsets(messages: Message[], measuredHeights: Record<string, number>): number[] {
   const offsets: number[] = [0];
   for (const message of messages) {
-    offsets.push(offsets[offsets.length - 1] + estimateMessageHeight(message));
+    offsets.push(offsets[offsets.length - 1] + getMessageHeight(message, measuredHeights));
   }
   return offsets;
 }
@@ -48,7 +54,9 @@ export function MessageList({
   const shouldVirtualize = visible.length > VIRTUALIZATION_THRESHOLD;
   const [scrollTop, setScrollTop] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
+  const [measuredHeights, setMeasuredHeights] = useState<Record<string, number>>({});
   const fallbackRef = useRef<HTMLDivElement>(null);
+  const observersRef = useRef<Map<string, ResizeObserver>>(new Map());
 
   const updateMeasurements = useCallback(() => {
     const container = scrollContainerRef?.current ?? fallbackRef.current?.parentElement;
@@ -56,6 +64,39 @@ export function MessageList({
     setScrollTop(container.scrollTop);
     setViewportHeight(container.clientHeight);
   }, [scrollContainerRef]);
+
+  const registerMessageRef = useCallback((messageId: string, node: HTMLDivElement | null) => {
+    const existing = observersRef.current.get(messageId);
+    if (existing) {
+      existing.disconnect();
+      observersRef.current.delete(messageId);
+    }
+
+    if (!node) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const height = Math.ceil(entry.contentRect.height);
+      setMeasuredHeights((current) => {
+        if (current[messageId] === height) return current;
+        return { ...current, [messageId]: height };
+      });
+    });
+
+    observer.observe(node);
+    observersRef.current.set(messageId, observer);
+  }, []);
+
+  useEffect(() => {
+    const observers = observersRef.current;
+    return () => {
+      for (const observer of observers.values()) {
+        observer.disconnect();
+      }
+      observers.clear();
+    };
+  }, []);
 
   useEffect(() => {
     const container = scrollContainerRef?.current ?? fallbackRef.current?.parentElement;
@@ -72,7 +113,10 @@ export function MessageList({
     };
   }, [scrollContainerRef, shouldVirtualize, updateMeasurements, visible.length]);
 
-  const messageOffsets = useMemo(() => getMessageOffsets(visible), [visible]);
+  const messageOffsets = useMemo(
+    () => getMessageOffsets(visible, measuredHeights),
+    [visible, measuredHeights]
+  );
 
   const { startIndex, endIndex, topSpacer, bottomSpacer } = useMemo(() => {
     if (!shouldVirtualize) {
@@ -118,14 +162,19 @@ export function MessageList({
       >
         {shouldVirtualize && topSpacer > 0 && <div aria-hidden style={{ height: topSpacer }} />}
         {renderedMessages.map((message) => (
-          <ChatMessage
+          <div
             key={message.id}
-            message={message}
-            isWelcome={message.id === 'welcome' && message.content === welcomeMessage.content}
-            isLastAssistant={message.id === lastAssistantMessageId}
-            onRegenerate={onRegenerate}
-            onEdit={onEdit}
-          />
+            ref={(node) => registerMessageRef(message.id, node)}
+            role="listitem"
+          >
+            <ChatMessage
+              message={message}
+              isWelcome={message.id === 'welcome' && message.content === welcomeMessage.content}
+              isLastAssistant={message.id === lastAssistantMessageId}
+              onRegenerate={onRegenerate}
+              onEdit={onEdit}
+            />
+          </div>
         ))}
         {shouldVirtualize && bottomSpacer > 0 && (
           <div aria-hidden style={{ height: bottomSpacer }} />

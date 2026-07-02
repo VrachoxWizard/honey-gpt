@@ -1,4 +1,5 @@
 import { Feather, Search, Moon, Sun } from 'lucide-react';
+import { ALLOWED_MODELS, MODEL_DISPLAY_NAMES } from '@shared/models';
 import { PersonaSeals } from '../PersonaSeals';
 import type { ToneMode } from '@lib/codex';
 
@@ -10,6 +11,8 @@ interface SidebarHeaderProps {
   onChangeRite: (t: ToneMode) => void;
   theme: 'day' | 'night';
   onToggleTheme: () => void;
+  activeModel: string;
+  onChangeModel: (model: string) => void;
 }
 
 export function SidebarHeader({
@@ -20,6 +23,8 @@ export function SidebarHeader({
   onChangeRite,
   theme,
   onToggleTheme,
+  activeModel,
+  onChangeModel,
 }: SidebarHeaderProps) {
   return (
     <div className="shrink-0 flex flex-col">
@@ -44,6 +49,25 @@ export function SidebarHeader({
       {/* The rite dial — his voice */}
       <div className="px-4 pb-4">
         <PersonaSeals active={rite} onChange={onChangeRite} />
+      </div>
+
+      <div className="px-4 pb-4">
+        <label htmlFor="model-select" className="rubric text-[9px] block mb-1.5">
+          Model
+        </label>
+        <select
+          id="model-select"
+          value={activeModel}
+          onChange={(e) => onChangeModel(e.target.value)}
+          aria-label="Odaberi AI model"
+          className="w-full bg-vellum/50 border border-line rounded-lg px-2.5 py-2 text-xs text-ink font-ui focus:outline-none focus:border-gold/50 cursor-pointer"
+        >
+          {ALLOWED_MODELS.map((modelId) => (
+            <option key={modelId} value={modelId}>
+              {MODEL_DISPLAY_NAMES[modelId] ?? modelId}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="rule-gold mx-4 mb-3" />

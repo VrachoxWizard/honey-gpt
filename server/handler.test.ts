@@ -23,6 +23,9 @@ vi.mock('./limiter.js', () => ({
     resetTime: Date.now() + 60_000,
   })),
   checkTokenBudget: vi.fn(async () => ({ allowed: true, remaining: 50_000 })),
+  reserveTokenBudget: vi.fn(async () => true),
+  refundTokenReservation: vi.fn(async () => {}),
+  settleTokenReservation: vi.fn(async () => {}),
   recordTokenUsage: vi.fn(async () => {}),
   getClientIp: vi.fn(() => '127.0.0.1'),
 }));
@@ -34,6 +37,7 @@ vi.mock('./env.js', () => ({
     apiSecret: undefined,
     requireRedis: false,
     isProduction: false,
+    maxTokens: 2048,
   })),
   warnIfProductionWithoutRedis: vi.fn(),
   assertRedisIfRequired: vi.fn(),

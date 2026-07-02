@@ -40,11 +40,21 @@ export function decodeSharedChat(encoded: string): SharedChatPayload | null {
   }
 }
 
-export function buildShareUrl(payload: SharedChatPayload): string {
+/** Conservative browser URL limit (varies ~2k–8k; 6000 leaves headroom). */
+export const MAX_SHARE_URL_LENGTH = 6000;
+
+export const SHARE_URL_TOO_LONG_MESSAGE =
+  'Razgovor je predugačak za dijeljenje putem linka. Skrati povijest ili preuzmi zapis kao datoteku.';
+
+export function buildShareUrl(payload: SharedChatPayload): string | null {
   const url = new URL(window.location.href);
   url.pathname = '/share';
   url.searchParams.set('share', encodeSharedChat(payload));
-  return url.toString();
+  const urlString = url.toString();
+  if (urlString.length > MAX_SHARE_URL_LENGTH) {
+    return null;
+  }
+  return urlString;
 }
 
 export function readSharedChatFromLocation(): SharedChatPayload | null {

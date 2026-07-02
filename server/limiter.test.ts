@@ -15,6 +15,9 @@ import {
   checkTokenBudget,
   getClientIp,
   recordTokenUsage,
+  reserveTokenBudget,
+  refundTokenReservation,
+  settleTokenReservation,
   resetLimiterForTests,
 } from './limiter';
 
@@ -42,6 +45,23 @@ describe('limiter', () => {
     await recordTokenUsage('10.0.0.2', 200);
     const blocked = await checkTokenBudget('10.0.0.2');
     expect(blocked.allowed).toBe(false);
+  });
+
+  it('reserves and refunds token budget in memory', async () => {
+    const reserved = await reserveTokenBudget('10.0.0.3', 400);
+    expect(reserved).toBe(true);
+
+    await settleTokenReservation('10.0.0.3', 400, 150);
+    const afterSettle = await checkTokenBudget('10.0.0.3');
+    expect(afterSettle.allowed).toBe(true);
+    expect(afterSettle.remaining).toBe(850);
+
+    const overBudget = await reserveTokenBudget('10.0.0.3', 900);
+    expect(overBudget).toBe(false);
+
+    await refundTokenReservation('10.0.0.3', 200);
+    const afterRefund = await checkTokenBudget('10.0.0.3');
+    expect(afterRefund.remaining).toBeGreaterThan(afterSettle.remaining);
   });
 
   it('extracts client IP from proxy headers', () => {

@@ -1,6 +1,7 @@
 import ky from 'ky';
 import { CONSTANTS } from './constants.js';
 import { isRedisConfigured } from './env.js';
+import { logSystem } from './logger.js';
 
 const redisUrl = () => process.env.UPSTASH_REDIS_REST_URL?.trim();
 const redisToken = () => process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
@@ -38,7 +39,9 @@ async function runRedisCommands(commands: RedisCommand[]): Promise<unknown[]> {
       return res.result;
     });
   } catch (error) {
-    console.error('Greška u komunikaciji s Redisom:', error);
+    logSystem('error', 'Greška u komunikaciji s Redisom', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw error;
   }
 }
@@ -81,7 +84,9 @@ export async function checkRateLimitRedis(
       resetTime,
     };
   } catch (err) {
-    console.warn(`[Redis] Rate limit greška, fallback na in-memory: ${(err as Error).message}`);
+    logSystem('warn', 'Redis rate limit greška, fallback na in-memory', {
+      error: (err as Error).message,
+    });
     return null;
   }
 }

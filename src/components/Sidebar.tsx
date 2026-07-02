@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback, MouseEvent, useRef } from 'react';
+import { useState, useMemo, useCallback, MouseEvent, useRef, type ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Image, Link2, Trash2, X } from 'lucide-react';
+import { Download, Image, Link2, Trash2, X, Upload, FileJson } from 'lucide-react';
 import type { ChatSession } from '@shared/types';
 import type { ToneMode } from '../lib/codex';
 import { useFocusTrap } from '../hooks/useFocusTrap';
@@ -19,8 +19,12 @@ interface SidebarProps {
   onNewChat: () => void;
   onSearch: () => void;
   onExportChat: () => void;
+  onExportSessionJson: () => void;
+  onImportSession: (file: File) => void;
   onShareChat: () => void;
   onDownloadImage: () => void;
+  activeModel: string;
+  onChangeModel: (model: string) => void;
   sessions: ChatSession[];
   activeSessionId?: string;
   onSwitchSession: (id: string) => void;
@@ -90,8 +94,12 @@ function SidebarBody({
   onNewChat,
   onSearch,
   onExportChat,
+  onExportSessionJson,
+  onImportSession,
   onShareChat,
   onDownloadImage,
+  activeModel,
+  onChangeModel,
   sessions,
   activeSessionId,
   onSwitchSession,
@@ -103,6 +111,8 @@ function SidebarBody({
   const [editTitle, setEditTitle] = useState('');
   const [filter, setFilter] = useState('');
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const filteredSessions = useMemo(() => {
     if (!filter) return sessions;
@@ -137,6 +147,26 @@ function SidebarBody({
     setConfirmClearOpen(false);
   }, [onClearAllSessions]);
 
+  const handleConfirmDelete = useCallback(() => {
+    if (pendingDeleteId) {
+      onDeleteSession(pendingDeleteId);
+      setPendingDeleteId(null);
+    }
+  }, [pendingDeleteId, onDeleteSession]);
+
+  const handleImportClick = useCallback(() => {
+    importInputRef.current?.click();
+  }, []);
+
+  const handleImportFile = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) onImportSession(file);
+      event.target.value = '';
+    },
+    [onImportSession]
+  );
+
   const handleSelect = useCallback(
     (id: string) => {
       onSwitchSession(id);
@@ -155,6 +185,8 @@ function SidebarBody({
         onChangeRite={onChangeRite}
         theme={theme}
         onToggleTheme={onToggleTheme}
+        activeModel={activeModel}
+        onChangeModel={onChangeModel}
       />
 
       {/* History */}
@@ -170,6 +202,29 @@ function SidebarBody({
             >
               <Link2 size={13} />
             </button>
+            <button
+              onClick={onExportSessionJson}
+              title="Preuzmi razgovor kao JSON"
+              aria-label="Preuzmi razgovor kao JSON"
+              className="p-1 text-ink-faint hover:text-ink transition-colors cursor-pointer"
+            >
+              <FileJson size={13} />
+            </button>
+            <button
+              onClick={handleImportClick}
+              title="Uvezi razgovor iz JSON datoteke"
+              aria-label="Uvezi razgovor"
+              className="p-1 text-ink-faint hover:text-ink transition-colors cursor-pointer"
+            >
+              <Upload size={13} />
+            </button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={handleImportFile}
+            />
             <button
               onClick={onExportChat}
               title="Prepiši trenutni razgovor u datoteku"
@@ -212,9 +267,19 @@ function SidebarBody({
           onEditChange={setEditTitle}
           onEditSave={handleEditSave}
           onEditCancel={handleEditCancel}
-          onDelete={onDeleteSession}
+          onDeleteRequest={setPendingDeleteId}
         />
       </div>
+
+      <ConfirmDialog
+        isOpen={pendingDeleteId !== null}
+        title="Spaliti ovaj zapis?"
+        message="Ovo će trajno obrisati odabrani razgovor. Ova radnja se ne može poništiti."
+        confirmLabel="Spali zapis"
+        cancelLabel="Odustani"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDeleteId(null)}
+      />
 
       <ConfirmDialog
         isOpen={confirmClearOpen}

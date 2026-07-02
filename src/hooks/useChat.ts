@@ -32,6 +32,9 @@ export function useChat() {
   const clearAllSessions = useChatStore((s) => s.clearAllSessions);
   const abortGeneration = useChatStore((s) => s.abortGeneration);
   const shareSession = useChatStore((s) => s.shareSession);
+  const exportSession = useChatStore((s) => s.exportSession);
+  const importSession = useChatStore((s) => s.importSession);
+  const setActiveModel = useChatStore((s) => s.setActiveModel);
 
   return {
     sessions,
@@ -53,5 +56,8 @@ export function useChat() {
     clearAllSessions,
     abortGeneration,
     shareSession,
+    exportSession,
+    importSession,
+    setActiveModel,
   };
 }

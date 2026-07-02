@@ -1,24 +1,22 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('./redis.js', () => ({
-  incrementRedisCounter: vi.fn(async () => 1),
+  incrementRedisCounter: vi.fn(async () => null),
 }));
 
-import { incrementMetric, recordRequestMetrics } from './metrics';
-import { incrementRedisCounter } from './redis';
+vi.mock('./env.js', () => ({
+  isRedisConfigured: vi.fn(() => false),
+}));
+
+import { incrementMetric, getMemoryMetricCount, resetMetricsForTests } from './metrics';
 
 describe('metrics', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetMetricsForTests();
   });
 
-  it('increments named metrics', async () => {
-    await incrementMetric('requests');
-    expect(incrementRedisCounter).toHaveBeenCalled();
-  });
-
-  it('records request metrics bundle', async () => {
-    await recordRequestMetrics({ cacheHit: true, tokens: 120, statusCode: 200 });
-    expect(incrementRedisCounter).toHaveBeenCalled();
+  it('stores metrics in memory when redis is unavailable', async () => {
+    await incrementMetric('requests', 2);
+    expect(getMemoryMetricCount('requests')).toBe(2);
   });
 });

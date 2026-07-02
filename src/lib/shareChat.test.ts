@@ -27,7 +27,19 @@ describe('shareChat', () => {
       messages: [],
     };
     const url = buildShareUrl(payload);
+    expect(url).not.toBeNull();
     expect(url).toContain('/share?share=');
+  });
+
+  it('returns null when share URL exceeds browser limit', () => {
+    const longContent = 'x'.repeat(8000);
+    const payload = {
+      version: 1 as const,
+      title: 'Predugačak',
+      exportedAt: 1,
+      messages: [{ id: '1', role: 'user' as const, content: longContent, timestamp: 1 }],
+    };
+    expect(buildShareUrl(payload)).toBeNull();
   });
 
   it('clearShareFromLocation removes share parameter and resets /share to /', () => {

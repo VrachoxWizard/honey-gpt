@@ -13,6 +13,7 @@ export function ChatSearch({ filter, onFilterChange }: ChatSearchProps) {
         value={filter}
         onChange={(e) => onFilterChange(e.target.value)}
         placeholder="Prolistaj…"
+        aria-label="Filtriraj zapise po naslovu"
         className="w-full bg-vellum/40 border border-line rounded-lg pl-7 pr-2 py-1.5 text-xs text-ink placeholder:text-ink-faint focus:outline-none focus:border-gold/50 transition-all"
       />
     </div>

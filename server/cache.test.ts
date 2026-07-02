@@ -37,6 +37,30 @@ describe('cache', () => {
     expect(shouldUseResponseCache(multiTurn, 'sanctus')).toBe(true);
   });
 
+  it('includes prompt version and risk level in cache keys', () => {
+    const messages = [{ role: 'user' as const, content: 'Pozdrav' }];
+    const base = generateCacheKey(messages, 'google/gemini-2.5-flash', 'sanctus');
+    const withVersion = generateCacheKey(
+      messages,
+      'google/gemini-2.5-flash',
+      'sanctus',
+      undefined,
+      'v2',
+      'safe'
+    );
+    const withCaution = generateCacheKey(
+      messages,
+      'google/gemini-2.5-flash',
+      'sanctus',
+      undefined,
+      'v2',
+      'caution'
+    );
+
+    expect(withVersion).not.toBe(base);
+    expect(withCaution).not.toBe(withVersion);
+  });
+
   it('uses shorter TTL for multi-turn cache keys', () => {
     const singleTurn = [{ role: 'user' as const, content: 'Pozdrav' }];
     const multiTurn = [

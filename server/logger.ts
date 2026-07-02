@@ -45,3 +45,7 @@ export function createRequestLogger(requestId: string): RequestLogger {
 export function createRequestId(): string {
   return crypto.randomUUID();
 }
+
+export function logSystem(level: LogLevel, message: string, context: LogContext = {}): void {
+  writeLog(level, message, context);
+}

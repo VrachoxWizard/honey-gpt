@@ -2,6 +2,7 @@ import { Component, ErrorInfo, ReactNode } from 'react';
 import { RefreshCcw, ShieldAlert } from 'lucide-react';
 import { del } from 'idb-keyval';
 import { Sentry } from '@lib/monitoring';
+import { THEME_STORAGE_KEY } from '@hooks/useAppTheme';
 
 interface Props {
   children?: ReactNode;
@@ -36,7 +37,7 @@ export class ErrorBoundary extends Component<Props, State> {
     } catch (error) {
       console.error('Neuspjelo brisanje IndexedDB pohrane:', error);
     }
-    localStorage.removeItem('hanicar_gpt_theme');
+    localStorage.removeItem(THEME_STORAGE_KEY);
     window.location.reload();
   };
 

@@ -22,6 +22,7 @@ const SearchModal = lazy(() =>
 import {
   clearShareFromLocation,
   readSharedChatFromLocation,
+  SHARE_URL_TOO_LONG_MESSAGE,
   type SharedChatPayload,
 } from './lib/shareChat';
 import { useChatStore } from './store/chatStore';
@@ -53,6 +54,10 @@ function AppContent() {
     clearAllSessions,
     abortGeneration,
     shareSession,
+    exportSession,
+    importSession,
+    setActiveModel,
+    activeModel,
     summaryWarning,
   } = useChat();
 
@@ -67,13 +72,23 @@ function AppContent() {
   const { showToast } = useToast();
   const { theme, toggleTheme } = useAppTheme();
 
+  const [hasHydrated, setHasHydrated] = useState(() => useChatStore.persist.hasHydrated());
+
+  useEffect(() => {
+    if (hasHydrated) return;
+    return useChatStore.persist.onFinishHydration(() => {
+      setHasHydrated(true);
+    });
+  }, [hasHydrated]);
+
   const liveAnnouncement = useMemo(() => {
+    if (isSending) return '';
     const lastMsg = displayMessages[displayMessages.length - 1];
     if (lastMsg?.role === 'assistant' && lastMsg.content) {
       return lastMsg.content;
     }
     return '';
-  }, [displayMessages]);
+  }, [displayMessages, isSending]);
 
   useEffect(() => {
     if (!summaryWarning) return;
@@ -83,11 +98,12 @@ function AppContent() {
 
   const hasInitializedRef = useRef(false);
   useEffect(() => {
+    if (!hasHydrated) return;
     if (sessions.length === 0 && !sharedView && !hasInitializedRef.current) {
       hasInitializedRef.current = true;
       newChat();
     }
-  }, [sessions.length, sharedView, newChat]);
+  }, [hasHydrated, sessions.length, sharedView, newChat]);
 
   const lastAssistantMessageId = useMemo(() => {
     return [...displayMessages].reverse().find((m) => m.role === 'assistant' && m.id !== 'welcome')
@@ -150,10 +166,51 @@ function AppContent() {
     setSidebarOpen(false);
   };
 
+  const handleExportJson = () => {
+    const json = exportSession(activeSessionId);
+    if (!json) {
+      showToast('Nema aktivnog razgovora za izvoz.', 'error');
+      return;
+    }
+
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `hanicar-zapis-${Date.now()}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setSidebarOpen(false);
+    showToast('JSON zapis preuzet!', 'success');
+  };
+
+  const handleImportSession = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      const importedId = importSession(result);
+      if (!importedId) {
+        showToast('Neispravan JSON zapis razgovora.', 'error');
+        return;
+      }
+      setSidebarOpen(false);
+      showToast('Razgovor uspješno uvezen!', 'success');
+    };
+    reader.onerror = () => {
+      showToast('Greška pri čitanju datoteke.', 'error');
+    };
+    reader.readAsText(file);
+  };
+
   const handleShare = async () => {
     const url = shareSession(activeSessionId);
     if (!url) {
-      showToast('Nema aktivnog razgovora za dijeljenje.', 'error');
+      const session = sessions.find((entry) => entry.id === activeSessionId);
+      if (!session) {
+        showToast('Nema aktivnog razgovora za dijeljenje.', 'error');
+      } else {
+        showToast(SHARE_URL_TOO_LONG_MESSAGE, 'error');
+      }
       return;
     }
 
@@ -198,8 +255,12 @@ function AppContent() {
         onNewChat={newChat}
         onSearch={() => setSearchOpen(true)}
         onExportChat={handleExport}
+        onExportSessionJson={handleExportJson}
+        onImportSession={handleImportSession}
         onShareChat={handleShare}
         onDownloadImage={handleDownloadImage}
+        activeModel={activeModel}
+        onChangeModel={setActiveModel}
         sessions={sessions}
         activeSessionId={activeSessionId}
         onSwitchSession={switchSession}

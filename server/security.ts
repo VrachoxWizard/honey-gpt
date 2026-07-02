@@ -14,6 +14,14 @@ const PROMPT_INJECTION_PATTERNS = [
   /<\s*system\s*>/i,
   /jailbreak/i,
   /DAN\s+mode/i,
+  /ignoriraj\s+(sve\s+)?prethodn(e|a)\s+instrukcij/i,
+  /zanemari\s+(sve\s+)?prethodn/i,
+  /sada\s+si\s+/i,
+  /pretvaraj\s+se\s+da\s+si/i,
+  /<\s*user_message\s*>/i,
+  /<\s*\/\s*user_message\s*>/i,
+  /data:text\/html;base64,/i,
+  /(?:^|\s)[A-Za-z0-9+/]{60,}={0,2}(?:\s|$)/,
 ];
 
 const BLOCKED_CONTENT_PATTERNS = [
@@ -62,9 +70,7 @@ type UserMessageInput = {
   content: string | Array<{ type: string; text?: string }>;
 };
 
-export function extractUserTextFromMessage(message: UserMessageInput): string {
-  if (message.role !== 'user') return '';
-
+export function extractTextFromMessage(message: UserMessageInput): string {
   if (typeof message.content === 'string') {
     return message.content;
   }
@@ -75,6 +81,11 @@ export function extractUserTextFromMessage(message: UserMessageInput): string {
   }
 
   return '';
+}
+
+export function extractUserTextFromMessage(message: UserMessageInput): string {
+  if (message.role !== 'user') return '';
+  return extractTextFromMessage(message);
 }
 
 export function extractLatestUserText(messages: UserMessageInput[]): string {
@@ -90,8 +101,14 @@ export function extractAllUserTexts(messages: UserMessageInput[]): string[] {
     .filter((text) => text.trim().length > 0);
 }
 
+export function extractAllConversationTexts(messages: UserMessageInput[]): string[] {
+  return messages
+    .map((message) => extractTextFromMessage(message))
+    .filter((text) => text.trim().length > 0);
+}
+
 export function assertSafeConversation(messages: UserMessageInput[]): void {
-  for (const text of extractAllUserTexts(messages)) {
+  for (const text of extractAllConversationTexts(messages)) {
     assertSafeUserContent(text);
   }
 }

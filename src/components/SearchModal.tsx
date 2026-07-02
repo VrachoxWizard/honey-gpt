@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MessageSquare, Calendar } from 'lucide-react';
 import Fuse from 'fuse.js';
@@ -14,7 +14,9 @@ interface SearchModalProps {
 export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalProps) {
   const sessions = useChatStore((s) => s.sessions);
   const [query, setQuery] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   useFocusTrap(isOpen, dialogRef);
 
   const fuse = useMemo(() => {
@@ -34,19 +36,56 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
 
   useEffect(() => {
     if (isOpen) {
-      const t = setTimeout(() => setQuery(''), 0);
+      const t = setTimeout(() => {
+        setQuery('');
+        setActiveIndex(0);
+      }, 0);
       return () => clearTimeout(t);
     }
   }, [isOpen]);
 
+  const selectResult = useCallback(
+    (index: number) => {
+      const result = results[index];
+      if (!result) return;
+      onSelectSession(result.item.id);
+      onClose();
+    },
+    [results, onSelectSession, onClose]
+  );
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (!results.length) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex((current) => Math.min(current + 1, results.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex((current) => Math.max(current - 1, 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        selectResult(activeIndex);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, results, activeIndex, selectResult]);
+
+  useEffect(() => {
+    if (!listRef.current) return;
+    const activeItem = listRef.current.querySelector<HTMLElement>(
+      `[data-result-index="${activeIndex}"]`
+    );
+    activeItem?.scrollIntoView?.({ block: 'nearest' });
+  }, [activeIndex, results.length]);
 
   return (
     <AnimatePresence>
@@ -79,8 +118,15 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
                 autoFocus
                 placeholder="Pretraži arhivu (naslove i poruke)..."
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setActiveIndex(0);
+                }}
                 aria-label="Pretraži arhivu razgovora"
+                aria-controls="search-results-list"
+                aria-activedescendant={
+                  results.length > 0 ? `search-result-${activeIndex}` : undefined
+                }
                 className="w-full bg-transparent pl-10 pr-10 py-2 outline-none font-ui text-ink text-lg placeholder-ink-faint"
               />
               <button
@@ -102,8 +148,8 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
                   Upiši pojam za pretragu starih razgovora...
                 </div>
               ) : (
-                <ul className="flex flex-col gap-1">
-                  {results.map(({ item, matches }) => {
+                <ul id="search-results-list" ref={listRef} className="flex flex-col gap-1">
+                  {results.map(({ item, matches }, index) => {
                     const messageMatch = matches?.find((m) => m.key === 'messages.content');
                     let snippet = '';
                     if (messageMatch && messageMatch.value) {
@@ -114,11 +160,14 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
                     return (
                       <li key={item.id}>
                         <button
-                          onClick={() => {
-                            onSelectSession(item.id);
-                            onClose();
-                          }}
-                          className="w-full text-left p-3 rounded-xl hover:bg-seal/10 transition-colors flex flex-col gap-1 cursor-pointer group"
+                          id={`search-result-${index}`}
+                          data-result-index={index}
+                          aria-selected={index === activeIndex}
+                          onMouseEnter={() => setActiveIndex(index)}
+                          onClick={() => selectResult(index)}
+                          className={`w-full text-left p-3 rounded-xl transition-colors flex flex-col gap-1 cursor-pointer group ${
+                            index === activeIndex ? 'bg-seal/20' : 'hover:bg-seal/10'
+                          }`}
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-ui font-semibold text-ink group-hover:text-oxblood transition-colors line-clamp-1">

@@ -141,7 +141,14 @@ async function prepareHanicarRequest(
   const hasVisionContent = messageHasVisionContent(cleanMessages);
   const models = getModelCandidates(options?.model, userText, hasVisionContent);
   const primaryModel = models[0];
-  const cacheKey = generateCacheKey(cleanMessages, primaryModel, options?.toneMode, newsHeadlines);
+  const cacheKey = generateCacheKey(
+    cleanMessages,
+    primaryModel,
+    options?.toneMode,
+    newsHeadlines,
+    getPromptVersion(),
+    options?.riskLevel ?? 'safe'
+  );
   const shouldCache = shouldUseResponseCache(cleanMessages, options?.toneMode);
   const cacheTtlMs = getCacheTtlMs(cleanMessages);
   const isCoding = detectCodingOrLogic(userText);
@@ -285,7 +292,9 @@ export async function streamHanicarReply(
           break;
         }
 
-        console.warn(`Model ${model} nije uspio: ${lastError}. Pokušavam sljedeći...`);
+        if (logger) {
+          logger.warn('Model fallback', { model, error: lastError });
+        }
       }
     }
 

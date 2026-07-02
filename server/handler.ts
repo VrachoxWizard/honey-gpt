@@ -1,5 +1,12 @@
 import { handleChatPayloadStream, toClientError, type StreamChunk } from './api.js';
-import { checkRateLimit, checkTokenBudget, getClientIp, recordTokenUsage } from './limiter.js';
+import {
+  checkRateLimit,
+  checkTokenBudget,
+  getClientIp,
+  reserveTokenBudget,
+  settleTokenReservation,
+  refundTokenReservation,
+} from './limiter.js';
 import { checkEnv, getEnv, warnIfProductionWithoutRedis, assertRedisIfRequired } from './env.js';
 import { createRequestId, createRequestLogger } from './logger.js';
 import { validateOptionalApiSecret } from './security.js';
@@ -139,6 +146,8 @@ export async function handleChatRequest(
     };
   }
 
+  const reservedTokens = env.maxTokens;
+
   const tokenBudget = await checkTokenBudget(clientIp);
   if (!tokenBudget.allowed) {
     await incrementMetric('errors429');
@@ -151,13 +160,27 @@ export async function handleChatRequest(
     };
   }
 
+  const reserved = await reserveTokenBudget(clientIp, reservedTokens);
+  if (!reserved) {
+    await incrementMetric('errors429');
+    return {
+      statusCode: 429,
+      headers: { ...headers, 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({
+        error: 'Dnevni token budžet je iscrpljen. Haničar molitvu nastavlja sutra.',
+      }),
+    };
+  }
+  let shouldRefundReservation = true;
+
   if (await isCircuitOpen()) {
+    await refundTokenReservation(clientIp, reservedTokens);
     await incrementMetric('errors502');
     return {
       statusCode: 503,
       headers: { ...headers, 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({
-        error: 'OpenRouter je privremeno nedostupan. Molimo pokušajte za minutu.',
+        error: 'Usluga je privremeno nedostupna. Molimo pokušajte za minutu.',
       }),
     };
   }
@@ -201,13 +224,18 @@ export async function handleChatRequest(
           },
           onUsage: async (usage) => {
             tokensUsed = usage.totalTokens;
-            await recordTokenUsage(clientIp, usage.totalTokens);
+            await settleTokenReservation(clientIp, reservedTokens, usage.totalTokens);
+            shouldRefundReservation = false;
           },
         }
       ),
       CONSTANTS.HANDLER_TIMEOUT_MS,
       'Haničar je predugo molio. Molimo pokušajte s kraćim pitanjem.'
     );
+
+    if (shouldRefundReservation) {
+      await refundTokenReservation(clientIp, reservedTokens);
+    }
 
     writeSse(callbacks.write, {
       meta: {
@@ -236,6 +264,10 @@ export async function handleChatRequest(
 
     return { statusCode, headers: streamHeaders, streamed: true };
   } catch (error) {
+    if (shouldRefundReservation) {
+      await refundTokenReservation(clientIp, reservedTokens);
+    }
+
     const clientError = toClientError(error);
     statusCode = clientError.statusCode;
     logger.error('Chat request failed', {

@@ -15,6 +15,8 @@ describe('SidebarHeader', () => {
         onChangeRite={vi.fn()}
         theme="day"
         onToggleTheme={onToggleTheme}
+        activeModel="google/gemini-2.5-flash"
+        onChangeModel={vi.fn()}
       />
     );
 

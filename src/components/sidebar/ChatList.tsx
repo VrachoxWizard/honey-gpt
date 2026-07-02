@@ -13,7 +13,7 @@ interface ChatListProps {
   onEditChange: (title: string) => void;
   onEditSave: (id: string) => void;
   onEditCancel: () => void;
-  onDelete: (id: string) => void;
+  onDeleteRequest: (id: string) => void;
 }
 
 export function ChatList({
@@ -27,7 +27,7 @@ export function ChatList({
   onEditChange,
   onEditSave,
   onEditCancel,
-  onDelete,
+  onDeleteRequest,
 }: ChatListProps) {
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-1 pb-2 scrollbar-thin">
@@ -51,7 +51,7 @@ export function ChatList({
               onEditChange={onEditChange}
               onEditSave={onEditSave}
               onEditCancel={onEditCancel}
-              onDelete={onDelete}
+              onDeleteRequest={onDeleteRequest}
             />
           ))}
         </AnimatePresence>

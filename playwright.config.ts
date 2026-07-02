@@ -3,6 +3,11 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   timeout: 30_000,
+  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  use: {
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+  },
   projects: [
     {
       name: 'dev',
