@@ -82,6 +82,14 @@ function AppContent() {
     useChatStore.setState({ summaryWarning: '' });
   }, [summaryWarning, showToast]);
 
+  const hasInitializedRef = useRef(false);
+  useEffect(() => {
+    if (sessions.length === 0 && !sharedView && !hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      newChat();
+    }
+  }, [sessions.length, sharedView, newChat]);
+
   const lastAssistantMessageId = useMemo(() => {
     return [...displayMessages].reverse().find((m) => m.role === 'assistant' && m.id !== 'welcome')
       ?.id;

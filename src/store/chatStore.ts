@@ -54,13 +54,7 @@ export const useChatStore = create<ChatState>()(
 
           return migrated;
         },
-        onRehydrateStorage: () => (state) => {
-          if (state && state.sessions.length === 0) {
-            const session = createDefaultSession();
-            state.sessions = [session];
-            state.activeSessionId = session.id;
-          }
-        },
+
         partialize: (state) => ({
           sessions: state.sessions,
           activeSessionId: state.activeSessionId,
