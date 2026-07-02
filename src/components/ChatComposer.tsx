@@ -1,10 +1,11 @@
-import { ChangeEvent, DragEvent, FormEvent, KeyboardEvent, useRef, useState, useCallback } from 'react';
+import { ChangeEvent, DragEvent, FormEvent, KeyboardEvent, useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Square, Paperclip, X, AlertTriangle } from 'lucide-react';
+import { Square, Paperclip, X, AlertTriangle, Mic, MicOff } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useToast } from '../hooks/useToast';
 import { TextInput } from './chat/ChatComposer/TextInput';
 import { SendButton } from './chat/ChatComposer/SendButton';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 
 interface ChatComposerProps {
   draft: string;
@@ -73,6 +74,20 @@ export function ChatComposer({
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { showToast } = useToast();
+
+  const { startListening, stopListening, isListening, supported: speechSupported, transcript } = useSpeechRecognition();
+
+  const draftRef = useRef(draft);
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
+
+  useEffect(() => {
+    if (transcript) {
+      const currentDraft = draftRef.current;
+      setDraft(currentDraft ? `${currentDraft} ${transcript}` : transcript);
+    }
+  }, [transcript, setDraft]);
 
   const processImageFile = async (file: File) => {
     try {
@@ -210,6 +225,21 @@ export function ChatComposer({
             >
               <Paperclip size={17} />
             </button>
+
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={isListening ? stopListening : startListening}
+                disabled={isSending}
+                aria-label={isListening ? 'Zaustavi snimanje' : 'Govori'}
+                className={cn(
+                  'shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-vellum disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 cursor-pointer',
+                  isListening ? 'text-oxblood animate-pulse bg-oxblood/10' : 'text-ink-soft hover:text-ink'
+                )}
+              >
+                {isListening ? <MicOff size={17} /> : <Mic size={17} />}
+              </button>
+            )}
 
             <TextInput
               textareaRef={textareaRef}

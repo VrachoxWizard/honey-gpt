@@ -9,7 +9,7 @@ import { Invocation } from './components/Invocation';
 import { MessageList } from './components/MessageList';
 import { TypingIndicator } from './components/TypingIndicator';
 import { ChatComposer } from './components/ChatComposer';
-import { exportChatToMarkdown } from './utils/exportChat';
+import { exportChatToMarkdown, exportChatToPNG } from './utils/exportChat';
 import {
   clearShareFromLocation,
   readSharedChatFromLocation,
@@ -107,6 +107,23 @@ function AppContent() {
     showToast('Zapis prepisan u datoteku!', 'success');
   };
 
+  const handleDownloadImage = async () => {
+    const element = containerRef.current;
+    if (!element) {
+      showToast('Nemoguće dohvatiti prozor razgovora.', 'error');
+      return;
+    }
+
+    showToast('Pripremam sliku zapisa...', 'info');
+    const success = await exportChatToPNG(element);
+    if (success) {
+      showToast('Zapis uspješno spremljen kao slika!', 'success');
+    } else {
+      showToast('Greška prilikom izvoza slike.', 'error');
+    }
+    setSidebarOpen(false);
+  };
+
   const handleShare = async () => {
     const url = shareSession(activeSessionId);
     if (!url) {
@@ -166,6 +183,7 @@ function AppContent() {
         onNewChat={newChat}
         onExportChat={handleExport}
         onShareChat={handleShare}
+        onDownloadImage={handleDownloadImage}
         sessions={sessions}
         activeSessionId={activeSessionId}
         onSwitchSession={switchSession}

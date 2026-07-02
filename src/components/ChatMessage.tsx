@@ -1,4 +1,4 @@
-import { Check, Copy, Pencil, RefreshCcw } from 'lucide-react';
+import { Check, Copy, Pencil, RefreshCcw, Volume2, VolumeX } from 'lucide-react';
 import React, { useState } from 'react';
 import { cn } from '../utils/cn';
 import { useToast } from '../hooks/useToast';
@@ -6,6 +6,7 @@ import { useClipboard } from '../hooks/useClipboard';
 import { SaintPortrait } from './SaintPortrait';
 import type { Message } from '@shared/types';
 import { MessageContent } from './chat/MessageContent';
+import { useTextToSpeech } from '../hooks/useTextToSpeech';
 
 function CopyButton({ text }: { text: string }) {
   const { copied, copy } = useClipboard();
@@ -28,6 +29,23 @@ function CopyButton({ text }: { text: string }) {
       aria-label="Prepiši tekst"
     >
       {copied ? <Check size={13} className="text-gold-bright" /> : <Copy size={13} />}
+    </button>
+  );
+}
+
+function SpeechButton({ text }: { text: string }) {
+  const { speak, stop, isSpeaking, supported } = useTextToSpeech();
+  
+  if (!supported) return null;
+  
+  return (
+    <button
+      onClick={() => isSpeaking ? stop() : speak(text)}
+      className="p-1 text-ink-faint hover:text-ink rounded-md hover:bg-vellum/60 transition-colors select-none cursor-pointer"
+      title={isSpeaking ? 'Zaustavi čitanje' : 'Pročitaj naglas'}
+      aria-label={isSpeaking ? 'Zaustavi čitanje' : 'Pročitaj naglas'}
+    >
+      {isSpeaking ? <VolumeX size={13} className="text-oxblood" /> : <Volume2 size={13} />}
     </button>
   );
 }
@@ -84,6 +102,7 @@ export const ChatMessage = React.memo(function ChatMessage({
             )}
           >
             {!isWelcome && <CopyButton text={message.content} />}
+            {!isUser && <SpeechButton text={message.content} />}
             {isUser && (
               <button
                 onClick={() => {

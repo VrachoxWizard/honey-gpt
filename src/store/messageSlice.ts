@@ -109,6 +109,13 @@ export const createMessageSlice: StateCreator<
             'summaryFailed'
           );
         },
+        onRetry: () => {
+          updateActiveSessionMessages((currentMessages) =>
+            currentMessages.map((msg) =>
+              msg.id === assistantMessageId ? { ...msg, content: '' } : msg
+            )
+          );
+        },
       });
     } catch (requestError: unknown) {
       if (requestError instanceof Error && requestError.name === 'AbortError') {

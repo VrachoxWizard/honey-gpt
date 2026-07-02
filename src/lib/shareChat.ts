@@ -42,6 +42,7 @@ export function decodeSharedChat(encoded: string): SharedChatPayload | null {
 
 export function buildShareUrl(payload: SharedChatPayload): string {
   const url = new URL(window.location.href);
+  url.pathname = '/share';
   url.searchParams.set('share', encodeSharedChat(payload));
   return url.toString();
 }
@@ -58,5 +59,8 @@ export function clearShareFromLocation(): void {
   const url = new URL(window.location.href);
   if (!url.searchParams.has('share')) return;
   url.searchParams.delete('share');
+  if (url.pathname === '/share') {
+    url.pathname = '/';
+  }
   window.history.replaceState({}, '', url.pathname + url.search + url.hash);
 }

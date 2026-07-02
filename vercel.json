@@ -7,6 +7,12 @@
     },
     "api/health.ts": {
       "maxDuration": 10
+    },
+    "api/share.ts": {
+      "maxDuration": 10
+    },
+    "api/og.ts": {
+      "maxDuration": 10
     }
   },
   "headers": [
@@ -27,6 +33,14 @@
     {
       "source": "/api/health",
       "destination": "/api/health.ts"
+    },
+    {
+      "source": "/share",
+      "destination": "/api/share.ts"
+    },
+    {
+      "source": "/api/og",
+      "destination": "/api/og.ts"
     },
     {
       "source": "/((?!assets/|hanicar-the-genie.jpeg|manifest.json|robots.txt|sitemap.xml|sw.js).*)$",

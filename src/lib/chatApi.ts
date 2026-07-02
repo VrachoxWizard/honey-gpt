@@ -11,6 +11,7 @@ export interface SendConversationOptions {
   onModel: (model: string) => void;
   onRequestId?: (requestId: string) => void;
   onSummaryFailed?: () => void;
+  onRetry?: () => void;
 }
 
 export interface ServerStreamChunk {
@@ -153,6 +154,7 @@ export async function sendConversation(options: SendConversationOptions): Promis
           }
           lastError = error;
           if (attempt < RETRY_DELAYS_MS.length && isRetryableError(error)) {
+            options.onRetry?.();
             await sleep(RETRY_DELAYS_MS[attempt]);
             continue;
           }

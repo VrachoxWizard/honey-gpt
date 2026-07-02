@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, MouseEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Link2, Trash2, X } from 'lucide-react';
+import { Download, Image, Link2, Trash2, X } from 'lucide-react';
 import type { ChatSession } from '@shared/types';
 import type { ToneMode } from '../lib/codex';
 import { SidebarHeader } from './sidebar/SidebarHeader';
@@ -17,6 +17,7 @@ interface SidebarProps {
   onNewChat: () => void;
   onExportChat: () => void;
   onShareChat: () => void;
+  onDownloadImage: () => void;
   sessions: ChatSession[];
   activeSessionId?: string;
   onSwitchSession: (id: string) => void;
@@ -74,6 +75,7 @@ function SidebarBody({
   onNewChat,
   onExportChat,
   onShareChat,
+  onDownloadImage,
   sessions,
   activeSessionId,
   onSwitchSession,
@@ -146,6 +148,14 @@ function SidebarBody({
               className="p-1 text-ink-faint hover:text-ink transition-colors cursor-pointer"
             >
               <Download size={13} />
+            </button>
+            <button
+              onClick={onDownloadImage}
+              title="Preuzmi trenutni razgovor kao sliku"
+              aria-label="Preuzmi kao sliku"
+              className="p-1 text-ink-faint hover:text-ink transition-colors cursor-pointer"
+            >
+              <Image size={13} />
             </button>
             {sessions.length > 1 && (
               <button

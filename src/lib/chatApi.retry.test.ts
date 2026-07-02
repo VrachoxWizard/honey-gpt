@@ -33,6 +33,8 @@ describe('chatApi retry', () => {
 
     vi.stubGlobal('fetch', fetchMock);
 
+    const onRetryMock = vi.fn();
+
     const promise = sendConversation({
       messages: [{ role: 'user', content: 'Pozdrav' }],
       model: 'google/gemini-2.5-flash',
@@ -40,12 +42,14 @@ describe('chatApi retry', () => {
       signal: new AbortController().signal,
       onToken: () => {},
       onModel: () => {},
+      onRetry: onRetryMock,
     });
 
     await vi.runAllTimersAsync();
     await promise;
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(onRetryMock).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
 });
