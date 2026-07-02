@@ -51,7 +51,7 @@ export function SidebarHeader({
             onNewChat();
             onClose();
           }}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-oxblood text-seal font-ui text-xs font-semibold uppercase tracking-[0.14em] hover:brightness-110 transition-all cursor-pointer shadow-[0_3px_10px_rgba(60,12,8,0.25)]"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-oxblood text-seal font-ui text-xs font-semibold uppercase tracking-[0.14em] hover:brightness-110 transition-all cursor-pointer shadow-[0_3px_10px_rgba(60,12,8,0.25)] focus-visible:ring-2 focus-visible:ring-gold"
         >
           <Feather size={15} /> Novi zapis
         </button>
@@ -61,7 +61,7 @@ export function SidebarHeader({
             onClose();
           }}
           aria-label="Pretraži arhivu"
-          className="flex-none flex items-center justify-center w-[42px] py-2.5 rounded-xl bg-parchment-deep text-ink hover:text-oxblood border border-line transition-all cursor-pointer shadow-[0_3px_10px_rgba(60,12,8,0.1)]"
+          className="flex-none flex items-center justify-center w-[42px] py-2.5 rounded-xl bg-parchment-2 text-ink hover:text-oxblood border border-line transition-all cursor-pointer shadow-[0_3px_10px_rgba(60,12,8,0.1)] focus-visible:ring-2 focus-visible:ring-gold"
         >
           <Search size={15} />
         </button>

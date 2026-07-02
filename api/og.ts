@@ -58,8 +58,12 @@ export default async function handler(request: VercelRequest, response: VercelRe
       const decodedText = Buffer.from(padded, 'base64').toString('utf8');
       const payload = JSON.parse(decodedText);
       if (payload.messages && Array.isArray(payload.messages)) {
-        const userMsg = payload.messages.find((m: any) => m.role === 'user');
-        const assistantMsg = payload.messages.find((m: any) => m.role === 'assistant' && m.content);
+        const userMsg = payload.messages.find(
+          (m: { role: string; content?: string }) => m.role === 'user'
+        );
+        const assistantMsg = payload.messages.find(
+          (m: { role: string; content?: string }) => m.role === 'assistant' && m.content
+        );
         if (userMsg && userMsg.content) {
           userText = cleanMarkdown(userMsg.content);
         }

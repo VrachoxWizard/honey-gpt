@@ -33,7 +33,9 @@ export default async function handler(request: VercelRequest, response: VercelRe
     }
     if (payload.messages && Array.isArray(payload.messages) && payload.messages.length > 0) {
       // Find the first user message, otherwise first assistant message
-      const firstUserMsg = payload.messages.find((m: any) => m.role === 'user');
+      const firstUserMsg = payload.messages.find(
+        (m: { role: string; content?: string }) => m.role === 'user'
+      );
       const firstMsg = firstUserMsg || payload.messages[0];
       if (firstMsg && firstMsg.content) {
         description = firstMsg.content.substring(0, 150);

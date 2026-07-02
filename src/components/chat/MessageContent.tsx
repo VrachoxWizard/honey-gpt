@@ -2,6 +2,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useMemo, memo } from 'react';
 import { CodeBlock } from './CodeBlock';
+import type { Components } from 'react-markdown';
 
 interface MessageContentProps {
   content: string;
@@ -10,7 +11,7 @@ interface MessageContentProps {
 export const MessageContent = memo(function MessageContent({ content }: MessageContentProps) {
   const markdownComponents = useMemo(
     () => ({
-      code: CodeBlock as any,
+      code: CodeBlock as Components['code'],
     }),
     []
   );

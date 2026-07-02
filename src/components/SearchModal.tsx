@@ -63,10 +63,10 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            className="fixed top-[10%] left-1/2 -translate-x-1/2 w-[90%] max-w-xl bg-parchment-deep rounded-2xl shadow-2xl z-[101] overflow-hidden border border-gold/30 flex flex-col max-h-[80vh]"
+            className="fixed top-[10%] left-1/2 -translate-x-1/2 w-[90%] md:w-full max-w-xl bg-parchment-2 rounded-2xl shadow-2xl z-[101] overflow-hidden border border-gold/30 flex flex-col max-h-[80vh]"
           >
             {/* Search Input Area */}
-            <div className="relative p-4 border-b border-line/60 bg-parchment-100 flex items-center">
+            <div className="relative p-4 border-b border-line/60 bg-parchment flex items-center">
               <Search size={20} className="text-ink-soft absolute left-6" />
               <input
                 type="text"

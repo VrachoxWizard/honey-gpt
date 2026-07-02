@@ -275,21 +275,23 @@ function AppContent() {
             {isWelcomeView ? (
               <Invocation onSuggestionSelect={handleSuggestionSelect} />
             ) : (
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center text-ink-soft font-incipit">
-                    Otvaram zapise...
-                  </div>
-                }
-              >
-                <MessageList
-                  messages={displayMessages}
-                  lastAssistantMessageId={lastAssistantMessageId}
-                  onRegenerate={sharedView ? () => {} : regenerateLastResponse}
-                  onEdit={sharedView ? () => {} : editAndResend}
-                  scrollContainerRef={containerRef}
-                />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center text-ink-soft font-incipit">
+                      Otvaram zapise...
+                    </div>
+                  }
+                >
+                  <MessageList
+                    messages={displayMessages}
+                    lastAssistantMessageId={lastAssistantMessageId}
+                    onRegenerate={sharedView ? () => {} : regenerateLastResponse}
+                    onEdit={sharedView ? () => {} : editAndResend}
+                    scrollContainerRef={containerRef}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             )}
 
             {showTypingIndicator && <TypingIndicator />}

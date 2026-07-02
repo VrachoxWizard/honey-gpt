@@ -24,7 +24,7 @@ Object.defineProperty(window, 'localStorage', {
 import { vi } from 'vitest';
 
 vi.mock('idb-keyval', () => {
-  let store: Record<string, any> = {};
+  let store: Record<string, unknown> = {};
   return {
     get: vi.fn((key) => Promise.resolve(store[key])),
     set: vi.fn((key, val) => {

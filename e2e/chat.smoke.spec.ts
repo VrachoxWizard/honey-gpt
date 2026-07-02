@@ -108,3 +108,45 @@ test('navigating to /share?share=... and closing it redirects back to /', async 
   await page.getByRole('button', { name: 'Zatvori' }).click();
   await expect(page).toHaveURL('http://127.0.0.1:5173/');
 });
+
+test('opens search modal and searches sessions', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('/');
+  // Type something to create a message
+  const input = page.getByLabel('Upiši molbu');
+  await input.fill('Neka tajna poruka');
+  // Just setting draft and waiting won't save it to session without sending, but "Novi razgovor" title exists.
+  
+  // Click search in sidebar
+  await page.getByLabel('Pretraži arhivu').click();
+  const searchInput = page.getByPlaceholder(/Pretraži arhivu/i);
+  await expect(searchInput).toBeVisible();
+  
+  await searchInput.fill('razgovor');
+  // Should find "Novi razgovor" inside the modal
+  const modal = page.locator('div.fixed.z-\\[101\\]');
+  const result = modal.getByText('Novi razgovor');
+  await expect(result.first()).toBeVisible();
+  
+  // Click result
+  await result.first().click();
+  // Modal should close
+  await expect(searchInput).toHaveCount(0);
+});
+
+test('selects Zbor Građana and toggles Auto-TTS', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('/');
+  
+  // Choose concilium persona from PersonaSeals (role is radio)
+  await page.getByRole('radio', { name: /Zbor Građana/i }).click();
+  
+  // Find the Auto-TTS toggle button
+  // it has aria-label 'Uključi čitanje naglas'
+  const ttsBtn = page.getByLabel('Uključi čitanje naglas');
+  await expect(ttsBtn).toBeVisible();
+  await ttsBtn.click();
+  
+  // It should now be 'Isključi čitanje naglas'
+  await expect(page.getByLabel('Isključi čitanje naglas')).toBeVisible();
+});

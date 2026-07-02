@@ -35,7 +35,7 @@ describe('useChat', () => {
     };
 
     useChatStore.setState({
-      sessions: [defaultSession as any],
+      sessions: [defaultSession as import('@shared/types').ChatSession],
       activeSessionId: 'test-session-1',
       activeModel: 'google/gemini-2.5-flash',
       toneMode: 'sanctus',
