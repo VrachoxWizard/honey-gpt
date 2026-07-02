@@ -57,22 +57,43 @@ export function assertSafeUserContent(text: string): void {
   }
 }
 
-export function extractLatestUserText(
-  messages: Array<{ role: string; content: string | Array<{ type: string; text?: string }> }>
-): string {
-  const lastUser = [...messages].reverse().find((message) => message.role === 'user');
-  if (!lastUser) return '';
+type UserMessageInput = {
+  role: string;
+  content: string | Array<{ type: string; text?: string }>;
+};
 
-  if (typeof lastUser.content === 'string') {
-    return lastUser.content;
+export function extractUserTextFromMessage(message: UserMessageInput): string {
+  if (message.role !== 'user') return '';
+
+  if (typeof message.content === 'string') {
+    return message.content;
   }
 
-  if (Array.isArray(lastUser.content)) {
-    const textPart = lastUser.content.find((part) => part.type === 'text');
+  if (Array.isArray(message.content)) {
+    const textPart = message.content.find((part) => part.type === 'text');
     return textPart?.text ?? '';
   }
 
   return '';
+}
+
+export function extractLatestUserText(messages: UserMessageInput[]): string {
+  const lastUser = [...messages].reverse().find((message) => message.role === 'user');
+  if (!lastUser) return '';
+  return extractUserTextFromMessage(lastUser);
+}
+
+export function extractAllUserTexts(messages: UserMessageInput[]): string[] {
+  return messages
+    .filter((message) => message.role === 'user')
+    .map((message) => extractUserTextFromMessage(message))
+    .filter((text) => text.trim().length > 0);
+}
+
+export function assertSafeConversation(messages: UserMessageInput[]): void {
+  for (const text of extractAllUserTexts(messages)) {
+    assertSafeUserContent(text);
+  }
 }
 
 export function validateOptionalApiSecret(

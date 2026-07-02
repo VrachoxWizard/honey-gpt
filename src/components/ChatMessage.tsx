@@ -77,7 +77,11 @@ export const ChatMessage = React.memo(function ChatMessage({
     : null;
 
   return (
-    <div className="group w-full max-w-[720px] mx-auto animate-ink-in">
+    <article
+      role="listitem"
+      aria-label={isUser ? 'Korisnička poruka' : 'Odgovor Haničara'}
+      className="group w-full max-w-[720px] mx-auto animate-ink-in"
+    >
       <div
         className={cn('flex items-center gap-2.5 mb-2', isUser ? 'flex-row-reverse' : 'flex-row')}
       >
@@ -182,6 +186,6 @@ export const ChatMessage = React.memo(function ChatMessage({
           </div>
         </div>
       )}
-    </div>
+    </article>
   );
 });

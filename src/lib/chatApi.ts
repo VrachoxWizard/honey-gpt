@@ -44,13 +44,22 @@ function isRetryableError(error: Error): boolean {
   return /fetch|network|mrež|timeout|502|503|504/i.test(error.message);
 }
 
+function getChatHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const apiSecret = import.meta.env.VITE_API_SECRET;
+  if (apiSecret) {
+    headers['X-Api-Secret'] = apiSecret;
+  }
+  return headers;
+}
+
 async function makeChatRequest(
   endpoint: string,
   options: SendConversationOptions
 ): Promise<Response> {
   const response = await fetch(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getChatHeaders(),
     body: JSON.stringify({
       messages: options.messages,
       model: options.model,

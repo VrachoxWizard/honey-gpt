@@ -59,3 +59,24 @@ Sadržaj poruka se ne logira.
 - Frontend: `VITE_SENTRY_DSN`
 
 Oba su opcionalna.
+
+## API pristup (`/api/chat`)
+
+Endpoint `/api/chat` je namijenjen javnoj SPA aplikaciji. Bez `API_SECRET` bilo tko može slati zahtjeve i trošiti OpenRouter kredite — to je **svjesna odluka** za jednostavno korištenje bez prijave.
+
+Zaštita od zloupotrebe oslanja se na:
+
+- rate limit (20 req/min/IP)
+- dnevni token budget (`DAILY_TOKEN_BUDGET_PER_IP`)
+- CORS (`CORS_ORIGIN`)
+- model allowlist i moderaciju sadržaja
+
+### Opcionalni `API_SECRET`
+
+Ako postaviš `API_SECRET` u Vercel env vars, backend odbija zahtjeve bez zaglavlja `X-Api-Secret`. Frontend automatski šalje tajno vrijednost iz `VITE_API_SECRET` (mora biti ista vrijednost).
+
+**Napomena:** U SPA aplikaciji tajna u frontend bundleu nije prava sigurnost — štiti samo od površnog scrapinga, ne od određenog napadača. Za strožu kontrolu koristi Vercel Deployment Protection ili vlastiti auth sloj.
+
+### Produkcijski Redis
+
+U produkciji postavi `REQUIRE_REDIS=true` zajedno s Upstash varijablama. Bez Redisa, rate limit i cache rade samo in-memory po serverless instanci.

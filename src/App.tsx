@@ -30,6 +30,8 @@ import { ToastProvider } from './components/Toast';
 import { useToast } from './hooks/useToast';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useTextToSpeech } from './hooks/useTextToSpeech';
+import { useAppTheme } from './hooks/useAppTheme';
+import { useChatScroll } from './hooks/useChatScroll';
 import { cn } from './utils/cn';
 
 function AppContent() {
@@ -63,23 +65,15 @@ function AppContent() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { showToast } = useToast();
+  const { theme, toggleTheme } = useAppTheme();
 
-  const [theme, setTheme] = useState<'day' | 'night'>(() => {
-    if (typeof localStorage === 'undefined') return 'day';
-    const v = localStorage.getItem('hanicar_codex_theme');
-    if (v === 'day' || v === 'night') return v;
-    return localStorage.getItem('hanicar_gpt_theme') === 'dark' ? 'night' : 'day';
-  });
-
-  const [showScrollButton, setShowScrollButton] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isNearBottomRef = useRef(true);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('night', theme === 'night');
-    localStorage.setItem('hanicar_codex_theme', theme);
-  }, [theme]);
+  const liveAnnouncement = useMemo(() => {
+    const lastMsg = displayMessages[displayMessages.length - 1];
+    if (lastMsg?.role === 'assistant' && lastMsg.content) {
+      return lastMsg.content;
+    }
+    return '';
+  }, [displayMessages]);
 
   useEffect(() => {
     if (!summaryWarning) return;
@@ -106,6 +100,12 @@ function AppContent() {
     return !lastMsg || lastMsg.role !== 'assistant' || !lastMsg.content;
   }, [messages, isSending, sharedView]);
 
+  const { showScrollButton, scrollRef, containerRef, handleScroll, scrollToBottom } = useChatScroll(
+    displayMessages.length,
+    isSending,
+    showTypingIndicator
+  );
+
   const { speak } = useTextToSpeech();
   const autoSpeak = useChatStore((s) => s.autoSpeak);
   const previousIsSending = useRef(isSending);
@@ -119,12 +119,6 @@ function AppContent() {
     }
     previousIsSending.current = isSending;
   }, [isSending, autoSpeak, displayMessages, sharedView, speak]);
-
-  useEffect(() => {
-    if (isNearBottomRef.current) {
-      scrollRef.current?.scrollIntoView({ block: 'end' });
-    }
-  }, [displayMessages, isSending, showTypingIndicator]);
 
   const isWelcomeView = !sharedView && displayMessages.length <= 1;
 
@@ -189,18 +183,6 @@ function AppContent() {
     onHelp: () => setShortcutsOpen((p) => !p),
   });
 
-  const handleScroll = () => {
-    const container = containerRef.current;
-    if (!container) return;
-    const distanceFromBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
-    isNearBottomRef.current = distanceFromBottom < 48;
-    setShowScrollButton(distanceFromBottom > 260);
-  };
-
-  const scrollToBottom = () =>
-    scrollRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
-
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden relative">
       {/* Parchment fibre grain */}
@@ -212,7 +194,7 @@ function AppContent() {
         rite={toneMode}
         onChangeRite={setToneMode}
         theme={theme}
-        onToggleTheme={() => setTheme((t) => (t === 'day' ? 'night' : 'day'))}
+        onToggleTheme={toggleTheme}
         onNewChat={newChat}
         onSearch={() => setSearchOpen(true)}
         onExportChat={handleExport}
@@ -252,6 +234,9 @@ function AppContent() {
 
         {/* Reading area */}
         <main className="flex-1 flex flex-col min-h-0 relative">
+          <div aria-live="polite" aria-atomic="true" className="sr-only">
+            {liveAnnouncement}
+          </div>
           {sharedView && (
             <div className="shrink-0 px-4 py-2 bg-seal/20 border-b border-line text-center text-sm text-ink-soft">
               Samo za čitanje: dijeljeni razgovor «{sharedView.title}».

@@ -68,4 +68,42 @@ describe('chatApi', () => {
       })
     ).rejects.toThrow('Pad OpenRoutera');
   });
+
+  it('sends X-Api-Secret header when configured', async () => {
+    vi.stubEnv('VITE_API_SECRET', 'frontend-secret');
+
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('data: {"token":"ok"}\n\n'));
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+      },
+    });
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'Content-Type': 'text/event-stream' }),
+      body: stream,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await sendConversation({
+      messages: [{ role: 'user', content: 'Pozdrav' }],
+      model: 'google/gemini-2.5-flash',
+      toneMode: 'sanctus',
+      signal: new AbortController().signal,
+      onToken: () => {},
+      onModel: () => {},
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/chat',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'X-Api-Secret': 'frontend-secret',
+        }),
+      })
+    );
+  });
 });

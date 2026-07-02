@@ -8,7 +8,7 @@ test('loads app shell', async ({ page }) => {
 test('shows welcome and at least one session after bootstrap', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/');
-  await expect(page.getByText(/Mir s tobom, sine/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Mir s tobom, sine/i })).toBeVisible();
   await expect(page.getByText('Novi razgovor')).toBeVisible();
 });
 
@@ -132,6 +132,49 @@ test('opens search modal and searches sessions', async ({ page }) => {
   await result.first().click();
   // Modal should close
   await expect(searchInput).toHaveCount(0);
+});
+
+test('shows moderation block error from API', async ({ page }) => {
+  await page.route('**/api/chat', async (route) => {
+    await route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: 'Poruka nije dopuštena. Haničar ne može odgovoriti na ovakav sadržaj.',
+      }),
+    });
+  });
+
+  await page.goto('/');
+  await page.getByLabel('Upiši molbu').fill('test');
+  await page.getByLabel('Zapečati i pošalji').click();
+  await expect(page.getByRole('alert')).toContainText(/nije dopuštena/i);
+});
+
+test('shows rate limit error from API', async ({ page }) => {
+  await page.route('**/api/chat', async (route) => {
+    await route.fulfill({
+      status: 429,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Previše zahtjeva' }),
+    });
+  });
+
+  await page.goto('/');
+  await page.getByLabel('Upiši molbu').fill('test');
+  await page.getByLabel('Zapečati i pošalji').click();
+  await expect(page.getByRole('alert')).toContainText(/Previše molitvi/i);
+});
+
+test('shows network failure error', async ({ page }) => {
+  await page.route('**/api/chat', async (route) => {
+    await route.abort('failed');
+  });
+
+  await page.goto('/');
+  await page.getByLabel('Upiši molbu').fill('test');
+  await page.getByLabel('Zapečati i pošalji').click();
+  await expect(page.getByRole('alert')).toBeVisible();
 });
 
 test('selects Zbor Građana and toggles Auto-TTS', async ({ page }) => {

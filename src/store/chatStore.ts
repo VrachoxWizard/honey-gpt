@@ -15,6 +15,44 @@ type PersistedChatState = Pick<
   'sessions' | 'activeSessionId' | 'activeModel' | 'toneMode' | 'autoSpeak'
 >;
 
+export function migrateChatPersistedState(
+  persistedState: PersistedChatState,
+  version: number
+): PersistedChatState {
+  let migrated = persistedState;
+
+  if (version < 2) {
+    migrated = {
+      ...migrated,
+      sessions: (migrated.sessions ?? []).map((session: ChatSession) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { persona: _persona, ...rest } = session as ChatSession & {
+          persona?: unknown;
+        };
+        return rest;
+      }),
+    };
+  }
+
+  if (version < 3) {
+    migrated = {
+      ...migrated,
+      autoSpeak: migrated.autoSpeak ?? false,
+    };
+  }
+
+  if (!migrated.sessions?.length) {
+    const session = createDefaultSession();
+    migrated = {
+      ...migrated,
+      sessions: [session],
+      activeSessionId: session.id,
+    };
+  }
+
+  return migrated;
+}
+
 export const useChatStore = create<ChatState>()(
   devtools(
     persist(
@@ -26,34 +64,8 @@ export const useChatStore = create<ChatState>()(
         name: 'hanicar-chat-storage',
         storage: createJSONStorage(() => indexedDBStorage),
         version: 3,
-        migrate: (persistedState, version) => {
-          const state = persistedState as PersistedChatState;
-          let migrated = state;
-
-          if (version < 2) {
-            migrated = {
-              ...migrated,
-              sessions: (migrated.sessions ?? []).map((session: ChatSession) => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { persona: _persona, ...rest } = session as ChatSession & {
-                  persona?: unknown;
-                };
-                return rest;
-              }),
-            };
-          }
-
-          if (!migrated.sessions?.length) {
-            const session = createDefaultSession();
-            migrated = {
-              ...migrated,
-              sessions: [session],
-              activeSessionId: session.id,
-            };
-          }
-
-          return migrated;
-        },
+        migrate: (persistedState, version) =>
+          migrateChatPersistedState(persistedState as PersistedChatState, version),
 
         partialize: (state) => ({
           sessions: state.sessions,

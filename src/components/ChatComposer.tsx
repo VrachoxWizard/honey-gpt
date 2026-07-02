@@ -27,6 +27,13 @@ import { useChatStore } from '../store/chatStore';
 import { TextInput } from './chat/ChatComposer/TextInput';
 import { SendButton } from './chat/ChatComposer/SendButton';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { compressAndConvertImage } from './chat/ChatComposer/imageCompression';
+import {
+  isSupportedAttachment,
+  parseDocumentFile,
+  type AttachedDocument,
+} from './chat/ChatComposer/fileHandling';
+import { buildMessageWithDocument } from '../utils/documentAttachment';
 
 interface ChatComposerProps {
   draft: string;
@@ -35,51 +42,6 @@ interface ChatComposerProps {
   error: string;
   onSubmit: (content: string, image?: string) => void;
   onAbort: () => void;
-}
-
-function compressAndConvertImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          const maxDimension = 1024;
-
-          if (width > maxDimension || height > maxDimension) {
-            if (width > height) {
-              height = Math.round((height * maxDimension) / width);
-              width = maxDimension;
-            } else {
-              width = Math.round((width * maxDimension) / height);
-              height = maxDimension;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            resolve(event.target?.result as string);
-            return;
-          }
-
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.85));
-        } catch {
-          resolve(event.target?.result as string);
-        }
-      };
-      img.onerror = () => reject(new Error('Učitavanje slike nije uspjelo.'));
-      img.src = event.target?.result as string;
-    };
-    reader.onerror = () => reject(new Error('Čitanje datoteke nije uspjelo.'));
-    reader.readAsDataURL(file);
-  });
 }
 
 export function ChatComposer({
@@ -93,10 +55,7 @@ export function ChatComposer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
-  const [attachedDocument, setAttachedDocument] = useState<{
-    name: string;
-    content: string;
-  } | null>(null);
+  const [attachedDocument, setAttachedDocument] = useState<AttachedDocument | null>(null);
   const [isParsingDocument, setIsParsingDocument] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const { showToast } = useToast();
@@ -136,28 +95,33 @@ export function ChatComposer({
     }
   };
 
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type.startsWith('image/')) {
+  const processAttachmentFile = async (file: File) => {
+    const kind = isSupportedAttachment(file);
+    if (kind === 'image') {
       await processImageFile(file);
-    } else if (file.name.endsWith('.pdf') || file.name.endsWith('.txt')) {
+      return;
+    }
+
+    if (kind === 'document') {
       try {
         setIsParsingDocument(true);
-        const { parseFileContent } = await import('../utils/fileParser');
-        const content = await parseFileContent(file);
-        setAttachedDocument({ name: file.name, content });
+        setAttachedDocument(await parseDocumentFile(file));
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Greška prilikom obrade dokumenta.';
         showToast(message, 'error');
       } finally {
         setIsParsingDocument(false);
       }
-    } else {
-      showToast('Nepodržan format datoteke.', 'error');
+      return;
     }
 
+    showToast('Nepodržan format datoteke.', 'error');
+  };
+
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processAttachmentFile(file);
     e.target.value = '';
   };
 
@@ -168,7 +132,7 @@ export function ChatComposer({
       if (!draft.trim() && !attachedImage && !attachedDocument) return;
 
       const finalDraft = attachedDocument
-        ? `${draft.trim()}\n\n--- Priloženi dokument: ${attachedDocument.name} ---\n${attachedDocument.content}`
+        ? buildMessageWithDocument(draft, attachedDocument)
         : draft.trim();
 
       onSubmit(finalDraft, attachedImage || undefined);
@@ -208,24 +172,7 @@ export function ChatComposer({
     if (isSending) return;
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
-
-    if (file.type.startsWith('image/')) {
-      await processImageFile(file);
-    } else if (file.name.endsWith('.pdf') || file.name.endsWith('.txt')) {
-      try {
-        setIsParsingDocument(true);
-        const { parseFileContent } = await import('../utils/fileParser');
-        const content = await parseFileContent(file);
-        setAttachedDocument({ name: file.name, content });
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Greška prilikom obrade dokumenta.';
-        showToast(message, 'error');
-      } finally {
-        setIsParsingDocument(false);
-      }
-    } else {
-      showToast('Nepodržan format datoteke.', 'error');
-    }
+    await processAttachmentFile(file);
   };
 
   return (

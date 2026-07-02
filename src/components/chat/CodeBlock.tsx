@@ -8,6 +8,7 @@ function CopyBlockButton({ text }: { text: string }) {
   return (
     <button
       onClick={() => copy(text)}
+      aria-label={copied ? 'Kod je prepisan' : 'Prepiši kod u međuspremnik'}
       className="text-ink-soft hover:text-ink transition-colors flex items-center gap-1 cursor-pointer select-none font-ui text-[11px]"
     >
       {copied ? <Check size={12} className="text-gold-bright" /> : <Copy size={12} />}

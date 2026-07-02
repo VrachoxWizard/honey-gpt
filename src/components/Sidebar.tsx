@@ -7,6 +7,7 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { SidebarHeader } from './sidebar/SidebarHeader';
 import { ChatSearch } from './sidebar/ChatSearch';
 import { ChatList } from './sidebar/ChatList';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -35,7 +36,10 @@ export function Sidebar(props: SidebarProps) {
   return (
     <>
       {/* Desktop: persistent codex spine */}
-      <aside className="hidden md:flex flex-col w-[272px] shrink-0 bg-parchment-2/60 border-r border-line relative z-30">
+      <aside
+        aria-label="Povijest razgovora"
+        className="hidden md:flex flex-col w-[272px] shrink-0 bg-parchment-2/60 border-r border-line relative z-30"
+      >
         <SidebarBody {...props} />
       </aside>
 
@@ -98,6 +102,7 @@ function SidebarBody({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [filter, setFilter] = useState('');
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   const filteredSessions = useMemo(() => {
     if (!filter) return sessions;
@@ -122,15 +127,15 @@ function SidebarBody({
     setEditingId(null);
   }, []);
 
-  const handleClearAll = useCallback(
-    (e: MouseEvent) => {
-      e.stopPropagation();
-      if (window.confirm('Spaliti sve zapise? Ovo se ne može poništiti.')) {
-        onClearAllSessions();
-      }
-    },
-    [onClearAllSessions]
-  );
+  const handleClearAll = useCallback((e: MouseEvent) => {
+    e.stopPropagation();
+    setConfirmClearOpen(true);
+  }, []);
+
+  const handleConfirmClear = useCallback(() => {
+    onClearAllSessions();
+    setConfirmClearOpen(false);
+  }, [onClearAllSessions]);
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -210,6 +215,16 @@ function SidebarBody({
           onDelete={onDeleteSession}
         />
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmClearOpen}
+        title="Spaliti sve zapise?"
+        message="Ovo će trajno obrisati sve razgovore. Ova radnja se ne može poništiti."
+        confirmLabel="Spali sve"
+        cancelLabel="Odustani"
+        onConfirm={handleConfirmClear}
+        onCancel={() => setConfirmClearOpen(false)}
+      />
     </div>
   );
 }

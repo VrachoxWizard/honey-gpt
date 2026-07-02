@@ -5,8 +5,29 @@ import { welcomeMessage } from '../store/chatStore';
 import type { Message } from '@shared/types';
 
 const VIRTUALIZATION_THRESHOLD = 30;
-const ESTIMATED_MESSAGE_HEIGHT = 140;
+const MIN_MESSAGE_HEIGHT = 80;
+const MAX_MESSAGE_HEIGHT = 600;
+const BASE_MESSAGE_HEIGHT = 60;
+const CHARS_PER_LINE = 80;
+const LINE_HEIGHT = 22;
 const OVERSCAN = 4;
+
+function estimateMessageHeight(message: Message): number {
+  const content = typeof message.content === 'string' ? message.content : '';
+  const lines = Math.ceil(content.length / CHARS_PER_LINE);
+  return Math.max(
+    MIN_MESSAGE_HEIGHT,
+    Math.min(MAX_MESSAGE_HEIGHT, BASE_MESSAGE_HEIGHT + lines * LINE_HEIGHT)
+  );
+}
+
+function getMessageOffsets(messages: Message[]): number[] {
+  const offsets: number[] = [0];
+  for (const message of messages) {
+    offsets.push(offsets[offsets.length - 1] + estimateMessageHeight(message));
+  }
+  return offsets;
+}
 
 interface MessageListProps {
   messages: Message[];
@@ -51,6 +72,8 @@ export function MessageList({
     };
   }, [scrollContainerRef, shouldVirtualize, updateMeasurements, visible.length]);
 
+  const messageOffsets = useMemo(() => getMessageOffsets(visible), [visible]);
+
   const { startIndex, endIndex, topSpacer, bottomSpacer } = useMemo(() => {
     if (!shouldVirtualize) {
       return {
@@ -61,23 +84,38 @@ export function MessageList({
       };
     }
 
-    const start = Math.max(0, Math.floor(scrollTop / ESTIMATED_MESSAGE_HEIGHT) - OVERSCAN);
-    const visibleCount = Math.ceil(viewportHeight / ESTIMATED_MESSAGE_HEIGHT) + OVERSCAN * 2;
-    const end = Math.min(visible.length, start + visibleCount);
+    const totalHeight = messageOffsets[messageOffsets.length - 1] ?? 0;
+    let start = 0;
+    while (start < visible.length && messageOffsets[start + 1] <= scrollTop) {
+      start += 1;
+    }
+    start = Math.max(0, start - OVERSCAN);
+
+    const bottomEdge = scrollTop + viewportHeight;
+    let end = start;
+    while (end < visible.length && messageOffsets[end] < bottomEdge) {
+      end += 1;
+    }
+    end = Math.min(visible.length, end + OVERSCAN);
 
     return {
       startIndex: start,
       endIndex: end,
-      topSpacer: start * ESTIMATED_MESSAGE_HEIGHT,
-      bottomSpacer: Math.max(0, (visible.length - end) * ESTIMATED_MESSAGE_HEIGHT),
+      topSpacer: messageOffsets[start] ?? 0,
+      bottomSpacer: Math.max(0, totalHeight - (messageOffsets[end] ?? totalHeight)),
     };
-  }, [shouldVirtualize, scrollTop, viewportHeight, visible.length]);
+  }, [shouldVirtualize, scrollTop, viewportHeight, visible.length, messageOffsets]);
 
   const renderedMessages = shouldVirtualize ? visible.slice(startIndex, endIndex) : visible;
 
   return (
     <AnimatePresence initial={false}>
-      <div ref={fallbackRef} className="space-y-10 w-full">
+      <div
+        ref={fallbackRef}
+        role="list"
+        aria-label="Poruke razgovora"
+        className="space-y-10 w-full"
+      >
         {shouldVirtualize && topSpacer > 0 && <div aria-hidden style={{ height: topSpacer }} />}
         {renderedMessages.map((message) => (
           <ChatMessage

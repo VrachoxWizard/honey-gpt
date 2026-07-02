@@ -3,8 +3,8 @@ import { streamHanicarReply } from './hanicar.js';
 import { resolveRiskLevel } from './moderation.js';
 import { validateRequestedModel } from './models.js';
 import {
-  assertSafeUserContent,
-  classifyRiskLevel,
+  assertSafeConversation,
+  extractAllUserTexts,
   extractLatestUserText,
   isValidImageDataUrl,
 } from './security.js';
@@ -55,7 +55,9 @@ const imageUrlSchema = z
 const MessagePartSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('text'),
-    text: z.string(),
+    text: z.string().max(CONSTANTS.MAX_MESSAGE_CHARS, {
+      message: `Tekst poruke prelazi dozvoljenu duljinu (${CONSTANTS.MAX_MESSAGE_CHARS} znakova).`,
+    }),
   }),
   z.object({
     type: z.literal('image_url'),
@@ -71,7 +73,9 @@ const ChatPayloadSchema = z.object({
       z.object({
         role: z.enum(['user', 'assistant']),
         content: z.union([
-          z.string().max(100000, 'Tekst poruke prelazi dozvoljenu duljinu (100k znakova).'),
+          z.string().max(CONSTANTS.MAX_MESSAGE_CHARS, {
+            message: `Tekst poruke prelazi dozvoljenu duljinu (${CONSTANTS.MAX_MESSAGE_CHARS} znakova).`,
+          }),
           z.array(MessagePartSchema),
         ]),
       })
@@ -108,22 +112,30 @@ export function validateAndParsePayload(payload: unknown) {
   }
 
   const validatedModel = validateRequestedModel(result.data.model);
+  assertSafeConversation(result.data.messages);
   const latestUserText = extractLatestUserText(result.data.messages);
-  assertSafeUserContent(latestUserText);
 
   return {
     ...result.data,
     model: validatedModel,
-    riskLevel: classifyRiskLevel(latestUserText),
     latestUserText,
   };
 }
 
 export async function resolvePayloadRiskLevel(
-  latestUserText: string
-): Promise<ReturnType<typeof classifyRiskLevel>> {
+  messages: Array<{ role: string; content: string | Array<{ type: string; text?: string }> }>
+): Promise<'safe' | 'caution' | 'block'> {
   const apiKey = getEnv().openRouterApiKey;
-  return resolveRiskLevel(latestUserText, apiKey);
+  const userTexts = extractAllUserTexts(messages);
+
+  let highest: 'safe' | 'caution' | 'block' = 'safe';
+  for (const text of userTexts) {
+    const risk = await resolveRiskLevel(text, apiKey);
+    if (risk === 'block') return 'block';
+    if (risk === 'caution') highest = 'caution';
+  }
+
+  return highest;
 }
 
 export async function handleChatPayloadStream(
@@ -132,7 +144,7 @@ export async function handleChatPayloadStream(
   context?: ChatStreamContext
 ) {
   const parsed = validateAndParsePayload(payload);
-  const riskLevel = await resolvePayloadRiskLevel(parsed.latestUserText);
+  const riskLevel = await resolvePayloadRiskLevel(parsed.messages);
 
   if (riskLevel === 'block') {
     throw httpError(400, 'Poruka nije dopuštena. Haničar ne može odgovoriti na ovakav sadržaj.');

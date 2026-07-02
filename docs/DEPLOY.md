@@ -18,17 +18,17 @@
 | `CORS_ORIGIN` | Ne | Dozvoljeni origin za `/api/chat` |
 | `UPSTASH_REDIS_REST_URL` | **Obavezno u produkciji** | Upstash Redis REST URL |
 | `UPSTASH_REDIS_REST_TOKEN` | **Obavezno u produkciji** | Upstash Redis token |
-| `REQUIRE_REDIS` | Preporučeno (`true`) | Odbija zahtjeve ako Redis nije konfiguriran |
-| `MODERATION_MODEL` | Preporučeno | Jeftin model za LLM moderaciju prije glavnog odgovora |
-| `SENTRY_DSN` | Ne | Error monitoring |
-| `API_SECRET` | Ne | Opcionalna zaštita API-ja |
+| `REQUIRE_REDIS` | **Preporučeno (`true`)** | Odbija zahtjeve ako Redis nije konfiguriran |
+| `API_SECRET` | Ne | Opcionalna zaštita API-ja (par s `VITE_API_SECRET` na frontendu) |
+| `VITE_API_SECRET` | Ne | Ista vrijednost kao `API_SECRET` — frontend šalje `X-Api-Secret` |
 
 ## Upstash Redis (obavezno za produkciju)
 
 1. Kreiraj Upstash Redis instancu.
 2. Kopiraj REST URL i token u Vercel env vars.
 3. Postavi `REQUIRE_REDIS=true` kako bi deploy odbijao zahtjeve bez distribuiranog rate limita.
-4. Bez Redisa, rate limit i cache rade samo in-memory po Vercel instanci.
+4. **Obavezno u produkciji:** `REQUIRE_REDIS=true` + Upstash varijable. Bez toga, efektivni rate limit raste s brojem serverless instanci.
+5. Bez Redisa, rate limit i cache rade samo in-memory po Vercel instanci.
 
 ## CI
 
