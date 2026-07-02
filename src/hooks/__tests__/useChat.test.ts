@@ -2,7 +2,6 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useChat, welcomeMessage } from '../useChat';
 import { useChatStore } from '../../store/chatStore';
-import type { ChatSession } from '@shared/types';
 
 describe('useChat', () => {
   let store: Record<string, string> = {};

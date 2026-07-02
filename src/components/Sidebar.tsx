@@ -15,6 +15,7 @@ interface SidebarProps {
   theme: 'day' | 'night';
   onToggleTheme: () => void;
   onNewChat: () => void;
+  onSearch: () => void;
   onExportChat: () => void;
   onShareChat: () => void;
   onDownloadImage: () => void;
@@ -73,6 +74,7 @@ function SidebarBody({
   rite,
   onChangeRite,
   onNewChat,
+  onSearch,
   onExportChat,
   onShareChat,
   onDownloadImage,
@@ -132,6 +134,7 @@ function SidebarBody({
     <div className="flex flex-col h-full min-h-0">
       <SidebarHeader
         onNewChat={onNewChat}
+        onSearch={onSearch}
         onClose={onClose}
         rite={rite}
         onChangeRite={onChangeRite}

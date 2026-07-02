@@ -1,15 +1,22 @@
-import { Feather } from 'lucide-react';
+import { Feather, Search } from 'lucide-react';
 import { PersonaSeals } from '../PersonaSeals';
 import type { ToneMode } from '@lib/codex';
 
 interface SidebarHeaderProps {
   onNewChat: () => void;
+  onSearch: () => void;
   onClose: () => void;
   rite: ToneMode;
   onChangeRite: (t: ToneMode) => void;
 }
 
-export function SidebarHeader({ onNewChat, onClose, rite, onChangeRite }: SidebarHeaderProps) {
+export function SidebarHeader({
+  onNewChat,
+  onSearch,
+  onClose,
+  rite,
+  onChangeRite,
+}: SidebarHeaderProps) {
   return (
     <div className="shrink-0 flex flex-col">
       {/* Saint — always watching */}
@@ -37,16 +44,26 @@ export function SidebarHeader({ onNewChat, onClose, rite, onChangeRite }: Sideba
 
       <div className="rule-gold mx-4 mb-3" />
 
-      {/* New Chat Button */}
-      <div className="px-4 mb-3">
+      {/* New Chat & Search Buttons */}
+      <div className="px-4 mb-3 flex items-center gap-2">
         <button
           onClick={() => {
             onNewChat();
             onClose();
           }}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-oxblood text-seal font-ui text-xs font-semibold uppercase tracking-[0.14em] hover:brightness-110 transition-all cursor-pointer shadow-[0_3px_10px_rgba(60,12,8,0.25)]"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-oxblood text-seal font-ui text-xs font-semibold uppercase tracking-[0.14em] hover:brightness-110 transition-all cursor-pointer shadow-[0_3px_10px_rgba(60,12,8,0.25)]"
         >
           <Feather size={15} /> Novi zapis
+        </button>
+        <button
+          onClick={() => {
+            onSearch();
+            onClose();
+          }}
+          aria-label="Pretraži arhivu"
+          className="flex-none flex items-center justify-center w-[42px] py-2.5 rounded-xl bg-parchment-deep text-ink hover:text-oxblood border border-line transition-all cursor-pointer shadow-[0_3px_10px_rgba(60,12,8,0.1)]"
+        >
+          <Search size={15} />
         </button>
       </div>
     </div>

@@ -9,9 +9,21 @@ import {
   useEffect,
 } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Square, Paperclip, X, AlertTriangle, Mic, MicOff, FileText, Loader2 } from 'lucide-react';
+import {
+  Square,
+  Paperclip,
+  X,
+  AlertTriangle,
+  Mic,
+  MicOff,
+  FileText,
+  Loader2,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useToast } from '../hooks/useToast';
+import { useChatStore } from '../store/chatStore';
 import { TextInput } from './chat/ChatComposer/TextInput';
 import { SendButton } from './chat/ChatComposer/SendButton';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
@@ -88,6 +100,9 @@ export function ChatComposer({
   const [isParsingDocument, setIsParsingDocument] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const { showToast } = useToast();
+
+  const autoSpeak = useChatStore((s) => s.autoSpeak);
+  const setAutoSpeak = useChatStore((s) => s.setAutoSpeak);
 
   const {
     startListening,
@@ -333,6 +348,18 @@ export function ChatComposer({
                 {isListening ? <MicOff size={17} /> : <Mic size={17} />}
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={() => setAutoSpeak(!autoSpeak)}
+              aria-label={autoSpeak ? 'Isključi čitanje naglas' : 'Uključi čitanje naglas'}
+              className={cn(
+                'shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-vellum transition-colors mb-0.5 cursor-pointer',
+                autoSpeak ? 'text-gold' : 'text-ink-soft hover:text-ink'
+              )}
+            >
+              {autoSpeak ? <Volume2 size={17} /> : <VolumeX size={17} />}
+            </button>
 
             <TextInput
               textareaRef={textareaRef}

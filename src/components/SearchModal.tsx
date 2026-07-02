@@ -1,0 +1,147 @@
+import { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, X, MessageSquare, Calendar } from 'lucide-react';
+import Fuse from 'fuse.js';
+import { useChatStore } from '../store/chatStore';
+
+interface SearchModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectSession: (id: string) => void;
+}
+
+export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalProps) {
+  const sessions = useChatStore((s) => s.sessions);
+  const [query, setQuery] = useState('');
+
+  // Setup Fuse for searching sessions and messages
+  const fuse = useMemo(() => {
+    return new Fuse(sessions, {
+      keys: ['title', 'messages.content'],
+      threshold: 0.3,
+      ignoreLocation: true,
+      includeMatches: true,
+      useExtendedSearch: true,
+    });
+  }, [sessions]);
+
+  const results = useMemo(() => {
+    if (!query.trim()) return [];
+    return fuse.search(query).slice(0, 10);
+  }, [query, fuse]);
+
+  useEffect(() => {
+    // Resetiramo query samo ako je modal otvoren (pomoću timeouta kako bi izbjegli synchronous state update)
+    if (isOpen) {
+      const t = setTimeout(() => setQuery(''), 0);
+      return () => clearTimeout(t);
+    }
+  }, [isOpen]);
+
+  // Handle ESC key inside the modal
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-oxblood-deep/60 backdrop-blur-sm z-[100]"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -20 }}
+            className="fixed top-[10%] left-1/2 -translate-x-1/2 w-[90%] max-w-xl bg-parchment-deep rounded-2xl shadow-2xl z-[101] overflow-hidden border border-gold/30 flex flex-col max-h-[80vh]"
+          >
+            {/* Search Input Area */}
+            <div className="relative p-4 border-b border-line/60 bg-parchment-100 flex items-center">
+              <Search size={20} className="text-ink-soft absolute left-6" />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Pretraži arhivu (naslove i poruke)..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full bg-transparent pl-10 pr-10 py-2 outline-none font-ui text-ink text-lg placeholder-ink-faint"
+              />
+              <button
+                onClick={onClose}
+                className="absolute right-6 p-1 text-ink-soft hover:text-oxblood transition-colors cursor-pointer rounded-full hover:bg-black/5"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Results Area */}
+            <div className="overflow-y-auto scrollbar-thin p-2 min-h-[100px]">
+              {query.trim() && results.length === 0 ? (
+                <div className="text-center py-10 text-ink-soft italic text-sm">
+                  Ništa nismo pronašli u arhivu za &quot;{query}&quot;.
+                </div>
+              ) : !query.trim() ? (
+                <div className="text-center py-10 text-ink-soft italic text-sm">
+                  Upiši pojam za pretragu starih razgovora...
+                </div>
+              ) : (
+                <ul className="flex flex-col gap-1">
+                  {results.map(({ item, matches }) => {
+                    // Try to find the first message match snippet
+                    const messageMatch = matches?.find((m) => m.key === 'messages.content');
+                    let snippet = '';
+                    if (messageMatch && messageMatch.value) {
+                      snippet = messageMatch.value.substring(0, 100);
+                      if (messageMatch.value.length > 100) snippet += '...';
+                    }
+
+                    return (
+                      <li key={item.id}>
+                        <button
+                          onClick={() => {
+                            onSelectSession(item.id);
+                            onClose();
+                          }}
+                          className="w-full text-left p-3 rounded-xl hover:bg-seal/10 transition-colors flex flex-col gap-1 cursor-pointer group"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-ui font-semibold text-ink group-hover:text-oxblood transition-colors line-clamp-1">
+                              {item.title}
+                            </span>
+                            <span className="text-[10px] uppercase font-ui tracking-wider text-ink-faint flex items-center gap-1 shrink-0">
+                              <Calendar size={10} />
+                              {new Date(item.createdAt).toLocaleDateString('hr-HR')}
+                            </span>
+                          </div>
+                          {snippet ? (
+                            <p className="text-xs text-ink-soft line-clamp-2 italic">
+                              &quot;{snippet}&quot;
+                            </p>
+                          ) : (
+                            <p className="text-xs text-ink-faint flex items-center gap-1">
+                              <MessageSquare size={12} /> {item.messages.length} poruka
+                            </p>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}

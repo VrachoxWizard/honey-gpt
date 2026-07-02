@@ -16,6 +16,9 @@ const MessageList = lazy(() =>
 const KeyboardShortcutsModal = lazy(() =>
   import('./components/KeyboardShortcutsModal').then((m) => ({ default: m.KeyboardShortcutsModal }))
 );
+const SearchModal = lazy(() =>
+  import('./components/SearchModal').then((m) => ({ default: m.SearchModal }))
+);
 import {
   clearShareFromLocation,
   readSharedChatFromLocation,
@@ -26,6 +29,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './components/Toast';
 import { useToast } from './hooks/useToast';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useTextToSpeech } from './hooks/useTextToSpeech';
 import { cn } from './utils/cn';
 
 function AppContent() {
@@ -57,6 +61,7 @@ function AppContent() {
   const [draft, setDraft] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const { showToast } = useToast();
 
   const [theme, setTheme] = useState<'day' | 'night'>(() => {
@@ -100,6 +105,20 @@ function AppContent() {
     const lastMsg = messages[messages.length - 1];
     return !lastMsg || lastMsg.role !== 'assistant' || !lastMsg.content;
   }, [messages, isSending, sharedView]);
+
+  const { speak } = useTextToSpeech();
+  const autoSpeak = useChatStore((s) => s.autoSpeak);
+  const previousIsSending = useRef(isSending);
+
+  useEffect(() => {
+    if (previousIsSending.current && !isSending && autoSpeak && !sharedView) {
+      const lastMsg = displayMessages[displayMessages.length - 1];
+      if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content) {
+        speak(lastMsg.content);
+      }
+    }
+    previousIsSending.current = isSending;
+  }, [isSending, autoSpeak, displayMessages, sharedView, speak]);
 
   useEffect(() => {
     if (isNearBottomRef.current) {
@@ -159,12 +178,13 @@ function AppContent() {
   };
 
   useKeyboardShortcuts({
-    onSearch: () => setSidebarOpen((p) => !p),
+    onSearch: () => setSearchOpen((p) => !p),
     onNewChat: newChat,
     onExport: handleExport,
     onClose: () => {
       setSidebarOpen(false);
       setShortcutsOpen(false);
+      setSearchOpen(false);
     },
     onHelp: () => setShortcutsOpen((p) => !p),
   });
@@ -194,6 +214,7 @@ function AppContent() {
         theme={theme}
         onToggleTheme={() => setTheme((t) => (t === 'day' ? 'night' : 'day'))}
         onNewChat={newChat}
+        onSearch={() => setSearchOpen(true)}
         onExportChat={handleExport}
         onShareChat={handleShare}
         onDownloadImage={handleDownloadImage}
@@ -305,6 +326,11 @@ function AppContent() {
 
       <Suspense fallback={null}>
         <KeyboardShortcutsModal isOpen={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+        <SearchModal
+          isOpen={searchOpen}
+          onClose={() => setSearchOpen(false)}
+          onSelectSession={switchSession}
+        />
       </Suspense>
     </div>
   );

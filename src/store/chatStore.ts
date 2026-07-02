@@ -12,7 +12,7 @@ export * from './messageSlice';
 
 type PersistedChatState = Pick<
   ChatState,
-  'sessions' | 'activeSessionId' | 'activeModel' | 'toneMode'
+  'sessions' | 'activeSessionId' | 'activeModel' | 'toneMode' | 'autoSpeak'
 >;
 
 export const useChatStore = create<ChatState>()(
@@ -60,6 +60,7 @@ export const useChatStore = create<ChatState>()(
           activeSessionId: state.activeSessionId,
           activeModel: state.activeModel,
           toneMode: state.toneMode,
+          autoSpeak: state.autoSpeak,
         }),
       }
     )

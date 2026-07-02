@@ -1,13 +1,14 @@
 import type { ToneMode } from '@lib/codex';
-import type { ChatSession } from '@shared/types';
 
 export interface ChatSlice {
   sessions: import('@shared/types').ChatSession[];
   activeSessionId: string;
   activeModel: string;
   toneMode: ToneMode;
+  autoSpeak: boolean;
   setActiveModel: (model: string) => void;
   setToneMode: (tone: ToneMode) => void;
+  setAutoSpeak: (val: boolean) => void;
   newChat: () => void;
   switchSession: (id: string) => void;
   deleteSession: (id: string) => void;

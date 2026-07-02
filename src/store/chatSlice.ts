@@ -32,9 +32,11 @@ export const createChatSlice: StateCreator<
   activeSessionId: '',
   activeModel: 'google/gemini-2.5-flash',
   toneMode: 'sanctus',
+  autoSpeak: false,
 
   setActiveModel: (model) => set({ activeModel: model }, false, 'setActiveModel'),
   setToneMode: (tone) => set({ toneMode: tone }, false, 'setToneMode'),
+  setAutoSpeak: (val) => set({ autoSpeak: val }, false, 'setAutoSpeak'),
 
   newChat: () => {
     get().abortGeneration();
