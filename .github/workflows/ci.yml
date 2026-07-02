@@ -20,6 +20,9 @@ jobs:
 
       - run: npm run verify
       - run: npm audit --audit-level=high
+      - run: npm run check:env-example
+      - run: npm run build
+      - run: npm run check:bundle
 
   e2e:
     runs-on: ubuntu-latest
@@ -35,3 +38,4 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - run: PLAYWRIGHT_PREVIEW=1 npm run test:e2e -- --project=preview
