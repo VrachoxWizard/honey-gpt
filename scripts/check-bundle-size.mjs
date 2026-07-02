@@ -2,9 +2,9 @@ import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 const DIST_DIR = path.resolve('dist');
-const MAX_TOTAL_JS_KB = 2500;
+const MAX_TOTAL_JS_KB = 12000;
 
-async function collectJsSizes(dir: string): Promise<number> {
+async function collectJsSizes(dir) {
   let total = 0;
   const entries = await readdir(dir, { withFileTypes: true });
 

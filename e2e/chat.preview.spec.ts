@@ -5,5 +5,5 @@ test('loads production preview build shell', async ({ page, baseURL }) => {
 
   await page.goto(baseURL ?? '/');
   await expect(page.locator('body')).toBeVisible();
-  await expect(page.getByText(/Mir s tobom/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Mir s tobom, sine/i })).toBeVisible();
 });
