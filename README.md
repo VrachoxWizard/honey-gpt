@@ -28,28 +28,49 @@ Otvori `http://127.0.0.1:5173`.
 
 - Build command: `npm run build`
 - Output directory: `dist`
-- Environment variable: `OPENROUTER_API_KEY`
+- Detaljan checklist: [`docs/DEPLOY.md`](docs/DEPLOY.md)
+
+### Obavezne environment varijable
+
+```bash
+OPENROUTER_API_KEY=sk-or-...
+```
+
+### Preporučene environment varijable
+
+```bash
+OPENROUTER_MODEL=google/gemini-2.5-flash
+OPENROUTER_MAX_TOKENS=2048
+OPENROUTER_FALLBACK_MODELS=meta-llama/llama-3.3-70b-instruct
+OPENROUTER_SITE_URL=https://honey-gpt.vercel.app
+OPENROUTER_APP_NAME=Hanicar-gpt
+CORS_ORIGIN=https://honey-gpt.vercel.app
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
+```
 
 Vercel automatski koristi `api/chat.ts` kao serverless rutu na `/api/chat`.
 
 ## Model
 
-Zadani jeftini model je:
+Zadani model je `google/gemini-2.5-flash`. Promjena ide kroz `OPENROUTER_MODEL`. Fallback modeli se postavljaju zarezom:
 
 ```bash
-OPENROUTER_MODEL=qwen/qwen3.5-flash-02-23
-OPENROUTER_MAX_TOKENS=2048
+OPENROUTER_FALLBACK_MODELS=meta-llama/llama-3.3-70b-instruct,google/gemini-2.5-pro
 ```
 
-Mozes ga promijeniti kroz `OPENROUTER_MODEL`. Opcionalno mozes dodati fallback modele odvojene zarezom:
+## Kvalitet i testiranje
 
 ```bash
-OPENROUTER_FALLBACK_MODELS=deepseek/deepseek-v4-flash,mistralai/mistral-small-2603
+npm run typecheck
+npm run lint
+npm run format:check
+npm test
+npm run test:coverage
 ```
 
-Za OpenRouter attribution mozes postaviti:
+CI workflow pokreće iste provjere na GitHub push/PR.
 
-```bash
-OPENROUTER_SITE_URL=https://honey-gpt.vercel.app
-OPENROUTER_APP_NAME=Hanicar-gpt
-```
+## Arhitektura
+
+Pogledaj [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).

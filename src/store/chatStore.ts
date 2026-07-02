@@ -17,6 +17,8 @@ export const useChatStore = create<ChatState>()(
       }),
       {
         name: 'hanicar-chat-storage',
+        version: 1,
+        migrate: (persistedState) => persistedState,
         partialize: (state) => ({
           sessions: state.sessions,
           activeSessionId: state.activeSessionId,

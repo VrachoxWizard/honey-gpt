@@ -148,7 +148,18 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       globals: true,
-      setupFiles: './src/setupTests.ts'
+      setupFiles: './src/setupTests.ts',
+      coverage: {
+        provider: 'v8',
+        include: ['server/**/*.ts', 'api/**/*.ts', 'shared/**/*.ts'],
+        exclude: ['**/*.test.ts', '**/*.d.ts'],
+        thresholds: {
+          lines: 55,
+          functions: 55,
+          statements: 55,
+          branches: 45,
+        },
+      },
     }
   } as import('vite').UserConfig & { test: any };
 });

@@ -21,7 +21,10 @@ function getChatEndpoints() {
   return configuredEndpoint ? [configuredEndpoint] : ['/api/chat'];
 }
 
-async function makeChatRequest(endpoint: string, options: SendConversationOptions): Promise<Response> {
+async function makeChatRequest(
+  endpoint: string,
+  options: SendConversationOptions
+): Promise<Response> {
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -42,7 +45,10 @@ async function makeChatRequest(endpoint: string, options: SendConversationOption
   return response;
 }
 
-async function streamChatResponse(response: Response, options: SendConversationOptions): Promise<void> {
+async function streamChatResponse(
+  response: Response,
+  options: SendConversationOptions
+): Promise<void> {
   const contentType = response.headers.get('Content-Type') || '';
 
   if (contentType.includes('text/event-stream')) {
@@ -50,17 +56,23 @@ async function streamChatResponse(response: Response, options: SendConversationO
     if (!reader) throw new Error('Streaming body is empty.');
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
+    let streamError: Error | null = null;
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
       buffer = parseSSEChunks<ServerStreamChunk>(buffer, (data) => {
-        if (data.error) throw new Error(data.error);
+        if (data.error) {
+          streamError = new Error(data.error);
+          return;
+        }
         if (data.token) options.onToken(data.token);
         if (data.model) options.onModel(data.model);
       });
     }
+
+    if (streamError) throw streamError;
   } else {
     const payload = await response.json();
     if (!payload.text) throw new Error('Odgovor nema tekst.');

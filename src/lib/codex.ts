@@ -1,4 +1,11 @@
-export type ToneMode = 'humilis' | 'clericus' | 'sanctus';
+import type { ToneMode } from '@shared/types';
+import {
+  ALLOWED_MODELS,
+  MODEL_DISPLAY_NAMES,
+  modelDisplayName as sharedModelDisplayName,
+} from '@shared/models';
+
+export type { ToneMode };
 
 export interface Rite {
   key: ToneMode;
@@ -37,21 +44,11 @@ export const RITES: Rite[] = [
   },
 ];
 
-export const riteOf = (key: ToneMode): Rite =>
-  RITES.find((r) => r.key === key) ?? RITES[0];
+export const riteOf = (key: ToneMode): Rite => RITES.find((r) => r.key === key) ?? RITES[0];
 
-export const AVAILABLE_MODELS = [
-  { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
-  { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B' },
-  { id: 'qwen/qwen-2.5-coder-32b-instruct', name: 'Qwen 2.5 Coder' },
-  { id: 'google/gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
-  { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1' },
-];
+export const AVAILABLE_MODELS = ALLOWED_MODELS.map((id) => ({
+  id,
+  name: MODEL_DISPLAY_NAMES[id] ?? id,
+}));
 
-export const modelDisplayName = (id: string): string => {
-  const known = AVAILABLE_MODELS.find((m) => m.id === id);
-  if (known) return known.name;
-  return id
-    .replace(/^(google\/|qwen\/|meta-llama\/|deepseek\/|mistralai\/)/, '')
-    .split(':')[0];
-};
+export const modelDisplayName = sharedModelDisplayName;

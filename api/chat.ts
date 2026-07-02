@@ -1,6 +1,9 @@
 import { handleChatPayloadStream, toClientError } from '../server/api.js';
 import { checkRateLimit, getClientIp } from '../server/limiter.js';
-import { checkEnv } from '../server/env.js';
+import { checkEnv, getEnv, warnIfProductionWithoutRedis } from '../server/env.js';
+import { createRequestId, createRequestLogger } from '../server/logger.js';
+import { validateOptionalApiSecret } from '../server/security.js';
+import { captureException, initMonitoring } from '../server/monitoring.js';
 
 type VercelRequest = {
   method?: string;
@@ -18,11 +21,28 @@ type VercelResponse = {
   writeHead(statusCode: number, headers: Record<string, string>): void;
 };
 
+let monitoringReady: Promise<void> | null = null;
+
+function ensureMonitoring(): Promise<void> {
+  if (!monitoringReady) {
+    monitoringReady = initMonitoring();
+  }
+  return monitoringReady;
+}
+
 export default async function handler(request: VercelRequest, response: VercelResponse) {
-  const allowedOrigin = process.env.CORS_ORIGIN || 'https://honey-gpt.vercel.app';
-  response.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  await ensureMonitoring();
+  warnIfProductionWithoutRedis();
+
+  const requestId = createRequestId();
+  const logger = createRequestLogger(requestId);
+  const startedAt = Date.now();
+  const env = getEnv();
+
+  response.setHeader('Access-Control-Allow-Origin', env.corsOrigin);
   response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Api-Secret');
+  response.setHeader('X-Request-Id', requestId);
 
   if (request.method === 'OPTIONS') {
     response.status(204).end();
@@ -36,6 +56,7 @@ export default async function handler(request: VercelRequest, response: VercelRe
 
   try {
     checkEnv();
+    validateOptionalApiSecret(request.headers || {}, env.apiSecret);
   } catch (error) {
     const clientError = toClientError(error);
     response.status(clientError.statusCode).json({ error: clientError.message });
@@ -60,8 +81,8 @@ export default async function handler(request: VercelRequest, response: VercelRe
   try {
     response.writeHead(200, {
       'Content-Type': 'text/event-stream; charset=utf-8',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      'Cache-Control': 'no-cache, no-store',
+      Connection: 'keep-alive',
     });
 
     await handleChatPayloadStream(request.body, (chunk) => {
@@ -70,8 +91,20 @@ export default async function handler(request: VercelRequest, response: VercelRe
 
     response.write('data: [DONE]\n\n');
     response.end();
+
+    logger.info('Chat request completed', {
+      latencyMs: Date.now() - startedAt,
+      clientIp,
+    });
   } catch (error) {
     const clientError = toClientError(error);
+    logger.error('Chat request failed', {
+      latencyMs: Date.now() - startedAt,
+      statusCode: clientError.statusCode,
+      clientIp,
+    });
+    await captureException(error, { requestId });
+
     try {
       response.write(`data: ${JSON.stringify({ error: clientError.message })}\n\n`);
       response.end();

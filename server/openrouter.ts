@@ -1,5 +1,6 @@
 import ky from 'ky';
 import { CONSTANTS } from './constants.js';
+import { getEnv } from './env.js';
 import { parseSSEChunks, type OpenRouterStreamChunk } from './sse-parser.js';
 
 export interface OpenRouterResponse {
@@ -11,6 +12,17 @@ export interface OpenRouterResponse {
     };
   }>;
   model: string;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
+}
+
+export interface StreamOpenRouterOptions {
+  temperature?: number;
+  maxTokens?: number;
+  onUsage?: (usage: NonNullable<OpenRouterResponse['usage']>) => void;
 }
 
 export function isConfiguredOpenRouterKey(apiKey: string | undefined): boolean {
@@ -27,55 +39,36 @@ export function isQuotaLikeError(message: string): boolean {
   return /\b(429|quota|rate limit|credits|payment|required)\b/i.test(message);
 }
 
-export async function callOpenRouter(
-  apiKey: string,
-  model: string,
-  messages: any[]
-): Promise<OpenRouterResponse> {
-  return ky
-    .post(CONSTANTS.OPENROUTER_URL, {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://honey-gpt.vercel.app',
-        'X-Title': 'Haničar GPT',
-      },
-      json: {
-        model,
-        messages,
-        max_tokens: CONSTANTS.DEFAULT_MAX_TOKENS,
-        temperature: CONSTANTS.LLM_TEMPERATURE,
-      },
-      timeout: CONSTANTS.SYNC_TIMEOUT_MS,
-      retry: { 
-        limit: 3, 
-        methods: ['post'],
-        statusCodes: [429, 500, 502, 503, 504],
-        delay: (attemptCount) => 0.5 * (2 ** (attemptCount - 1)) * 1000
-      },
-    })
-    .json<OpenRouterResponse>();
+function getOpenRouterHeaders(apiKey: string): Record<string, string> {
+  const env = getEnv();
+  return {
+    Authorization: `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+    'HTTP-Referer': env.siteUrl,
+    'X-Title': env.appName,
+  };
 }
 
 export async function streamOpenRouter(
   apiKey: string,
   model: string,
-  messages: any[],
-  onChunk: (chunk: { token?: string; model?: string }) => void
+  messages: unknown[],
+  onChunk: (chunk: { token?: string; model?: string }) => void,
+  options: StreamOpenRouterOptions = {}
 ): Promise<string> {
+  const env = getEnv();
+  const temperature = options.temperature ?? CONSTANTS.LLM_TEMPERATURE;
+  const maxTokens = options.maxTokens ?? env.maxTokens;
+
   const response = await ky.post(CONSTANTS.OPENROUTER_URL, {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://honey-gpt.vercel.app',
-      'X-Title': 'Haničar GPT',
-    },
+    headers: getOpenRouterHeaders(apiKey),
     json: {
       model,
       messages,
-      max_tokens: CONSTANTS.DEFAULT_MAX_TOKENS,
-      temperature: CONSTANTS.LLM_TEMPERATURE,
+      max_tokens: maxTokens,
+      temperature,
       stream: true,
+      stream_options: { include_usage: true },
     },
     timeout: CONSTANTS.STREAM_TIMEOUT_MS,
     retry: { limit: 0 },
@@ -95,22 +88,56 @@ export async function streamOpenRouter(
   const decoder = new TextDecoder();
   for await (const chunk of response.body as AsyncIterable<Uint8Array>) {
     sseBuffer += decoder.decode(chunk, { stream: true });
-    
-    sseBuffer = parseSSEChunks(sseBuffer, (payload: OpenRouterStreamChunk) => {
-      if (payload.error) {
-        throw new Error(payload.error);
+
+    sseBuffer = parseSSEChunks(
+      sseBuffer,
+      (payload: OpenRouterStreamChunk & { usage?: OpenRouterResponse['usage'] }) => {
+        if (payload.error) {
+          throw new Error(payload.error);
+        }
+        if (payload.usage && options.onUsage) {
+          options.onUsage(payload.usage);
+        }
+        if (payload.model && !modelEmitted) {
+          onChunk({ model: payload.model });
+          modelEmitted = true;
+        }
+        const token = payload.choices?.[0]?.delta?.content;
+        if (token) {
+          fullResponseText += token;
+          onChunk({ token });
+        }
       }
-      if (payload.model && !modelEmitted) {
-        onChunk({ model: payload.model });
-        modelEmitted = true;
-      }
-      const token = payload.choices?.[0]?.delta?.content;
-      if (token) {
-        fullResponseText += token;
-        onChunk({ token });
-      }
-    });
+    );
   }
 
   return fullResponseText;
+}
+
+export async function callOpenRouterSync(
+  apiKey: string,
+  model: string,
+  messages: unknown[],
+  options: StreamOpenRouterOptions = {}
+): Promise<OpenRouterResponse> {
+  const temperature = options.temperature ?? CONSTANTS.SUMMARIZATION_TEMPERATURE;
+  const maxTokens = options.maxTokens ?? CONSTANTS.SUMMARIZATION_MAX_TOKENS;
+
+  return ky
+    .post(CONSTANTS.OPENROUTER_URL, {
+      headers: getOpenRouterHeaders(apiKey),
+      json: {
+        model,
+        messages,
+        max_tokens: maxTokens,
+        temperature,
+      },
+      timeout: CONSTANTS.SYNC_TIMEOUT_MS,
+      retry: {
+        limit: 2,
+        methods: ['post'],
+        statusCodes: [429, 500, 502, 503, 504],
+      },
+    })
+    .json<OpenRouterResponse>();
 }

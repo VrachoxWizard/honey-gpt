@@ -4,9 +4,7 @@ import { validateAndParsePayload } from './api';
 describe('Backend payload validation', () => {
   it('should parse valid options and messages', () => {
     const payload = {
-      messages: [
-        { role: 'user', content: 'Pozdrav' }
-      ],
+      messages: [{ role: 'user', content: 'Pozdrav' }],
       model: 'google/gemini-2.5-flash',
       toneMode: 'clericus',
     };

@@ -1,5 +1,8 @@
 import { z } from 'zod';
 import { streamHanicarReply } from './hanicar.js';
+import { validateRequestedModel } from './models.js';
+import { assertSafeUserContent, extractLatestUserText } from './security.js';
+import { CONSTANTS } from './constants.js';
 import type { ChatMessage } from '@shared/types';
 
 export type ClientError = {
@@ -13,7 +16,6 @@ export function httpError(statusCode: number, message: string): Error & { status
   return err;
 }
 
-// Zod definicija sheme za dijelove poruke (tekst ili slika)
 const MessagePartSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('text'),
@@ -27,26 +29,37 @@ const MessagePartSchema = z.discriminatedUnion('type', [
   }),
 ]);
 
-// Zod definicija sheme za cijeli API zahtjev
 const ChatPayloadSchema = z.object({
-  messages: z.array(
-    z.object({
-      role: z.enum(['user', 'assistant']),
-      content: z.union([
-        z.string().max(100000, "Tekst poruke prelazi dozvoljenu duljinu (100k znakova)."), 
-        z.array(MessagePartSchema)
-      ]),
-    })
-  ).max(50, "Maksimalno 50 poruka je dopušteno po zahtjevu."),
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.union([
+          z.string().max(100000, 'Tekst poruke prelazi dozvoljenu duljinu (100k znakova).'),
+          z.array(MessagePartSchema),
+        ]),
+      })
+    )
+    .max(50, 'Maksimalno 50 poruka je dopušteno po zahtjevu.'),
   model: z.string().trim().optional(),
   toneMode: z.enum(['humilis', 'clericus', 'sanctus']).optional(),
 });
 
-/**
- * Validira payload koristenjem Zod sheme i vraca ociscene podatke.
- * Ako validacija ne uspije, baca standardnu HTTP 400 gresku.
- */
+export function assertPayloadSize(payload: unknown): void {
+  const serialized = typeof payload === 'string' ? payload : JSON.stringify(payload ?? {});
+  const byteLength = Buffer.byteLength(serialized, 'utf8');
+
+  if (byteLength > CONSTANTS.MAX_REQUEST_BODY_BYTES) {
+    throw httpError(
+      413,
+      'Zahtjev je prevelik. Skrati poruku ili ukloni veliku sliku prije slanja.'
+    );
+  }
+}
+
 export function validateAndParsePayload(payload: unknown) {
+  assertPayloadSize(payload);
+
   const result = ChatPayloadSchema.safeParse(payload);
 
   if (!result.success) {
@@ -56,10 +69,15 @@ export function validateAndParsePayload(payload: unknown) {
     throw httpError(400, friendlyMessage);
   }
 
-  return result.data;
+  const validatedModel = validateRequestedModel(result.data.model);
+  const latestUserText = extractLatestUserText(result.data.messages);
+  assertSafeUserContent(latestUserText);
+
+  return {
+    ...result.data,
+    model: validatedModel,
+  };
 }
-
-
 
 export async function handleChatPayloadStream(
   payload: unknown,

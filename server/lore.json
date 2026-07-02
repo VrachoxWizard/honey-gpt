@@ -39,5 +39,37 @@
       "Sine moj, tvoj kôd pati od dramatičnog manjka komentara i viška smrtnih grijeha.",
       "Restartaj server i prepusti to Gospodinu. Njegovi su putovi, kao i TCP/IP protokoli, nedokučivi."
     ]
+  },
+  {
+    "keywords": ["split", "dalmacija", "more", "ferata", "turisti", "riva", "dioklecijan"],
+    "phrases": [
+      "U Splitu se i modlitva čuje jače kad u pozadini netko vrišti na rivi zbog cijene sardina.",
+      "Dioklecijanova palača je bila prvi cloud server, a danas je turistički hotspot s vječnom gužvom.",
+      "More je blagoslov, ali parking u Splitu je ispitanje vjere koje ne bih poželio ni farizeju."
+    ]
+  },
+  {
+    "keywords": ["zagreb", "kaptol", "jarun", "tramvaj", "grič", "ban jelačić"],
+    "phrases": [
+      "Zagreb je grad gdje se duhovni mir traži između dva tramvaja i jednog propuštenog priključka.",
+      "Na Kaptolu se pečati potpisuju brže nego što se u centru pronađe slobodno mjesto za parkiranje.",
+      "Jarun je svetinja vikenda, ali i tamo netko sigurno radi u nedjelju — grijeh je velik."
+    ]
+  },
+  {
+    "keywords": ["crkva", "biskup", "papa", "sveta", "molitva", "post", "grijeh", "ispovijed", "duhovni"],
+    "phrases": [
+      "Svaka ispovijed bi trebala imati QR kod i potvrdu o primitku, ali srce mora ostati papirnato.",
+      "Grijeh je poput loše Wi-Fi lozinke: svi ga znaju, nitko ga ne mijenja na vrijeme.",
+      "Papa bi možda i odobrio tvoju ideju, ali prvo treba tri potpisana primjerka i pečat biskupije."
+    ]
+  },
+  {
+    "keywords": ["posao", "šef", "kolega", "sastanak", "remote", "home office", "deadline"],
+    "phrases": [
+      "Sastanak bez kvoruma je kao misa bez orgulja — tehnički moguće, ali duhovno prazno.",
+      "Remote rad je blagoslov, sve dok šef ne vidi da si u pidžami tijekom eukaristije na Zoomu.",
+      "Deadline je sekularni sudnji dan; pripremi dokumente dan ranije, u ime Oca i Excela."
+    ]
   }
 ]

@@ -1,7 +1,7 @@
 import { useClipboard } from '@hooks/useClipboard';
 import { ShikiHighlighter } from '../ShikiHighlighter';
 import { Check, Copy } from 'lucide-react';
-import { memo } from 'react';
+import { memo, type ReactNode } from 'react';
 
 function CopyBlockButton({ text }: { text: string }) {
   const { copied, copy } = useClipboard();
@@ -19,13 +19,18 @@ function CopyBlockButton({ text }: { text: string }) {
 interface CodeBlockProps {
   inline?: boolean;
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-export const CodeBlock = memo(function CodeBlock({ inline, className, children, ...props }: CodeBlockProps) {
+export const CodeBlock = memo(function CodeBlock({
+  inline,
+  className,
+  children,
+  ...props
+}: CodeBlockProps) {
   const match = /language-(\w+)/.exec(className || '');
   const codeString = String(children).replace(/\n$/, '');
-  
+
   if (!inline && match) {
     return (
       <div className="rounded-lg overflow-hidden my-4 border border-line not-prose">

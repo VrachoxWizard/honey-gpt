@@ -1,10 +1,11 @@
 import ky from 'ky';
-import { CONSTANTS } from './constants';
+import { CONSTANTS } from './constants.js';
+import { isRedisConfigured } from './env.js';
 
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+const redisUrl = () => process.env.UPSTASH_REDIS_REST_URL?.trim();
+const redisToken = () => process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
 
-export const isRedisEnabled = Boolean(redisUrl && redisToken);
+export const isRedisEnabled = isRedisConfigured;
 
 type RedisCommand = (string | number)[];
 interface RedisPipelineResult {
@@ -14,22 +15,24 @@ interface RedisPipelineResult {
 
 // Pomocni klijent za slanje zahtjeva Upstash REST API-ju
 async function runRedisCommands(commands: RedisCommand[]): Promise<unknown[]> {
-  if (!isRedisEnabled) {
+  if (!isRedisEnabled()) {
     throw new Error('Redis nije konfiguriran.');
   }
 
   try {
-    const response = await ky.post(`${redisUrl}/pipeline`, {
-      headers: {
-        Authorization: `Bearer ${redisToken}`,
-        'Content-Type': 'application/json',
-      },
-      json: commands,
-      timeout: CONSTANTS.REDIS_TIMEOUT_MS, // Kratki timeout da ne blokiramo korisnika ako Redis spava
-      retry: { limit: 1 },
-    }).json<RedisPipelineResult[]>();
+    const response = await ky
+      .post(`${redisUrl()}/pipeline`, {
+        headers: {
+          Authorization: `Bearer ${redisToken()}`,
+          'Content-Type': 'application/json',
+        },
+        json: commands,
+        timeout: CONSTANTS.REDIS_TIMEOUT_MS, // Kratki timeout da ne blokiramo korisnika ako Redis spava
+        retry: { limit: 1 },
+      })
+      .json<RedisPipelineResult[]>();
 
-    return response.map(res => {
+    return response.map((res) => {
       if (res.error) {
         throw new Error(res.error);
       }
@@ -45,12 +48,15 @@ async function runRedisCommands(commands: RedisCommand[]): Promise<unknown[]> {
  * Provjerava rate limit za zadani IP koristeci Redis.
  * Zadrzava isti limit od maksimalno 20 zahtjeva u minuti po IP-u.
  */
-export async function checkRateLimitRedis(ip: string, maxRequests = 20): Promise<{
+export async function checkRateLimitRedis(
+  ip: string,
+  maxRequests = 20
+): Promise<{
   allowed: boolean;
   remaining: number;
   resetTime: number;
 } | null> {
-  if (!isRedisEnabled) return null;
+  if (!isRedisEnabled()) return null;
 
   const now = Date.now();
   const currentMinute = Math.floor(now / 60000);
@@ -89,12 +95,10 @@ export async function checkRateLimitRedis(ip: string, maxRequests = 20): Promise
  * Dohvaca vrijednost iz Redis cachea.
  */
 export async function getCacheRedis(key: string): Promise<string | null> {
-  if (!isRedisEnabled) return null;
+  if (!isRedisEnabled()) return null;
 
   try {
-    const results = await runRedisCommands([
-      ['GET', `hanicar:cache:${key}`],
-    ]);
+    const results = await runRedisCommands([['GET', `hanicar:cache:${key}`]]);
     const result = results[0];
     return typeof result === 'string' ? result : null;
   } catch {
@@ -105,13 +109,15 @@ export async function getCacheRedis(key: string): Promise<string | null> {
 /**
  * Sprema vrijednost u Redis cache s trajanjem od 30 minuta (1800 sekundi).
  */
-export async function setCacheRedis(key: string, value: string, ttlSeconds = 1800): Promise<boolean> {
-  if (!isRedisEnabled) return false;
+export async function setCacheRedis(
+  key: string,
+  value: string,
+  ttlSeconds = 1800
+): Promise<boolean> {
+  if (!isRedisEnabled()) return false;
 
   try {
-    await runRedisCommands([
-      ['SET', `hanicar:cache:${key}`, value, 'EX', ttlSeconds],
-    ]);
+    await runRedisCommands([['SET', `hanicar:cache:${key}`, value, 'EX', ttlSeconds]]);
     return true;
   } catch {
     return false;

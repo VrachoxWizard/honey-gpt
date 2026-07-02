@@ -23,7 +23,7 @@ export function createDefaultSession(): ChatSession {
 
 export const createChatSlice: StateCreator<
   ChatState,
-  [["zustand/devtools", never], ["zustand/persist", unknown]],
+  [['zustand/devtools', never], ['zustand/persist', unknown]],
   [],
   ChatSlice
 > = (set, get) => ({
@@ -34,15 +34,19 @@ export const createChatSlice: StateCreator<
 
   setActiveModel: (model) => set({ activeModel: model }, false, 'setActiveModel'),
   setToneMode: (tone) => set({ toneMode: tone }, false, 'setToneMode'),
-  
+
   newChat: () => {
     get().abortGeneration();
     const session = createDefaultSession();
-    set((state) => ({
-      sessions: [session, ...state.sessions],
-      activeSessionId: session.id,
-      error: '',
-    }), false, 'newChat');
+    set(
+      (state) => ({
+        sessions: [session, ...state.sessions],
+        activeSessionId: session.id,
+        error: '',
+      }),
+      false,
+      'newChat'
+    );
   },
 
   switchSession: (id) => {
@@ -52,50 +56,70 @@ export const createChatSlice: StateCreator<
 
   deleteSession: (id) => {
     get().abortGeneration();
-    set((state) => {
-      const updatedSessions = state.sessions.filter((s) => s.id !== id);
-      let nextActiveId = state.activeSessionId;
+    set(
+      (state) => {
+        const updatedSessions = state.sessions.filter((s) => s.id !== id);
+        let nextActiveId = state.activeSessionId;
 
-      if (updatedSessions.length === 0) {
-        const defaultSession = createDefaultSession();
-        updatedSessions.push(defaultSession);
-        nextActiveId = defaultSession.id;
-      } else if (id === state.activeSessionId) {
-        nextActiveId = updatedSessions[0].id;
-      }
+        if (updatedSessions.length === 0) {
+          const defaultSession = createDefaultSession();
+          updatedSessions.push(defaultSession);
+          nextActiveId = defaultSession.id;
+        } else if (id === state.activeSessionId) {
+          nextActiveId = updatedSessions[0].id;
+        }
 
-      return {
-        sessions: updatedSessions,
-        activeSessionId: nextActiveId,
-      };
-    }, false, 'deleteSession');
+        return {
+          sessions: updatedSessions,
+          activeSessionId: nextActiveId,
+        };
+      },
+      false,
+      'deleteSession'
+    );
   },
 
   renameSession: (id, newTitle) => {
-    set((state) => ({
-      sessions: state.sessions.map((s) =>
-        s.id === id ? { ...s, title: newTitle } : s
-      )
-    }), false, 'renameSession');
+    set(
+      (state) => ({
+        sessions: state.sessions.map((s) => (s.id === id ? { ...s, title: newTitle } : s)),
+      }),
+      false,
+      'renameSession'
+    );
   },
 
   clearAllSessions: () => {
     get().abortGeneration();
     const session = createDefaultSession();
-    set({
-      sessions: [session],
-      activeSessionId: session.id,
-      error: '',
-    }, false, 'clearAllSessions');
+    set(
+      {
+        sessions: [session],
+        activeSessionId: session.id,
+        error: '',
+      },
+      false,
+      'clearAllSessions'
+    );
   },
 
   clearChat: () => {
     get().abortGeneration();
-    set((state) => {
-      const updatedSessions = state.sessions.map((s) =>
-        s.id === state.activeSessionId ? { ...s, title: DEFAULT_SESSION_TITLE, messages: [{ ...welcomeMessage, timestamp: Date.now() }] } : s
-      );
-      return { sessions: updatedSessions, error: '' };
-    }, false, 'clearChat');
+    set(
+      (state) => {
+        const updatedSessions = state.sessions.map((s) =>
+          s.id === state.activeSessionId
+            ? {
+                ...s,
+                title: DEFAULT_SESSION_TITLE,
+                messages: [{ ...welcomeMessage, timestamp: Date.now() }],
+              }
+            : s
+        );
+        return { sessions: updatedSessions, error: '' };
+      },
+      false,
+      'clearChat'
+    );
   },
 });

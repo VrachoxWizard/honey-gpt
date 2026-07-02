@@ -8,7 +8,7 @@ let abortController: AbortController | null = null;
 
 export const createMessageSlice: StateCreator<
   ChatState,
-  [["zustand/devtools", never], ["zustand/persist", unknown]],
+  [['zustand/devtools', never], ['zustand/persist', unknown]],
   [],
   MessageSlice
 > = (set, get) => {
@@ -23,8 +23,7 @@ export const createMessageSlice: StateCreator<
           const firstUserMsg = nextMsgs.find((m) => m.role === 'user');
           if (firstUserMsg) {
             nextTitle =
-              firstUserMsg.content.slice(0, 30) +
-              (firstUserMsg.content.length > 30 ? '...' : '');
+              firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '');
           }
         }
         return { ...s, messages: nextMsgs, title: nextTitle };
@@ -79,7 +78,7 @@ export const createMessageSlice: StateCreator<
 
     try {
       const { activeModel, toneMode } = get();
-      
+
       await sendConversation({
         messages: apiMessages,
         model: activeModel,
@@ -96,17 +95,20 @@ export const createMessageSlice: StateCreator<
           set({ activeModel: model }, false, 'updateActiveModel');
         },
       });
-
     } catch (requestError: unknown) {
       if (requestError instanceof Error && requestError.name === 'AbortError') {
         // Aborted, this is fine
       } else {
-        set({
-          error:
-            requestError instanceof Error
-              ? requestError.message
-              : 'Nešto se zapetljalo. Haničar trese lampu, ali ništa.',
-        }, false, 'executeSendError');
+        set(
+          {
+            error:
+              requestError instanceof Error
+                ? requestError.message
+                : 'Nešto se zapetljalo. Haničar trese lampu, ali ništa.',
+          },
+          false,
+          'executeSendError'
+        );
         updateActiveSessionMessages((currentMessages) =>
           currentMessages.filter((msg) => msg.id !== assistantMessageId)
         );
@@ -129,7 +131,7 @@ export const createMessageSlice: StateCreator<
       if (!content.trim() && !image) return;
       const activeSession = getActiveSession();
       if (!activeSession) return;
-      
+
       const nextMessages: Message[] = [
         ...activeSession.messages,
         {
@@ -162,13 +164,13 @@ export const createMessageSlice: StateCreator<
       const activeSession = getActiveSession();
       if (!activeSession) return;
       const { messages } = activeSession;
-      
+
       const index = messages.findIndex((m) => m.id === messageId);
       if (index === -1) return;
 
       const newMessages = messages.slice(0, index + 1);
       newMessages[index] = { ...newMessages[index], content: newContent };
-      
+
       await executeSend(newMessages);
     },
   };

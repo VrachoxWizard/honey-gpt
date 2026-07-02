@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { checkRateLimit, getClientIp } from './limiter';
 
 describe('Rate Limiter', () => {
-  it('should return client IP from headers', () => {
-    const headers = { 'x-forwarded-for': '1.2.3.4, 5.6.7.8' };
+  it('should prefer x-real-ip over x-forwarded-for', () => {
+    const headers = { 'x-real-ip': '8.8.8.8', 'x-forwarded-for': '1.2.3.4, 5.6.7.8' };
     const ip = getClientIp(headers);
-    expect(ip).toBe('1.2.3.4');
+    expect(ip).toBe('8.8.8.8');
   });
 
-  it('should fallback to x-real-ip if x-forwarded-for is missing', () => {
+  it('should fallback to x-forwarded-for when x-real-ip is missing', () => {
     const headers = { 'x-real-ip': '8.8.8.8' };
     const ip = getClientIp(headers);
     expect(ip).toBe('8.8.8.8');

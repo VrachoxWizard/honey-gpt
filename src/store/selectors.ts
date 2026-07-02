@@ -7,10 +7,10 @@ import type { ToneMode } from '@lib/codex';
 export const selectSessions = (state: ChatState): ChatSession[] => state.sessions;
 export const selectActiveSessionId = (state: ChatState): string | null => state.activeSessionId;
 
-export const selectActiveSession = (state: ChatState): ChatSession | undefined => 
-  state.sessions.find(s => s.id === state.activeSessionId);
+export const selectActiveSession = (state: ChatState): ChatSession | undefined =>
+  state.sessions.find((s) => s.id === state.activeSessionId);
 
-export const selectMessages = (state: ChatState): Message[] => 
+export const selectMessages = (state: ChatState): Message[] =>
   selectActiveSession(state)?.messages || [];
 
 export const selectIsSending = (state: ChatState): boolean => state.isSending;

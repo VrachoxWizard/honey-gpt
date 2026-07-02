@@ -72,13 +72,15 @@ export function getClientIp(
   headers: Record<string, string | string[] | undefined>,
   socketRemoteAddress?: string
 ): string {
+  const xRealIp = headers['x-real-ip'];
+  if (typeof xRealIp === 'string' && xRealIp.trim()) {
+    return xRealIp.trim();
+  }
+
   const xForwardedFor = headers['x-forwarded-for'];
   if (typeof xForwardedFor === 'string') {
     return xForwardedFor.split(',')[0].trim();
   }
-  const xRealIp = headers['x-real-ip'];
-  if (typeof xRealIp === 'string') {
-    return xRealIp;
-  }
+
   return socketRemoteAddress || '127.0.0.1';
 }

@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   detectSentiment,
   detectCodingOrLogic,
   buildSystemPrompt,
   buildOpenRouterMessages,
+  getSeasonalInstructions,
 } from './prompts';
 
 describe('Prompts / Sentiment & Coding Detection', () => {
@@ -67,14 +68,22 @@ describe('Prompts / Sentiment & Coding Detection', () => {
 
   describe('buildOpenRouterMessages', () => {
     it('should format message array with system prompt first', () => {
-      const messages = [
-        { role: 'user' as const, content: 'Pozdrav!' }
-      ];
+      const messages = [{ role: 'user' as const, content: 'Pozdrav!' }];
       const formatted = buildOpenRouterMessages(messages, 'sanctus');
       expect(formatted).toHaveLength(2);
       expect(formatted[0].role).toBe('system');
       expect(formatted[1].role).toBe('user');
-      expect(formatted[1].content).toBe('Pozdrav!');
+      expect(formatted[1].content).toContain('<user_message>');
+      expect(formatted[1].content).toContain('Pozdrav!');
+    });
+  });
+
+  describe('getSeasonalInstructions', () => {
+    it('returns seasonal context for known holidays', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-05-01T10:00:00'));
+      expect(getSeasonalInstructions()[0]).toContain('PRVI SVIBNJA');
+      vi.useRealTimers();
     });
   });
 });
