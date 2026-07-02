@@ -40,6 +40,8 @@ export default async function handler(request: VercelRequest, response: VercelRe
     ok: openRouterKeyConfigured,
     redis: isRedisConfigured(),
     openrouterKeyConfigured: openRouterKeyConfigured,
+    sentryConfigured: Boolean(env.sentryDsn),
+    requireRedis: env.requireRedis,
     version: '2.0.0',
   });
 }

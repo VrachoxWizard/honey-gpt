@@ -35,9 +35,13 @@ export default defineConfig(({ mode }) => {
         manifest: {
           name: 'Haničar GPT',
           short_name: 'Haničar',
-          description: 'Hrvatski satirični AI chatbot',
+          description:
+            'Haničar — satirični hrvatski AI ispovjednik. Povijest razgovora ostaje dostupna i offline.',
+          lang: 'hr',
           theme_color: '#e9dcbf',
           background_color: '#e9dcbf',
+          display: 'standalone',
+          orientation: 'portrait',
           icons: [
             {
               src: 'hanicar-the-genie.jpeg',

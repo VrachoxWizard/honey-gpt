@@ -394,6 +394,18 @@ html.night .dropcap > p:first-of-type::first-letter {
   animation: slide-up-fade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ── Reduced motion ────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ── Modal / overlay codex theme ──────────────────────────────────────── */
 .codex-modal {
   background-color: var(--parchment-2);

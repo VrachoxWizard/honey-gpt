@@ -1,15 +1,37 @@
 import type { Message } from '@shared/types';
 import { stripThinking } from './textUtils';
 
-export function exportChatToMarkdown(messages: Message[]) {
-  let content = '# Razgovor s Haničar GPT-om\n\n';
-  content += `*Satirični AI chatbot - Izvezeno: ${new Date().toLocaleString('hr-HR')}*\n\n---\n\n`;
+export interface ExportMarkdownMeta {
+  /** Session title, shown as the document heading when provided. */
+  title?: string;
+  /** Human-readable model display name. */
+  model?: string;
+  /** Human-readable rite/tone name. */
+  rite?: string;
+}
+
+export function exportChatToMarkdown(messages: Message[], meta?: ExportMarkdownMeta) {
+  const heading = meta?.title?.trim() || 'Razgovor s Haničar GPT-om';
+  let content = `# ${heading}\n\n`;
+  content += `*Satirični AI chatbot - Izvezeno: ${new Date().toLocaleString('hr-HR')}*\n\n`;
+
+  const metaLines: string[] = [];
+  if (meta?.rite) metaLines.push(`- **Obred:** ${meta.rite}`);
+  if (meta?.model) metaLines.push(`- **Model:** ${meta.model}`);
+  if (metaLines.length > 0) {
+    content += `${metaLines.join('\n')}\n\n`;
+  }
+
+  content += '---\n\n';
 
   for (const message of messages) {
+    const time = message.timestamp ? new Date(message.timestamp).toLocaleString('hr-HR') : null;
+    const timeLine = time ? `*${time}*\n\n` : '';
+
     if (message.role === 'assistant') {
-      content += `**Haničar GPT:**\n\n${stripThinking(message.content)}\n\n---\n\n`;
+      content += `**Haničar GPT:**\n\n${timeLine}${stripThinking(message.content)}\n\n---\n\n`;
     } else {
-      content += `**Ti:**\n\n${message.content}\n\n---\n\n`;
+      content += `**Ti:**\n\n${timeLine}${message.content}\n\n---\n\n`;
     }
   }
 

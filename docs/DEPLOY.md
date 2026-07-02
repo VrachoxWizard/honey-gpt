@@ -1,5 +1,30 @@
 # Deploy vodič — Haničar GPT
 
+## Production Readiness Checklist
+
+Prije prvog produkcijskog deploya (i nakon većih promjena okoline), prođi kroz ovu listu.
+Pokreni i `npm run check:prod-readiness` — ne čita tajne, samo provjerava da `.env.example`
+sadrži sve preporučene hintove i ispisuje istu listu za brzu ručnu provjeru.
+
+**Obavezno:**
+
+- [ ] `OPENROUTER_API_KEY` postavljen (pravi `sk-or-...` ključ, ne placeholder).
+- [ ] `UPSTASH_REDIS_REST_URL` i `UPSTASH_REDIS_REST_TOKEN` postavljeni.
+- [ ] `REQUIRE_REDIS=true` u produkcijskom environmentu.
+- [ ] `CORS_ORIGIN` postavljen na stvarnu produkcijsku domenu (ne `*`).
+
+**Preporučeno:**
+
+- [ ] `API_SECRET` + `VITE_API_SECRET` ako želiš dodatnu (ne-savršenu) zaštitu `/api/chat`.
+- [ ] `SENTRY_DSN` + `VITE_SENTRY_DSN` za monitoring grešaka u produkciji.
+- [ ] `DAILY_TOKEN_BUDGET_PER_IP` prilagođen očekivanom prometu.
+
+**Post-deploy:**
+
+- [ ] `GET /api/health` vraća `"ok": true`, `"redis": true`, `"requireRedis": true`.
+- [ ] Ručni chat smoke test (vidi sekciju ispod).
+- [ ] Provjeri Vercel function logove da nema `[Hanicar] UPSTASH Redis nije konfiguriran` upozorenja.
+
 ## Vercel
 
 1. Poveži GitHub repo s Vercel projektom.
@@ -51,7 +76,9 @@ Nakon svakog deploya na Vercel:
    ```bash
    curl -s https://your-domain/api/health
    ```
-   Očekivano: `"ok": true`, `"openrouterKeyConfigured": true`, `"redis": true` (u produkciji).
+   Očekivano: `"ok": true`, `"openrouterKeyConfigured": true`, `"redis": true`, `"requireRedis": true`
+   (u produkciji). `"sentryConfigured"` je informativan i ovisi o tome je li `SENTRY_DSN` postavljen.
+   Endpoint nikad ne vraća stvarne vrijednosti tajni — samo boolean signale.
 
 2. **Frontend**
    - Otvori produkcijski URL u browseru.

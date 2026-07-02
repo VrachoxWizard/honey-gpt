@@ -5,10 +5,18 @@ interface TextInputProps {
   draft: string;
   setDraft: (value: string) => void;
   isSending: boolean;
+  placeholder?: string;
   onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
 }
 
-export function TextInput({ textareaRef, draft, setDraft, isSending, onKeyDown }: TextInputProps) {
+export function TextInput({
+  textareaRef,
+  draft,
+  setDraft,
+  isSending,
+  placeholder,
+  onKeyDown,
+}: TextInputProps) {
   useEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -25,7 +33,7 @@ export function TextInput({ textareaRef, draft, setDraft, isSending, onKeyDown }
       ref={textareaRef}
       value={draft}
       rows={1}
-      placeholder="Upiši svoju molbu Haničaru…"
+      placeholder={placeholder ?? 'Upiši svoju molbu Haničaru…'}
       aria-label="Upiši molbu"
       onChange={(e) => setDraft(e.target.value.slice(0, 8000))}
       onKeyDown={onKeyDown}

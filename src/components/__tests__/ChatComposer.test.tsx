@@ -104,4 +104,31 @@ describe('ChatComposer', () => {
     const paperclipBtn = screen.getByLabelText('Priloži datoteku');
     expect(paperclipBtn).toBeInTheDocument();
   });
+
+  it('disables sending and shows offline placeholder when isOnline is false', () => {
+    const onSubmit = vi.fn();
+    render(
+      <ToastProvider>
+        <ChatComposer
+          draft="Dobar dan"
+          setDraft={vi.fn()}
+          isSending={false}
+          isOnline={false}
+          error=""
+          onSubmit={onSubmit}
+          onAbort={vi.fn()}
+        />
+      </ToastProvider>
+    );
+
+    const button = screen.getByRole('button', { name: 'Zapečati i pošalji' });
+    expect(button).toBeDisabled();
+
+    fireEvent.click(button);
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    expect(
+      screen.getByPlaceholderText('Nema veze — pošalji kad se vrati internet…')
+    ).toBeInTheDocument();
+  });
 });

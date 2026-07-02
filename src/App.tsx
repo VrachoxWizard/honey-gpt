@@ -10,6 +10,7 @@ import { TypingIndicator } from './components/TypingIndicator';
 import { ChatComposer } from './components/ChatComposer';
 import { exportChatToMarkdown, exportChatToPNG } from './utils/exportChat';
 import { stripThinking } from './utils/textUtils';
+import { riteOf, modelDisplayName } from './lib/codex';
 
 const MessageList = lazy(() =>
   import('./components/MessageList').then((m) => ({ default: m.MessageList }))
@@ -34,6 +35,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useTextToSpeech } from './hooks/useTextToSpeech';
 import { useAppTheme } from './hooks/useAppTheme';
 import { useChatScroll } from './hooks/useChatScroll';
+import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { cn } from './utils/cn';
 
 function AppContent() {
@@ -72,6 +74,7 @@ function AppContent() {
   const [searchOpen, setSearchOpen] = useState(false);
   const { showToast } = useToast();
   const { theme, toggleTheme } = useAppTheme();
+  const isOnline = useOnlineStatus();
 
   const [hasHydrated, setHasHydrated] = useState(() => useChatStore.persist.hasHydrated());
 
@@ -86,7 +89,9 @@ function AppContent() {
     if (isSending) return '';
     const lastMsg = displayMessages[displayMessages.length - 1];
     if (lastMsg?.role === 'assistant' && lastMsg.content) {
-      return lastMsg.content;
+      const clean = stripThinking(lastMsg.content).trim();
+      const snippet = clean.slice(0, 120);
+      return `Novi odgovor Haničara: ${snippet}${clean.length > 120 ? '…' : ''}`;
     }
     return '';
   }, [displayMessages, isSending]);
@@ -145,7 +150,12 @@ function AppContent() {
   };
 
   const handleExport = () => {
-    exportChatToMarkdown(displayMessages);
+    const activeSession = sessions.find((s) => s.id === activeSessionId);
+    exportChatToMarkdown(displayMessages, {
+      title: sharedView?.title ?? activeSession?.title,
+      model: modelDisplayName(activeModel),
+      rite: riteOf(toneMode).name,
+    });
     setSidebarOpen(false);
     showToast('Zapis prepisan u datoteku!', 'success');
   };
@@ -285,13 +295,30 @@ function AppContent() {
               Haničar
             </span>
           </button>
-          <button
-            onClick={newChat}
-            aria-label="Novi zapis"
-            className="p-2 text-ink-soft hover:text-ink cursor-pointer"
-          >
-            <Feather size={19} />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              title="Promijeni obred i model"
+              aria-label={`Aktivni obred: ${riteOf(toneMode).name}. Model: ${modelDisplayName(
+                activeModel
+              )}. Otvori postavke.`}
+              className="flex items-center gap-1.5 max-w-[132px] px-2 py-1 rounded-full border border-line bg-vellum/50 text-ink-soft hover:text-ink hover:border-gold/50 transition-colors cursor-pointer"
+            >
+              <span className="font-incipit text-[11px] text-oxblood shrink-0" aria-hidden="true">
+                {riteOf(toneMode).seal}
+              </span>
+              <span className="font-ui text-[10px] uppercase tracking-wider truncate">
+                {modelDisplayName(activeModel)}
+              </span>
+            </button>
+            <button
+              onClick={newChat}
+              aria-label="Novi zapis"
+              className="p-2 text-ink-soft hover:text-ink cursor-pointer"
+            >
+              <Feather size={19} />
+            </button>
+          </div>
         </div>
 
         {/* Reading area */}
@@ -309,6 +336,16 @@ function AppContent() {
               >
                 Zatvori
               </button>
+            </div>
+          )}
+
+          {!isOnline && (
+            <div
+              role="status"
+              className="shrink-0 px-4 py-2 bg-oxblood/10 border-b border-oxblood/25 text-center text-sm text-oxblood"
+            >
+              Nema internetske veze. Zapisi su dostupni, ali slanje novih poruka trenutno nije
+              moguće.
             </div>
           )}
           <div
@@ -365,6 +402,7 @@ function AppContent() {
               draft={draft}
               setDraft={setDraft}
               isSending={isSending}
+              isOnline={isOnline}
               error={error}
               onSubmit={sendMessage}
               onAbort={abortGeneration}

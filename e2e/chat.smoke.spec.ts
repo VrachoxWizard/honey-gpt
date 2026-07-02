@@ -87,10 +87,20 @@ test('renders voice buttons (TTS and STT)', async ({ page }) => {
   await expect(page.getByLabel('Govori')).toBeVisible();
 });
 
-test('renders download as image button in sidebar', async ({ page }) => {
+test('exposes export/share/import actions behind a single "Izvezi" menu', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/');
-  await expect(page.getByLabel('Preuzmi kao sliku')).toBeVisible();
+
+  const exportTrigger = page.getByLabel('Izvezi ili podijeli razgovor');
+  await expect(exportTrigger).toBeVisible();
+  await exportTrigger.click();
+
+  const menu = page.getByRole('menu', { name: 'Radnje nad razgovorom' });
+  await expect(menu.getByRole('menuitem', { name: 'Podijeli link' })).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: 'Izvezi kao Markdown' })).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: 'Izvezi kao JSON' })).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: 'Izvezi kao sliku' })).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: 'Uvezi razgovor' })).toBeVisible();
 });
 
 test('navigating to /share?share=... and closing it redirects back to /', async ({ page }) => {
@@ -116,18 +126,18 @@ test('opens search modal and searches sessions', async ({ page }) => {
   const input = page.getByLabel('Upiši molbu');
   await input.fill('Neka tajna poruka');
   // Just setting draft and waiting won't save it to session without sending, but "Novi razgovor" title exists.
-  
+
   // Click search in sidebar
   await page.getByLabel('Pretraži arhivu').click();
   const searchInput = page.getByPlaceholder(/Pretraži arhivu/i);
   await expect(searchInput).toBeVisible();
-  
+
   await searchInput.fill('razgovor');
   // Should find "Novi razgovor" inside the modal
   const modal = page.locator('div.fixed.z-\\[101\\]');
   const result = modal.getByText('Novi razgovor');
   await expect(result.first()).toBeVisible();
-  
+
   // Click result
   await result.first().click();
   // Modal should close
@@ -180,16 +190,35 @@ test('shows network failure error', async ({ page }) => {
 test('selects Zbor Građana and toggles Auto-TTS', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/');
-  
+
   // Choose concilium persona from PersonaSeals (role is radio)
   await page.getByRole('radio', { name: /Zbor Građana/i }).click();
-  
+
   // Find the Auto-TTS toggle button
   // it has aria-label 'Uključi čitanje naglas'
   const ttsBtn = page.getByLabel('Uključi čitanje naglas');
   await expect(ttsBtn).toBeVisible();
   await ttsBtn.click();
-  
+
   // It should now be 'Isključi čitanje naglas'
   await expect(page.getByLabel('Isključi čitanje naglas')).toBeVisible();
+});
+
+test('shows offline banner and disables sending when the browser goes offline', async ({
+  page,
+  context,
+}) => {
+  await page.goto('/');
+  await page.getByLabel('Upiši molbu').fill('Kako si?');
+
+  await context.setOffline(true);
+  await expect(
+    page.getByRole('status').filter({ hasText: /Nema internetske veze/i })
+  ).toBeVisible();
+  await expect(page.getByLabel('Zapečati i pošalji')).toBeDisabled();
+
+  await context.setOffline(false);
+  await expect(
+    page.getByRole('status').filter({ hasText: /Nema internetske veze/i })
+  ).not.toBeVisible();
 });

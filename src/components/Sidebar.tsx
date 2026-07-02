@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, MouseEvent, useRef, type ChangeEvent } from 'react';
+import { useState, useMemo, useCallback, useRef, type ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Image, Link2, Trash2, X, Upload, FileJson } from 'lucide-react';
 import type { ChatSession } from '@shared/types';
@@ -7,6 +7,7 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { SidebarHeader } from './sidebar/SidebarHeader';
 import { ChatSearch } from './sidebar/ChatSearch';
 import { ChatList } from './sidebar/ChatList';
+import { ExportMenu, type ExportMenuAction } from './sidebar/ExportMenu';
 import { ConfirmDialog } from './ConfirmDialog';
 
 interface SidebarProps {
@@ -137,11 +138,6 @@ function SidebarBody({
     setEditingId(null);
   }, []);
 
-  const handleClearAll = useCallback((e: MouseEvent) => {
-    e.stopPropagation();
-    setConfirmClearOpen(true);
-  }, []);
-
   const handleConfirmClear = useCallback(() => {
     onClearAllSessions();
     setConfirmClearOpen(false);
@@ -165,6 +161,62 @@ function SidebarBody({
       event.target.value = '';
     },
     [onImportSession]
+  );
+
+  const hasMultipleSessions = sessions.length > 1;
+
+  const exportActions: ExportMenuAction[] = useMemo(
+    () => [
+      {
+        id: 'share',
+        label: 'Podijeli link',
+        icon: <Link2 size={14} />,
+        onSelect: onShareChat,
+      },
+      {
+        id: 'export-md',
+        label: 'Izvezi kao Markdown',
+        icon: <Download size={14} />,
+        onSelect: onExportChat,
+      },
+      {
+        id: 'export-json',
+        label: 'Izvezi kao JSON',
+        icon: <FileJson size={14} />,
+        onSelect: onExportSessionJson,
+      },
+      {
+        id: 'export-png',
+        label: 'Izvezi kao sliku',
+        icon: <Image size={14} />,
+        onSelect: onDownloadImage,
+      },
+      {
+        id: 'import',
+        label: 'Uvezi razgovor',
+        icon: <Upload size={14} />,
+        onSelect: handleImportClick,
+      },
+      ...(hasMultipleSessions
+        ? [
+            {
+              id: 'clear-all',
+              label: 'Spali sve zapise',
+              icon: <Trash2 size={14} />,
+              onSelect: () => setConfirmClearOpen(true),
+              variant: 'danger' as const,
+            },
+          ]
+        : []),
+    ],
+    [
+      onShareChat,
+      onExportChat,
+      onExportSessionJson,
+      onDownloadImage,
+      handleImportClick,
+      hasMultipleSessions,
+    ]
   );
 
   const handleSelect = useCallback(
@@ -193,65 +245,14 @@ function SidebarBody({
       <div className="flex-1 min-h-0 flex flex-col px-2">
         <div className="flex items-center justify-between px-2 mb-2 shrink-0">
           <span className="rubric text-[9px]">Zapisi</span>
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={onShareChat}
-              title="Podijeli razgovor putem linka"
-              aria-label="Podijeli razgovor"
-              className="p-1 text-ink-faint hover:text-ink transition-colors cursor-pointer"
-            >
-              <Link2 size={13} />
-            </button>
-            <button
-              onClick={onExportSessionJson}
-              title="Preuzmi razgovor kao JSON"
-              aria-label="Preuzmi razgovor kao JSON"
-              className="p-1 text-ink-faint hover:text-ink transition-colors cursor-pointer"
-            >
-              <FileJson size={13} />
-            </button>
-            <button
-              onClick={handleImportClick}
-              title="Uvezi razgovor iz JSON datoteke"
-              aria-label="Uvezi razgovor"
-              className="p-1 text-ink-faint hover:text-ink transition-colors cursor-pointer"
-            >
-              <Upload size={13} />
-            </button>
-            <input
-              ref={importInputRef}
-              type="file"
-              accept="application/json,.json"
-              className="hidden"
-              onChange={handleImportFile}
-            />
-            <button
-              onClick={onExportChat}
-              title="Prepiši trenutni razgovor u datoteku"
-              aria-label="Preuzmi razgovor"
-              className="p-1 text-ink-faint hover:text-ink transition-colors cursor-pointer"
-            >
-              <Download size={13} />
-            </button>
-            <button
-              onClick={onDownloadImage}
-              title="Preuzmi trenutni razgovor kao sliku"
-              aria-label="Preuzmi kao sliku"
-              className="p-1 text-ink-faint hover:text-ink transition-colors cursor-pointer"
-            >
-              <Image size={13} />
-            </button>
-            {sessions.length > 1 && (
-              <button
-                onClick={handleClearAll}
-                title="Spali sve zapise"
-                aria-label="Spali sve zapise"
-                className="p-1 text-ink-faint hover:text-oxblood transition-colors cursor-pointer"
-              >
-                <Trash2 size={13} />
-              </button>
-            )}
-          </div>
+          <ExportMenu actions={exportActions} />
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={handleImportFile}
+          />
         </div>
 
         {sessions.length > 3 && <ChatSearch filter={filter} onFilterChange={setFilter} />}

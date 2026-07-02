@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('../server/env.js', () => ({
-  getEnv: vi.fn(() => ({ corsOrigin: 'https://example.com', openRouterApiKey: 'sk-or-test-key' })),
+  getEnv: vi.fn(() => ({
+    corsOrigin: 'https://example.com',
+    openRouterApiKey: 'sk-or-test-key',
+    sentryDsn: 'https://sentry.example.com/1',
+    requireRedis: true,
+  })),
   checkEnv: vi.fn(),
   isRedisConfigured: vi.fn(() => true),
 }));
@@ -26,8 +31,22 @@ describe('api/health', () => {
       ok: true,
       redis: true,
       openrouterKeyConfigured: true,
+      sentryConfigured: true,
+      requireRedis: true,
       version: '2.0.0',
     });
+  });
+
+  it('never exposes secret values, only safe booleans', async () => {
+    const response = createMockResponse();
+    await handler({ method: 'GET' }, response);
+
+    const payload = response.payload as Record<string, unknown>;
+    const serialized = JSON.stringify(payload);
+    expect(serialized).not.toContain('sk-or-test-key');
+    expect(serialized).not.toContain('sentry.example.com');
+    expect(typeof payload.sentryConfigured).toBe('boolean');
+    expect(typeof payload.requireRedis).toBe('boolean');
   });
 
   it('rejects non-GET methods', async () => {

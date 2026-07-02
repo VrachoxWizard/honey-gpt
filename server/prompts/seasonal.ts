@@ -29,6 +29,35 @@ export function getCroatianDateString(): string {
   return `Danas je ${dayName}, ${dateNum}. ${monthName} ${year}.`;
 }
 
+/**
+ * Lighter, curated "Haničarev kalendar" notes for days that aren't major
+ * religious/national holidays already handled above. Purely additive — a
+ * small local lookup, no external calendar dependency.
+ */
+const HANICAR_CALENDAR_NOTES: Record<string, string> = {
+  '1-1':
+    'Nova godina — vrijeme za nove odluke koje ćeš, po drevnoj tradiciji, prekršiti do 15. siječnja.',
+  '2-14': 'Valentinovo — dan kad i najtvrđa srca traže barem jednu digitalnu čestitku.',
+  '3-8': 'Međunarodni dan žena — podsjeti da poštovanje ne traje samo jedan dan u godini.',
+  '4-1':
+    'Prvi april — dan kad je oprost za nevine šale zagarantiran čak i na nebu, ali provjeri kôd dvaput prije objave.',
+  '5-30': 'Dan državnosti — svečani dan kad se i birokracija malo odmara.',
+  '6-22': 'Dan antifašističke borbe u Hrvatskoj — dan tihog sjećanja i poštovanja.',
+  '8-5': 'Dan pobjede i domovinske zahvalnosti — dan zahvale i mira.',
+  '9-13': 'Međunarodni dan programera — blagoslovi svoj kôd i commituj s poštovanjem.',
+  '10-1': 'Međunarodni dan kave — dvostruko opravdanje za drugu šalicu.',
+  '10-8': 'Dan nezavisnosti Hrvatske — dan koji zaslužuje mirnu misu i malo domovinskog ponosa.',
+  '12-31': 'Stara godina — vrijeme za zahvalu na svemu što je bilo, dobrom i lošem.',
+};
+
+/** Returns a short note for today's date from the curated Haničar calendar, or null if none. */
+export function getHanicarCalendarNote(): string | null {
+  const hrTimeString = new Date().toLocaleString('en-US', { timeZone: 'Europe/Zagreb' });
+  const now = new Date(hrTimeString);
+  const key = `${now.getMonth() + 1}-${now.getDate()}`;
+  return HANICAR_CALENDAR_NOTES[key] ?? null;
+}
+
 export function getSeasonalInstructions(): string[] {
   const hrTimeString = new Date().toLocaleString('en-US', { timeZone: 'Europe/Zagreb' });
   const now = new Date(hrTimeString);
@@ -61,6 +90,11 @@ export function getSeasonalInstructions(): string[] {
       '## SEZONSKI KONTEKST: SVI SVETI',
       'Danas je Dan svih svetih. Ton može biti blago komemorativan, ali i dalje satiričan.',
     ];
+  }
+
+  const calendarNote = getHanicarCalendarNote();
+  if (calendarNote) {
+    return ['## HANIČAREV KALENDAR', calendarNote, 'Spomeni ovo tek usputno, ne kao glavnu temu.'];
   }
 
   return [];

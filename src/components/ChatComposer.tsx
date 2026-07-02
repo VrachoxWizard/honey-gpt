@@ -39,6 +39,7 @@ interface ChatComposerProps {
   draft: string;
   setDraft: (value: string) => void;
   isSending: boolean;
+  isOnline?: boolean;
   error: string;
   onSubmit: (content: string, image?: string) => void;
   onAbort: () => void;
@@ -48,6 +49,7 @@ export function ChatComposer({
   draft,
   setDraft,
   isSending,
+  isOnline = true,
   error,
   onSubmit,
   onAbort,
@@ -128,7 +130,7 @@ export function ChatComposer({
   const handleSubmit = useCallback(
     (e?: FormEvent<HTMLFormElement>) => {
       e?.preventDefault();
-      if (isSending || isParsingDocument) return;
+      if (isSending || isParsingDocument || !isOnline) return;
       if (!draft.trim() && !attachedImage && !attachedDocument) return;
 
       const finalDraft = attachedDocument
@@ -140,7 +142,16 @@ export function ChatComposer({
       setAttachedImage(null);
       setAttachedDocument(null);
     },
-    [isSending, isParsingDocument, draft, attachedImage, attachedDocument, onSubmit, setDraft]
+    [
+      isSending,
+      isParsingDocument,
+      isOnline,
+      draft,
+      attachedImage,
+      attachedDocument,
+      onSubmit,
+      setDraft,
+    ]
   );
 
   const handleKeyDown = useCallback(
@@ -276,7 +287,7 @@ export function ChatComposer({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isSending || isParsingDocument}
+              disabled={isSending || isParsingDocument || !isOnline}
               aria-label="Priloži datoteku"
               className="relative shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-ink-soft hover:text-ink hover:bg-vellum disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 cursor-pointer"
             >
@@ -291,7 +302,7 @@ export function ChatComposer({
               <button
                 type="button"
                 onClick={isListening ? stopListening : startListening}
-                disabled={isSending}
+                disabled={isSending || !isOnline}
                 aria-label={isListening ? 'Zaustavi snimanje' : 'Govori'}
                 className={cn(
                   'shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-vellum disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 cursor-pointer',
@@ -321,6 +332,7 @@ export function ChatComposer({
               draft={draft}
               setDraft={setDraft}
               isSending={isSending}
+              placeholder={isOnline ? undefined : 'Nema veze — pošalji kad se vrati internet…'}
               onKeyDown={handleKeyDown}
             />
 
@@ -328,7 +340,8 @@ export function ChatComposer({
               isDisabled={
                 (!draft.trim() && !attachedImage && !attachedDocument) ||
                 isSending ||
-                isParsingDocument
+                isParsingDocument ||
+                !isOnline
               }
               isSending={isSending}
             />

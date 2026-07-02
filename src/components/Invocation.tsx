@@ -2,8 +2,10 @@ import { motion } from 'framer-motion';
 
 const molbe = [
   'Objasni mi temu kao da smo na kavi poslije mise.',
+  'Pomozi mi pronaći bug u ovom kodu.',
   'Kako preživjeti siječanj bez kredita?',
   'Pretvori ovu poruku u prigovor za Sabor.',
+  'Napiši kratku satiričnu pjesmu o ponedjeljku.',
 ];
 
 interface InvocationProps {
@@ -22,9 +24,9 @@ export function Invocation({ onSuggestionSelect }: InvocationProps) {
       <h1 className="font-incipit text-4xl sm:text-5xl text-ink-strong tracking-wide leading-none mb-5">
         Mir s tobom, sine
       </h1>
-      <p className="font-display italic text-lg text-ink-soft leading-relaxed mb-10 max-w-md">
-        Reci što te muči, a ja ću ti odgovoriti — uz Božju pomoć i malo satire. Obred izaberi
-        lijevo.
+      <p className="font-display italic text-lg text-ink-soft leading-relaxed mb-8 max-w-md">
+        Reci što te muči, a ja ću ti odgovoriti — uz Božju pomoć i malo satire. Obred izaberi u
+        izborniku.
       </p>
 
       <div className="rule-gold w-40 mb-8 animate-gold-pulse" />
@@ -46,6 +48,17 @@ export function Invocation({ onSuggestionSelect }: InvocationProps) {
           </motion.button>
         ))}
       </div>
+
+      <p className="mt-8 font-ui text-[11px] uppercase tracking-[0.16em] text-ink-faint">
+        <kbd className="px-1.5 py-0.5 rounded border border-line bg-vellum/50 font-ui not-italic">
+          ?
+        </kbd>{' '}
+        za kratice ·{' '}
+        <kbd className="px-1.5 py-0.5 rounded border border-line bg-vellum/50 font-ui not-italic">
+          Ctrl/⌘ K
+        </kbd>{' '}
+        za pretragu
+      </p>
     </motion.div>
   );
 }

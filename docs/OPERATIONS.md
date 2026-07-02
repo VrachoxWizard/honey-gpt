@@ -37,9 +37,29 @@ Očekivani odgovor:
   "ok": true,
   "redis": true,
   "openrouterKeyConfigured": true,
+  "sentryConfigured": true,
+  "requireRedis": true,
   "version": "2.0.0"
 }
 ```
+
+Svi signali su boolean vrijednosti izvedene iz environment varijabli — endpoint nikad ne
+vraća stvarne API ključeve, Redis tokene ili Sentry DSN.
+
+## Timeout hijerarhija
+
+Kako bi handler uvijek vratio jasnu grešku umjesto da "visi", timeouti su slojeviti:
+
+| Sloj | Konstanta | Vrijednost |
+|------|-----------|------------|
+| Sažimanje starijeg konteksta | `SYNC_TIMEOUT_MS` | 15s |
+| Streaming odgovor od OpenRoutera | `STREAM_TIMEOUT_MS` | 20s |
+| Cijeli `/api/chat` zahtjev | `HANDLER_TIMEOUT_MS` | 25s |
+
+Ako sažimanje (`summarizeConversationIfNeeded`) ne stigne na vrijeme ili vrati grešku, degradira
+se tiho (`{ text: '', failed: true }`) — razgovor se šalje bez sažetka starijeg konteksta, umjesto
+da zahtjev padne. Backend to signalizira kroz SSE `meta.summaryFailed: true`, a frontend to
+prikazuje kao blagi upozoravajući toast, ne kao grešku zahtjeva.
 
 ## Structured logovi
 

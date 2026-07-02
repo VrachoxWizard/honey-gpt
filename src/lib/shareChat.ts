@@ -44,7 +44,7 @@ export function decodeSharedChat(encoded: string): SharedChatPayload | null {
 export const MAX_SHARE_URL_LENGTH = 6000;
 
 export const SHARE_URL_TOO_LONG_MESSAGE =
-  'Razgovor je predugačak za dijeljenje putem linka. Skrati povijest ili preuzmi zapis kao datoteku.';
+  'Razgovor je predugačak za dijeljenje putem linka. Umjesto toga izvezi ga kao Markdown ili JSON datoteku (izbornik "Izvezi").';
 
 export function buildShareUrl(payload: SharedChatPayload): string | null {
   const url = new URL(window.location.href);

@@ -8,6 +8,7 @@ export type { OpenRouterMessage } from './prompts/builder.js';
 export {
   getCroatianDateString,
   getSeasonalInstructions,
+  getHanicarCalendarNote,
   detectSentiment,
   detectCodingOrLogic,
 } from './prompts/seasonal.js';

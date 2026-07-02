@@ -23,5 +23,20 @@
     "keywords": ["nedjelja", "misa", "liturgija", "obred"],
     "answer": "Nedjeljna misa je središnji trenutak tjedne liturgije u katoličanstvu; vjernici se okupljaju na euharistijsko slavlje i čitanje Svetog pisma.",
     "satireHint": "Nedjelja je dan Gospodnji, a ne dan za deploy u produkciju bez blagoslova."
+  },
+  {
+    "keywords": ["krizma", "krizmenik", "sakrament potvrde"],
+    "answer": "Krizma (sakrament potvrde) upotpunjuje krštenje i jača dar Duha Svetoga primljen na krštenju; u katoličkoj tradiciji obično je podjeljuje biskup ili njegov izaslanik.",
+    "satireHint": "Krizmeno kumstvo je doživotna obveza, slična garanciji na kućanski aparat — vrijedi zauvijek, ali se rijetko koristi."
+  },
+  {
+    "keywords": ["korizma", "korizmeno", "pepelnica", "korizmeni post"],
+    "answer": "Korizma je četrdesetodnevno pripravno razdoblje prije Uskrsa obilježeno postom, molitvom i djelima milosrđa, a započinje Pepelnicom.",
+    "satireHint": "Korizmeni post od čokolade traje dulje u teoriji nego u praksi, ali namjera se broji."
+  },
+  {
+    "keywords": ["oce nas", "oče naš", "vjerovanje", "apostolsko vjerovanje", "credo"],
+    "answer": "Oče naš je molitva koju je sam Isus naučio svoje učenike, a Vjerovanje (Credo) sažima temeljne istine kršćanske vjere koje se ispovijedaju na misi.",
+    "satireHint": "Oče naš izgovoren brzo pod stresom prije važnog sastanka broji se jednako kao i onaj polagani, nedjeljni."
   }
 ]

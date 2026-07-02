@@ -36,16 +36,33 @@ export async function getLorePhrases(text: string): Promise<string[]> {
       });
     }
 
+    if (!loreData) return [];
+
+    // Keywords are short single/multi-word phrases, while `text` is a full user
+    // message. Fuse's fuzzy Bitap search can't find a long pattern inside a
+    // short target, so we match on direct substrings first (like katekizam),
+    // then fall back to a per-word fuzzy search for typo tolerance.
+    const lowerText = text.toLowerCase();
+    const matchedIndices = new Set<number>();
+
+    loreData.forEach((entry, index) => {
+      if (entry.keywords.some((keyword) => lowerText.includes(keyword.toLowerCase()))) {
+        matchedIndices.add(index);
+      }
+    });
+
+    if (fuseInstance && matchedIndices.size === 0) {
+      const words = lowerText.split(/\s+/).filter((w) => w.length > 2);
+      for (const word of words) {
+        fuseInstance.search(word).forEach((result) => matchedIndices.add(result.refIndex));
+      }
+    }
+
     const matchedPhrases: string[] = [];
-
-    if (fuseInstance) {
-      const results = fuseInstance.search(text);
-
-      results.forEach((result) => {
-        const entry = result.item;
-        const shuffled = [...entry.phrases].sort(() => 0.5 - Math.random());
-        matchedPhrases.push(...shuffled.slice(0, 2));
-      });
+    for (const index of matchedIndices) {
+      const entry = loreData[index];
+      const shuffled = [...entry.phrases].sort(() => 0.5 - Math.random());
+      matchedPhrases.push(...shuffled.slice(0, 2));
     }
 
     return matchedPhrases.slice(0, 3);

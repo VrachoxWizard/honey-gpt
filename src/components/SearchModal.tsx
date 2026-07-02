@@ -12,6 +12,57 @@ interface SearchModalProps {
   onSelectSession: (id: string) => void;
 }
 
+const SNIPPET_RADIUS = 70;
+const SNIPPET_MAX_LENGTH = 160;
+
+/** Best-effort snippet centred on the query, falling back to a plain prefix when no direct match is found (e.g. fuzzy-only matches). */
+function buildSnippet(rawContent: string, query: string): string {
+  const clean = stripThinking(rawContent).replace(/\s+/g, ' ').trim();
+  const trimmedQuery = query.trim();
+
+  const matchIndex = trimmedQuery ? clean.toLowerCase().indexOf(trimmedQuery.toLowerCase()) : -1;
+
+  if (matchIndex === -1) {
+    return clean.length > SNIPPET_MAX_LENGTH ? `${clean.slice(0, SNIPPET_MAX_LENGTH)}…` : clean;
+  }
+
+  const windowStart = Math.max(0, matchIndex - SNIPPET_RADIUS);
+  const windowEnd = Math.min(clean.length, matchIndex + trimmedQuery.length + SNIPPET_RADIUS);
+
+  let snippet = clean.slice(windowStart, windowEnd);
+  if (windowStart > 0) snippet = `…${snippet}`;
+  if (windowEnd < clean.length) snippet = `${snippet}…`;
+  return snippet;
+}
+
+/** Splits text around the first case-insensitive occurrence of the query, for highlighting. */
+function splitAtMatch(
+  text: string,
+  query: string
+): { before: string; match: string; after: string } | null {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) return null;
+  const idx = text.toLowerCase().indexOf(trimmedQuery.toLowerCase());
+  if (idx === -1) return null;
+  return {
+    before: text.slice(0, idx),
+    match: text.slice(idx, idx + trimmedQuery.length),
+    after: text.slice(idx + trimmedQuery.length),
+  };
+}
+
+function Highlighted({ text, query }: { text: string; query: string }) {
+  const parts = splitAtMatch(text, query);
+  if (!parts) return <>{text}</>;
+  return (
+    <>
+      {parts.before}
+      <mark className="bg-gold/35 text-ink-strong rounded-[2px]">{parts.match}</mark>
+      {parts.after}
+    </>
+  );
+}
+
 export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalProps) {
   const sessions = useChatStore((s) => s.sessions);
   const [query, setQuery] = useState('');
@@ -152,12 +203,10 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
                 <ul id="search-results-list" ref={listRef} className="flex flex-col gap-1">
                   {results.map(({ item, matches }, index) => {
                     const messageMatch = matches?.find((m) => m.key === 'messages.content');
-                    let snippet = '';
-                    if (messageMatch && messageMatch.value) {
-                      const cleanContent = stripThinking(messageMatch.value);
-                      snippet = cleanContent.substring(0, 100);
-                      if (cleanContent.length > 100) snippet += '...';
-                    }
+                    const snippet =
+                      messageMatch && messageMatch.value
+                        ? buildSnippet(messageMatch.value, query)
+                        : '';
 
                     return (
                       <li key={item.id}>
@@ -173,7 +222,7 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-ui font-semibold text-ink group-hover:text-oxblood transition-colors line-clamp-1">
-                              {item.title}
+                              <Highlighted text={item.title} query={query} />
                             </span>
                             <span className="text-[10px] uppercase font-ui tracking-wider text-ink-faint flex items-center gap-1 shrink-0">
                               <Calendar size={10} />
@@ -182,7 +231,9 @@ export function SearchModal({ isOpen, onClose, onSelectSession }: SearchModalPro
                           </div>
                           {snippet ? (
                             <p className="text-xs text-ink-soft line-clamp-2 italic">
-                              &quot;{snippet}&quot;
+                              &quot;
+                              <Highlighted text={snippet} query={query} />
+                              &quot;
                             </p>
                           ) : (
                             <p className="text-xs text-ink-faint flex items-center gap-1">

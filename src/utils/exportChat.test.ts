@@ -31,4 +31,44 @@ describe('exportChatToMarkdown', () => {
     expect(link.href).toBe('blob:mock');
     expect(click).toHaveBeenCalled();
   });
+
+  it('includes title, rite and model metadata in the exported markdown when provided', async () => {
+    const link = document.createElement('a');
+    link.click = vi.fn();
+    let capturedBlob: Blob | null = null;
+    vi.spyOn(document, 'createElement').mockReturnValue(link);
+    vi.spyOn(URL, 'createObjectURL').mockImplementation((obj: Blob | MediaSource) => {
+      capturedBlob = obj as Blob;
+      return 'blob:mock';
+    });
+
+    exportChatToMarkdown(messages, {
+      title: 'Porezna uprava',
+      rite: 'Sveti',
+      model: 'Gemini 2.5 Flash',
+    });
+
+    expect(capturedBlob).not.toBeNull();
+    const text = await capturedBlob!.text();
+    expect(text).toContain('# Porezna uprava');
+    expect(text).toContain('**Obred:** Sveti');
+    expect(text).toContain('**Model:** Gemini 2.5 Flash');
+  });
+
+  it('falls back to the default heading when no title metadata is provided', async () => {
+    const link = document.createElement('a');
+    link.click = vi.fn();
+    let capturedBlob: Blob | null = null;
+    vi.spyOn(document, 'createElement').mockReturnValue(link);
+    vi.spyOn(URL, 'createObjectURL').mockImplementation((obj: Blob | MediaSource) => {
+      capturedBlob = obj as Blob;
+      return 'blob:mock';
+    });
+
+    exportChatToMarkdown(messages);
+
+    expect(capturedBlob).not.toBeNull();
+    const text = await capturedBlob!.text();
+    expect(text).toContain('# Razgovor s Haničar GPT-om');
+  });
 });

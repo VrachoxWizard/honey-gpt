@@ -71,5 +71,45 @@
       "Remote rad je blagoslov, sve dok šef ne vidi da si u pidžami tijekom eukaristije na Zoomu.",
       "Deadline je sekularni sudnji dan; pripremi dokumente dan ranije, u ime Oca i Excela."
     ]
+  },
+  {
+    "keywords": ["birokracija", "sluzbenik", "službenik", "salter", "šalter", "cekaonica", "čekaonica", "papirologija", "obrazac", "opcina", "općina", "maticni ured", "matični ured"],
+    "phrases": [
+      "Uzmite broj za čekanje i pomolite se; broj 47 još čeka od Velike subote.",
+      "Obrazac je ispravno popunjen, ali nedostaje pečat kojim se potvrđuje autentičnost pečata.",
+      "Šalter broj 3 zatvoren je zbog duhovne pauze; šalter broj 4 nikad nije ni postojao.",
+      "Birokracija je poput čistilišta: prolazna, nužna i traje dulje nego što bi trebala.",
+      "Strpljenje u čekaonici je vrlina; glasno negodovanje pred službenikom je grijeh, ali razumljiv."
+    ]
+  },
+  {
+    "keywords": ["stres", "umoran", "umorna", "iscrpljen", "kaos", "nesanica", "budilica", "prehlada", "gripa"],
+    "phrases": [
+      "Umor je privremen, sine, kao i signal Wi-Fija u trećem redu autobusa.",
+      "Nesanica je Božji poziv da razmisliš o životu u tri ujutro, umjesto da skroluješ beskonačno.",
+      "Kaos u glavi se smiruje uz dubok dah, kratku molitvu i pet minuta bez mobitela.",
+      "Budilica koja zvoni triput zaredom test je vjere jači od svakog korizmenog posta.",
+      "Stres nestaje kad shvatiš da ni Vatikan nije izgrađen u jednom danu, a ni tvoj popis zadataka neće biti gotov danas."
+    ]
+  },
+  {
+    "keywords": ["obitelj", "roditelji", "majka", "otac", "djeca", "svadba", "baka", "dida", "rodbina", "susjedi"],
+    "phrases": [
+      "Obiteljski ručak nedjeljom je sveta liturgija s dodatkom sarme i političke rasprave za desertom.",
+      "Baka blagoslivlja sve, uključujući i tvoj životni odabir posla koji ona ni dalje ne razumije.",
+      "Brak je sakrament strpljenja, dijeljenja daljinskog upravljača i zajedničkog podnošenja poreza.",
+      "Rodbina na svadbi broji se u desecima, a plesni krug u samo dvoje hrabrih.",
+      "Susjedi znaju sve o tvom životu prije nego što ga i sam shvatiš; takva je uža duhovna zajednica."
+    ]
+  },
+  {
+    "keywords": ["skola", "škola", "fakultet", "ispit", "profesor", "student", "kolokvij", "diploma", "predavanje", "seminarski"],
+    "phrases": [
+      "Ispit je moderno čistilište: platiš indeks, moliš Boga i čekaš rezultate na e-mailu.",
+      "Profesor koji kaže 'ovo je jednostavno' zaslužuje posebno mjesto u redu za pojašnjenja.",
+      "Diploma je papir, ali olakšanje nakon zadnjeg ispita gotovo je religiozno iskustvo.",
+      "Seminarski rad napisan u zadnji čas moderna je verzija devetodnevne molitve prije velikog blagdana.",
+      "Kolokvij je mala Sudnja, ispit je velika; obje se polažu uz puno kave i malo spavanja."
+    ]
   }
 ]

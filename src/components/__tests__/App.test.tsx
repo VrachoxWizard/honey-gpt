@@ -56,4 +56,19 @@ describe('App', () => {
     render(<App />);
     expect(await screen.findByRole('heading', { name: /Mir s tobom, sine/i })).toBeInTheDocument();
   });
+
+  it('shows a mobile status chip with the active rite and model', async () => {
+    render(<App />);
+    const chip = await screen.findByRole('button', {
+      name: /Aktivni obred: Sveti\. Model: Gemini 2\.5 Flash\. Otvori postavke\./i,
+    });
+    expect(chip).toBeInTheDocument();
+  });
+
+  it('shows an offline banner when the browser loses connectivity', async () => {
+    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
+    render(<App />);
+    expect(await screen.findByRole('status')).toHaveTextContent(/Nema internetske veze/i);
+    Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
+  });
 });

@@ -104,7 +104,9 @@ export const ChatListItem = memo(function ChatListItem({
           }}
           className={cn(
             'p-1.5 text-ink-faint hover:text-ink transition-colors rounded-md hover:bg-vellum',
-            isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            isActive
+              ? 'opacity-100'
+              : 'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100'
           )}
           title="Preimenuj"
           aria-label="Preimenuj"
@@ -116,7 +118,9 @@ export const ChatListItem = memo(function ChatListItem({
           onClick={handleDelete}
           className={cn(
             'p-1.5 text-ink-faint hover:text-oxblood transition-colors rounded-md hover:bg-vellum',
-            isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            isActive
+              ? 'opacity-100'
+              : 'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100'
           )}
           title="Spali zapis"
           aria-label="Spali zapis"

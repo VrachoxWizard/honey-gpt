@@ -25,4 +25,23 @@ test.describe('mobile viewport', () => {
     await expect(page.getByLabel('Upiši molbu')).toBeVisible();
     await expect(page.getByLabel('Zapečati i pošalji')).toBeVisible();
   });
+
+  test('shows a status chip with active rite and model, which opens the sidebar', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const chip = page.getByRole('button', { name: /Aktivni obred:.*Model:/i });
+    await expect(chip).toBeVisible();
+
+    await chip.click();
+    await expect(page.getByRole('dialog', { name: 'Bočna traka razgovora' })).toBeVisible();
+  });
+
+  test('welcome screen hints at shortcuts without a separate onboarding flow', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await expect(page.getByText(/za kratice/i)).toBeVisible();
+    await expect(page.getByText(/za pretragu/i)).toBeVisible();
+  });
 });
