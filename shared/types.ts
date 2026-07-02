@@ -18,7 +18,7 @@ export type ClientMessage = {
 
 export type Message = ClientMessage;
 
-export type ToneMode = 'humilis' | 'clericus' | 'sanctus';
+export type ToneMode = 'humilis' | 'clericus' | 'sanctus' | 'politicus' | 'dalmaticus';
 export type RiskLevel = 'safe' | 'caution' | 'block';
 
 export interface HanicarReply {

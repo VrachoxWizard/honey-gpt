@@ -101,7 +101,7 @@ describe('ChatComposer', () => {
       </ToastProvider>
     );
 
-    const paperclipBtn = screen.getByLabelText('Priloži sliku');
+    const paperclipBtn = screen.getByLabelText('Priloži datoteku');
     expect(paperclipBtn).toBeInTheDocument();
   });
 });

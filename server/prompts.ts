@@ -235,6 +235,20 @@ const TONE_INSTRUCTIONS: Record<ToneMode, string[]> = {
     '- **Izražavanje:** Koristi snažne biblijske metafore, gromke najave, svjetlo, oganj, mač i križ. Budi samopouzdan do granice apsurda.',
     '- **Satira:** Urnebesni kontrast—najavljivanje rješenja običnog problema (npr. kako popraviti Wi-Fi) kao da se radi o apokaliptičnoj bitci arkanđela Mihaela protiv Lucifera.',
   ],
+  politicus: [
+    '## MODUS: POLITICUS (Balkanski Političar)',
+    '- **Ton:** Demagoški, pun velikih riječi koje ne znače ništa, obećava brda i doline, prebacuje krivnju na bivšu vlast.',
+    '- **Perspektiva:** Nastupaš kao iskusni hrvatski saborski zastupnik ili gradonačelnik.',
+    '- **Izražavanje:** Koristi fraze poput "neka institucije rade svoj posao", "to su gnjusne insinuacije", "mi nudimo reforme", "transparentno poslovanje", "vjerodostojno".',
+    '- **Satira:** Daješ točan odgovor, ali ga prvo moraš provući kroz hvalu kako je tvoja Vlada to omogućila, i okriviti oporbu za probleme s kojima se korisnik susreće.',
+  ],
+  dalmaticus: [
+    '## MODUS: DALMATICUS (Opušteni Dalmatinac)',
+    '- **Ton:** Opušten, ljetna fjaka, nimalo ti se ne žuri, koristiš dosta lokalizama.',
+    '- **Perspektiva:** Nastupaš kao Dalmatinac u kafiću na rivi, piješ produženu kavu već 3 sata i mudruješ.',
+    '- **Izražavanje:** Ubaci "pomalo", "ae", "prika", "asti gospe", "ne prešaj". Započni sa uzdasima "Aaa gospe ti blažene..."',
+    '- **Satira:** Genijalan si, ali jako lijen. Daješ točan odgovor ili kod, ali ističeš kako ti je tlaka to uopće objašnjavat i kako bi korisnik triba na more umisto da bleji u ekran.',
+  ],
 };
 
 export function buildSystemPrompt(
@@ -244,7 +258,8 @@ export function buildSystemPrompt(
   detectedSentiment?: 'angry' | 'sad' | 'normal',
   newsHeadlines?: string[],
   katekizam?: { answer: string; satireHint: string } | null,
-  riskLevel: RiskLevel = 'safe'
+  riskLevel: RiskLevel = 'safe',
+  wikiSummary?: string | null
 ): string {
   const dateString = getCroatianDateString();
 
@@ -340,6 +355,14 @@ export function buildSystemPrompt(
     );
   }
 
+  if (wikiSummary) {
+    baseInstructions.push(
+      '',
+      '## WIKIPEDIA SAŽETAK (provjerene činjenice - uzmi ovo u obzir da ne pogriješiš):',
+      wikiSummary
+    );
+  }
+
   return baseInstructions.join('\n');
 }
 
@@ -355,7 +378,8 @@ export function buildOpenRouterMessages(
   newsHeadlines?: string[],
   lorePhrases?: string[],
   katekizam?: { answer: string; satireHint: string } | null,
-  riskLevel: RiskLevel = 'safe'
+  riskLevel: RiskLevel = 'safe',
+  wikiSummary?: string | null
 ): OpenRouterMessage[] {
   const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
   let userText = '';
@@ -380,7 +404,8 @@ export function buildOpenRouterMessages(
     sentiment,
     newsHeadlines,
     katekizam,
-    riskLevel
+    riskLevel,
+    wikiSummary
   );
 
   return [

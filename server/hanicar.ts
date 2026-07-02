@@ -1,5 +1,6 @@
 import { httpError, type StreamChunk } from './api.js';
 import { fetchCroatianNews } from './news.js';
+import { searchWikipedia } from './wikipedia.js';
 import { CONSTANTS } from './constants.js';
 import {
   generateCacheKey,
@@ -40,6 +41,7 @@ interface PreparedRequest {
   shouldCache: boolean;
   cacheTtlMs: number;
   isCoding: boolean;
+  wikiSummary: string | null;
 }
 
 function sanitizeMessageContent(content: string | ChatMessagePart[]): string | ChatMessagePart[] {
@@ -126,10 +128,14 @@ async function prepareHanicarRequest(
         : '';
 
   const wantsNews = CONSTANTS.NEWS_KEYWORDS.some((word) => userText.toLowerCase().includes(word));
-  const [newsHeadlines, lorePhrases, katekizam] = await Promise.all([
+  const wikiMatch = userText.match(/(?:tko|što|sto|gdje)\s+(?:je|su)\s+([^?.,!]+)/i);
+  const wikiQuery = wikiMatch ? wikiMatch[1].trim() : null;
+
+  const [newsHeadlines, lorePhrases, katekizam, wikiSummary] = await Promise.all([
     wantsNews ? fetchCroatianNews() : Promise.resolve([]),
     getLorePhrases(userText),
     getKatekizamSnippet(userText),
+    wikiQuery ? searchWikipedia(wikiQuery) : Promise.resolve(null),
   ]);
 
   const hasVisionContent = messageHasVisionContent(cleanMessages);
@@ -153,6 +159,7 @@ async function prepareHanicarRequest(
     shouldCache,
     cacheTtlMs,
     isCoding,
+    wikiSummary,
   };
 }
 
@@ -175,6 +182,7 @@ export async function streamHanicarReply(
     shouldCache,
     cacheTtlMs,
     isCoding,
+    wikiSummary,
   } = prepared;
   const logger = options?.context?.logger;
 
@@ -226,7 +234,8 @@ export async function streamHanicarReply(
     newsHeadlines,
     lorePhrases,
     katekizam,
-    options?.riskLevel ?? 'safe'
+    options?.riskLevel ?? 'safe',
+    wikiSummary
   );
   const temperature = isCoding ? CONSTANTS.CODING_LLM_TEMPERATURE : CONSTANTS.LLM_TEMPERATURE;
   let streamedToCaller = false;

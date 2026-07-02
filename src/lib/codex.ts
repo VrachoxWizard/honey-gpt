@@ -42,6 +42,20 @@ export const RITES: Rite[] = [
     latin: 'Ritus Humilis',
     blurb: 'Tih, skroman i pokoran, ruku sklopljenih.',
   },
+  {
+    key: 'politicus',
+    seal: 'G',
+    name: 'Političar',
+    latin: 'Ritus Politicus',
+    blurb: 'Demagog, prebacuje krivnju, nudi reforme.',
+  },
+  {
+    key: 'dalmaticus',
+    seal: 'D',
+    name: 'Dalmatinac',
+    latin: 'Ritus Dalmaticus',
+    blurb: 'Pomalo, fjaka, opušteno, furešti.',
+  },
 ];
 
 export const riteOf = (key: ToneMode): Rite => RITES.find((r) => r.key === key) ?? RITES[0];

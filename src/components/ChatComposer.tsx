@@ -9,7 +9,7 @@ import {
   useEffect,
 } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Square, Paperclip, X, AlertTriangle, Mic, MicOff } from 'lucide-react';
+import { Square, Paperclip, X, AlertTriangle, Mic, MicOff, FileText, Loader2 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useToast } from '../hooks/useToast';
 import { TextInput } from './chat/ChatComposer/TextInput';
@@ -81,6 +81,11 @@ export function ChatComposer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [attachedDocument, setAttachedDocument] = useState<{
+    name: string;
+    content: string;
+  } | null>(null);
+  const [isParsingDocument, setIsParsingDocument] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const { showToast } = useToast();
 
@@ -114,23 +119,47 @@ export function ChatComposer({
     }
   };
 
-  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    await processImageFile(file);
+
+    if (file.type.startsWith('image/')) {
+      await processImageFile(file);
+    } else if (file.name.endsWith('.pdf') || file.name.endsWith('.txt')) {
+      try {
+        setIsParsingDocument(true);
+        const { parseFileContent } = await import('../utils/fileParser');
+        const content = await parseFileContent(file);
+        setAttachedDocument({ name: file.name, content });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Greška prilikom obrade dokumenta.';
+        showToast(message, 'error');
+      } finally {
+        setIsParsingDocument(false);
+      }
+    } else {
+      showToast('Nepodržan format datoteke.', 'error');
+    }
+
     e.target.value = '';
   };
 
   const handleSubmit = useCallback(
     (e?: FormEvent<HTMLFormElement>) => {
       e?.preventDefault();
-      if (isSending) return;
-      if (!draft.trim() && !attachedImage) return;
-      onSubmit(draft.trim(), attachedImage || undefined);
+      if (isSending || isParsingDocument) return;
+      if (!draft.trim() && !attachedImage && !attachedDocument) return;
+
+      const finalDraft = attachedDocument
+        ? `${draft.trim()}\n\n--- Priloženi dokument: ${attachedDocument.name} ---\n${attachedDocument.content}`
+        : draft.trim();
+
+      onSubmit(finalDraft, attachedImage || undefined);
       setDraft('');
       setAttachedImage(null);
+      setAttachedDocument(null);
     },
-    [isSending, draft, attachedImage, onSubmit, setDraft]
+    [isSending, isParsingDocument, draft, attachedImage, attachedDocument, onSubmit, setDraft]
   );
 
   const handleKeyDown = useCallback(
@@ -161,7 +190,23 @@ export function ChatComposer({
     setIsDragging(false);
     if (isSending) return;
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) await processImageFile(file);
+    if (!file) return;
+
+    if (file.type.startsWith('image/')) {
+      await processImageFile(file);
+    } else if (file.name.endsWith('.pdf') || file.name.endsWith('.txt')) {
+      try {
+        setIsParsingDocument(true);
+        const { parseFileContent } = await import('../utils/fileParser');
+        const content = await parseFileContent(file);
+        setAttachedDocument({ name: file.name, content });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Greška prilikom obrade dokumenta.';
+        showToast(message, 'error');
+      } finally {
+        setIsParsingDocument(false);
+      }
+    }
   };
 
   return (
@@ -227,24 +272,49 @@ export function ChatComposer({
                 </button>
               </motion.div>
             )}
+            {attachedDocument && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 5 }}
+                className="relative inline-flex items-center gap-2 mb-2 ml-2 bg-vellum border border-line rounded-xl px-3 py-2 shrink-0 shadow-sm"
+              >
+                <FileText size={20} className="text-oxblood" />
+                <span className="text-sm font-medium text-ink truncate max-w-[150px]">
+                  {attachedDocument.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAttachedDocument(null)}
+                  className="absolute -top-1.5 -right-1.5 bg-parchment-2 hover:bg-parchment-3 text-ink rounded-full p-1 border border-line cursor-pointer shadow"
+                  aria-label="Ukloni dokument"
+                >
+                  <X size={10} />
+                </button>
+              </motion.div>
+            )}
           </AnimatePresence>
 
           <div className="flex items-end gap-2 w-full">
             <input
               type="file"
               ref={fileInputRef}
-              onChange={handleImageChange}
-              accept="image/*"
+              onChange={handleFileChange}
+              accept="image/*,.pdf,.txt"
               className="hidden"
             />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isSending}
-              aria-label="Priloži sliku"
-              className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-ink-soft hover:text-ink hover:bg-vellum disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 cursor-pointer"
+              disabled={isSending || isParsingDocument}
+              aria-label="Priloži datoteku"
+              className="relative shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-ink-soft hover:text-ink hover:bg-vellum disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-0.5 cursor-pointer"
             >
-              <Paperclip size={17} />
+              {isParsingDocument ? (
+                <Loader2 size={17} className="animate-spin text-gold" />
+              ) : (
+                <Paperclip size={17} />
+              )}
             </button>
 
             {speechSupported && (
@@ -273,7 +343,11 @@ export function ChatComposer({
             />
 
             <SendButton
-              isDisabled={(!draft.trim() && !attachedImage) || isSending}
+              isDisabled={
+                (!draft.trim() && !attachedImage && !attachedDocument) ||
+                isSending ||
+                isParsingDocument
+              }
               isSending={isSending}
             />
           </div>

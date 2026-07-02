@@ -78,7 +78,7 @@ const ChatPayloadSchema = z.object({
     )
     .max(50, 'Maksimalno 50 poruka je dopušteno po zahtjevu.'),
   model: z.string().trim().optional(),
-  toneMode: z.enum(['humilis', 'clericus', 'sanctus']).optional(),
+  toneMode: z.enum(['humilis', 'clericus', 'sanctus', 'politicus', 'dalmaticus']).optional(),
 });
 
 export function assertPayloadSize(payload: unknown): void {
