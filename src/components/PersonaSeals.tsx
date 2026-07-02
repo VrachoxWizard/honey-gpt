@@ -24,7 +24,7 @@ export const PersonaSeals = memo(function PersonaSeals({
     <div
       role="radiogroup"
       aria-label="Izaberi obred (stil satire)"
-      className={cn('flex items-start justify-center gap-3 sm:gap-5', className)}
+      className={cn('flex flex-wrap items-start justify-center gap-3 sm:gap-4', className)}
     >
       {RITES.map((rite) => {
         const isActive = rite.key === active;
